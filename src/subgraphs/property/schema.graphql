@@ -2,13 +2,23 @@ schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@
   query: Query
   mutation: Mutation
 }
+directive @auth(
+  requires: [Role!] = []
+) on FIELD_DEFINITION | OBJECT
+directive @public on FIELD_DEFINITION
+directive @requiresRole(
+  role: Role!
+) on FIELD_DEFINITION
 
 type Query {
   properties: [Property]
+ 
 }
 
 type Mutation {
   createProperty(title: String!, price: Int!): Property
+   @auth(requires: [AGENT, ADMIN])
+   deleteProperty(id: ID!): Boolean @requiresRole(role: ADMIN)
 }
 
 type Property @key(fields: "id") {

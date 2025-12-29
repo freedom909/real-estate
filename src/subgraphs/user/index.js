@@ -5,35 +5,43 @@ import fs from "fs";
 import path from "path";
 import  resolvers  from "./resolvers/user.resolver.js";
 import { parse } from "graphql";
-const typeDefs = fs.readFileSync(
+import { authDirectiveTransformer } from "../../shared/directives/auth.js";
+
+const typeDefs = parse(fs.readFileSync(
   path.join(process.cwd(), "src/subgraphs/user/schema.graphql"),
   "utf-8"
-);
+));
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" }); // 指定路径
 console.log("JWT_SECRET =", process.env.JWT_SECRET); // 先测试
-const server = new ApolloServer({
-  schema: buildSubgraphSchema([{ typeDefs: parse(typeDefs), resolvers }]),
-});
+
+let schema = buildSubgraphSchema([
+  { typeDefs, resolvers },
+]);
+const transformedSchema = authDirectiveTransformer(schema);
+const server = new ApolloServer({ schema: transformedSchema });
 
 startStandaloneServer(server, {
   listen: { port: 4002 },
   context: async ({ req }) => {
-    console.log("🔥 user-subgraph headers:", req.headers);
-    const userHeader = req.headers["x-user"];
-    console.log("🔥 user-subgraph x-user header:", userHeader);
-    if (!userHeader) {
-      return { user: null };
-    }
+  const body = req.body ?? {};
+  const query = body.query ?? "";
 
-    try {
-      return {
-        user: JSON.parse(userHeader),
-      };
-    } catch {
-      return { user: null };
-    }
-  },
+  // federation 内部
+  if (
+    body.operationName === "IntrospectionQuery" ||
+    query.includes("_service") ||
+    query.includes("_entities")
+  ) {
+    return {};
+  }
+
+  const userHeader = req.headers["x-user"];
+  const user = userHeader ? JSON.parse(userHeader) : null;
+
+  return { user };
+}
+
 }).then(({ url }) => {
   console.log(`🧑 User subgraph running at ${url}`);
 });

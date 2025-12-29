@@ -1,9 +1,17 @@
 schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
   query: Query
 }
+directive @auth(
+  requires: [Role!] = []
+) on FIELD_DEFINITION | OBJECT
+directive @public on FIELD_DEFINITION
+directive @requiresRole(
+  role: Role!
+) on FIELD_DEFINITION
 
 type Query {
-  me: User
+  me: User @auth
+  users: [User]! @auth(requires: [ADMIN])
 }
 
 type User @key(fields: "id") {

@@ -1,27 +1,52 @@
-const resolvers = {
+import jwt from "jsonwebtoken";
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
+
+const MOCK_USER = {
+  id: "u1",
+  email: "agent@test.com",
+  role: "AGENT",
+};
+
+export default {
+  Query: {
+    me: (_, __, { user }) => {
+      if (!user) throw new Error("Unauthorized");
+      return MOCK_USER;
+    },
+  },
+
   Mutation: {
-    login: async (_, { email, password }) => {
-      // TODO: Replace with actual authentication logic
+    login: (_, { email }) => {
+      const token = jwt.sign(
+        { userId: MOCK_USER.id, role: MOCK_USER.role },
+        JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
       return {
-        accessToken: "mock-token",
-        user: {
-          id: "user-1", // Essential for Federation @key
-          email,
-          role: "USER",
-        },
+        accessToken: token,
+        user: MOCK_USER,
       };
     },
-    oauthLogin: async (_, { input }) => {
+
+    oauthLogin: () => {
+      const token = jwt.sign(
+        { userId: MOCK_USER.id, role: MOCK_USER.role },
+        JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
       return {
-        accessToken: "mock-oauth-token",
-        user: {
-          id: "user-2",
-          email: "oauth@example.com",
-          role: "USER",
-        },
+        accessToken: token,
+        user: MOCK_USER,
       };
     },
   },
-};
 
-export default resolvers;
+  User: {
+    __resolveReference(ref) {
+      return ref.id === MOCK_USER.id ? MOCK_USER : null;
+    },
+  },
+};

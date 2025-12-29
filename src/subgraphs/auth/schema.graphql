@@ -1,21 +1,25 @@
-schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
+schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.8"
+    import: ["@key"]
+  ) {
   query: Query
   mutation: Mutation
 }
 
+
 type Query {
   _empty: String
- 
 }
 
 type Mutation {
   login(email: String!, password: String!): AuthPayload
-  oauthLogin(input: OAuthLoginInput!): AuthPayload
+  oauthLogin(input: OAuthInput!): AuthPayload
 }
 
-input OAuthLoginInput {
+input OAuthInput {
   provider: String!
-  payload: String!
+  accessToken: String!
 }
 
 type AuthPayload {
@@ -25,12 +29,4 @@ type AuthPayload {
 
 type User @key(fields: "id") {
   id: ID!
-  email: String! @shareable
-  role: Role! @shareable
-}
-
-enum Role {
-  ADMIN
-  AGENT
-  USER
 }

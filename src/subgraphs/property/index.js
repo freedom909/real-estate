@@ -3,32 +3,39 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { buildSubgraphSchema } from "@apollo/subgraph";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { parse } from "graphql";
 import resolvers from "./resolvers/property.resolver.js";
+import { parse } from "graphql";
 
-// ✅ ESM 下手动构造 __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// ✅ 读取 schema.graphql 并解析为 AST
 const typeDefs = parse(fs.readFileSync(
-  path.join(__dirname, "./schema.graphql"),
+  path.join(process.cwd(), "src/subgraphs/property/schema.graphql"),
   "utf8"
 ));
-const schema = buildSubgraphSchema([
-  {
-    typeDefs,
-    resolvers,
-  },
-]);
 
 const server = new ApolloServer({
-  schema,
+  schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
 });
 
-const { url } = await startStandaloneServer(server, {
+startStandaloneServer(server, {
   listen: { port: 4003 },
-});
+context: async ({ req }) => {
+  const body = req.body ?? {};
+  const query = body.query ?? "";
 
-console.log(`🏠 Property subgraph running at ${url}`);
+  // federation 内部
+  if (
+    body.operationName === "IntrospectionQuery" ||
+    query.includes("_service") ||
+    query.includes("_entities")
+  ) {
+    return {};
+  }
+
+  const userHeader = req.headers["x-user"];
+  const user = userHeader ? JSON.parse(userHeader) : null;
+
+  return { user };
+}
+
+}).then(() => {
+  console.log("🏠 Property subgraph running at http://localhost:4003/graphql");
+});

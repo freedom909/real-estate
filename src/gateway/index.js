@@ -7,6 +7,7 @@ import {
   RemoteGraphQLDataSource,
 } from "@apollo/gateway";
 import jwt from "jsonwebtoken";
+import { authDirectiveTransformer } from "../shared/directives/auth.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 
@@ -44,7 +45,7 @@ const gateway = new ApolloGateway({
   },
 });
 
-const server = new ApolloServer({ gateway });
+const server = new ApolloServer({ gateway,schemaTransforms: [authDirectiveTransformer], });
 
 startStandaloneServer(server, {
   listen: { port: 4000 },
