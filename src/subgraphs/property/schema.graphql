@@ -1,0 +1,31 @@
+schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  properties: [Property]
+}
+
+type Mutation {
+  createProperty(title: String!, price: Int!): Property
+}
+
+type Property @key(fields: "id") {
+  id: ID!
+  title: String!
+  price: Int!
+  createdBy: User!
+}
+
+type User @key(fields: "id") {
+  id: ID!
+  email: String!@shareable
+  role: Role! @shareable
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  USER
+}

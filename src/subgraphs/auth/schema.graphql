@@ -1,0 +1,36 @@
+schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
+  query: Query
+  mutation: Mutation
+}
+
+type Query {
+  _empty: String
+ 
+}
+
+type Mutation {
+  login(email: String!, password: String!): AuthPayload
+  oauthLogin(input: OAuthLoginInput!): AuthPayload
+}
+
+input OAuthLoginInput {
+  provider: String!
+  payload: String!
+}
+
+type AuthPayload {
+  accessToken: String!
+  user: User
+}
+
+type User @key(fields: "id") {
+  id: ID!
+  email: String! @shareable
+  role: Role! @shareable
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  USER
+}
