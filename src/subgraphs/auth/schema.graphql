@@ -1,32 +1,85 @@
 schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8"
-    import: ["@key"]
+    import: ["@key", "@shareable"]
   ) {
   query: Query
   mutation: Mutation
 }
+directive @auth(
+  requires: [Role!] = []
+) on FIELD_DEFINITION | OBJECT
+directive @public on FIELD_DEFINITION
+directive @requiresRole(
+  role: Role!
+) on FIELD_DEFINITION
 
+"""
+JWT tokens returned by auth mutations
+"""
+type AuthTokens {
+  accessToken: String!
+  refreshToken: String!
+}
+
+"""
+User owned by auth domain
+"""
+type User @key(fields: "id") {
+  id: ID!
+  email: String! @shareable
+  role: Role! @shareable
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  USER
+  GUEST
+  PENDING_AGENT
+}
 
 type Query {
+  """
+  Auth subgraph normally does not expose business queries.
+  Keep this for federation health / future use.
+  """
   _empty: String
 }
 
 type Mutation {
-  login(email: String!, password: String!): AuthPayload
-  oauthLogin(input: OAuthInput!): AuthPayload
+  """
+  Email + password login
+  """
+  login(email: String! password: String! ): AuthPayload! @public
+
+
+
+  """
+  OAuth login (Google / Apple / etc.)
+  """
+  oauthLogin( provider: OAuthProvider! code: String!): AuthPayload! @public
+
+
+  """
+  🔥 Refresh token rotation entry
+  One-time-use refresh token
+  """
+  refreshToken: AuthTokens!
 }
 
-input OAuthInput {
-  provider: String!
-  accessToken: String!
-}
-
+"""
+Login / OAuth response
+"""
 type AuthPayload {
+  user: User!
   accessToken: String!
-  user: User
+  refreshToken: String!
 }
 
-type User @key(fields: "id") {
-  id: ID!
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+  GITHUB
 }
+

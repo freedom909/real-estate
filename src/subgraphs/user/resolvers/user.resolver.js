@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 
 const resolvers = {
- Query: {
+  Query: {
     me: (_, __, context) => {
       console.log("🔥 user-subgraph context.user:", context.user);
 
@@ -16,5 +16,12 @@ const resolvers = {
       };
     },
   },
+  Mutation: {
+    logout: (_, __, context) => {
+      context.res.clearCookie("rt");
+      return true;
+    },
+ 
+  }
 };
 export default resolvers;

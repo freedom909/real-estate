@@ -18,10 +18,19 @@ type User @key(fields: "id") {
   id: ID!
   email: String! @shareable
   role: Role! @shareable
+  phone:String @shareable
 }
 
 enum Role {
   ADMIN
   AGENT
   USER
+}
+
+
+input OAuthUserInput {
+  provider: String!
+  providerUserId: String!
+  email: String
+
 }

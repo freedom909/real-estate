@@ -1,0 +1,52 @@
+src/
+├─ subgraphs/
+│  ├─ auth/
+│  │  ├─ auth.server.ts        # Auth Subgraph 启动入口
+│  │  ├─ schema.graphql
+│  │  ├─ resolvers/
+│  │  │  ├─ mutation.resolver.ts
+│  │  │  └─ index.ts
+│  │  │
+│  │  ├─ oauth/
+│  │  │  ├─ oauth.service.ts   # Google / GitHub / Facebook verify
+│  │  │  └─ providers/
+│  │  │     ├─ google.ts
+│  │  │     ├─ github.ts
+│  │  │     └─ facebook.ts
+│  │  │
+│  │  ├─ token/
+│  │  │  ├─ token.service.ts   # signAccessToken / generateRefreshToken
+│  │  │  └─ token.util.ts      # hash / verify helpers
+│  │  │
+│  │  ├─ refresh/
+│  │  │  ├─ refreshToken.service.ts
+│  │  │  ├─ refresh.controller.ts  # REST /auth/refresh
+│  │  │  └─ refresh.repo.ts
+│  │  │
+│  │  ├─ cookies/
+│  │  │  └─ refreshCookie.ts
+│  │  │
+│  │  └─ index.ts              # DI & exports
+│  │
+│  ├─ user/
+│  │  ├─ schema.graphql
+│  │  ├─ resolvers/
+│  │  │  └─ user.resolver.ts
+│  │  ├─ services/
+│  │  │  └─ user.service.ts    # findById / findOrCreateByOAuth
+│  │  └─ repos/
+│  │     └─ user.repo.ts
+│  │
+│  └─ shared/
+│     ├─ auth/
+│     │  ├─ auth.context.ts
+│     │  ├─ authDirectiveTransformer.ts
+│     │  └─ role.enum.ts
+│     │
+│     ├─ errors/
+│     │  └─ auth.errors.ts
+│     │
+│     └─ utils/
+│        └─ time.ts
+│
+└─ server.ts                   # Gateway / Express bootstrap

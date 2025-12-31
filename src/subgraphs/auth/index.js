@@ -1,65 +1,44 @@
-import dotenv from "dotenv";
-dotenv.config({ path: "./.env" });
-
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
 import { buildSubgraphSchema } from "@apollo/subgraph";
-import fs from "fs";
+import fs,{ readFileSync } from 'fs';
+
 import path from "path";
-import jwt from "jsonwebtoken";
 import { parse } from "graphql";
+import userApi from "./adapters/userApi.js";
+import UserAdapter from "./adapters/user.adapter.js";
 import resolvers from "./resolvers/resolver.js";
-import { authDirectiveTransformer } from "../../shared/directives/auth.js";
+import { createAuthContainer } from "./container/auth.container.js";
+import RefreshTokenRepo from "./repos/refresh-token.repo.js";
+import dbConfig from "./DB/dbconfig.js";
+// schema
 
-console.log("JWT_SECRET =", process.env.JWT_SECRET);
+const db = await dbConfig. mongo();
 
-// 读取 schema
 const typeDefs = parse(
-  fs.readFileSync(
+  readFileSync(
     path.join(process.cwd(), "src/subgraphs/auth/schema.graphql"),
     "utf8"
   )
 );
 
-// 构建 subgraph schema
-let schema = buildSubgraphSchema([{ typeDefs, resolvers }]);
+// 🚨 依赖从外部来（封板）
+const container = createAuthContainer({
+  userService: new UserAdapter({ userApi }),
+  refreshTokenRepo: new RefreshTokenRepo({ db}),
+});
 
-
-// 创建 server
 const server = new ApolloServer({
-  schema,
+  schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
 });
 
-const { url } = await startStandaloneServer(server, {
+await startStandaloneServer(server, {
   listen: { port: 4001 },
-
-context: async ({ req }) => {
-  // Check for x-user header (from Gateway)
-  if (req.headers["x-user"]) {
-    try {
-      return { user: JSON.parse(req.headers["x-user"]) };
-    } catch {
-      return { user: null };
-    }
-  }
-
-  // Check for Authorization header (Direct access)
-  const auth = req.headers.authorization;
-  if (auth) {
-    try {
-      const user = jwt.verify(
-        auth.replace("Bearer ", ""),
-        process.env.JWT_SECRET
-      );
-      return { user };
-    } catch {
-      return { user: null };
-    }
-  }
-
-  return { user: null };
-}
-
+  context: async ({ req, res }) => ({
+    req,
+    res,
+    container,
+  }),
 });
 
-console.log(`🚀 Auth subgraph running at ${url}`);
+console.log("🔐 Auth subgraph running at http://localhost:4001/graphql");

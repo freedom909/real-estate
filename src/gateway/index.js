@@ -49,14 +49,18 @@ const server = new ApolloServer({ gateway,schemaTransforms: [authDirectiveTransf
 
 startStandaloneServer(server, {
   listen: { port: 4000 },
-  context: async ({ req }) => {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-    const user = decodeToken(token);
+context: async ({ req }) => {
+  const token = extractToken(req);
+  if (!token) return {};
 
-    console.log("🔥 gateway context user:", user);
+  try {
+    const payload = verifyJwt(token);
+    return { user: payload };
+  } catch {
+    return {};
+  }
+}
 
-    return { user };
-  },
 }).then(() => {
   console.log("🚀 Gateway running at http://localhost:4000/");
 });
