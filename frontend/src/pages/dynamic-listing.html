@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Listing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dynamic Listing from Subgraph</h1>
+    <div id="items">
+        <p class="loading">Loading data from subgraph-listing...</p>
+    </div>
+
+    <script>
+        // Replace with your subgraph-listing API endpoint
+        const API_URL = "http://localhost:4000/graphql";
+
+        // GraphQL query to fetch listings
+        const query = `
+            query {
+                YOUR_QUERY_FIELD {
+                    id
+                    name
+                    description
+                }
+            }
+        `;
+
+        // Fetch data from subgraph-listing
+        fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ query }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("API Response:", data); // Debug log
+            const container = document.getElementById("items");
+            if (data.data && data.data.listings) {
+                container.innerHTML = "";
+                data.data.listings.forEach(item => {
+                    const div = document.createElement("div");
+                    div.className = "item";
+                    div.innerHTML = `
+                        <h3>${item.name || "Untitled"}</h3>
+                        <p>${item.description || "No description provided."}</p>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<p>No listings found. Check the console for API response details.</p>";
+            }
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            document.getElementById("items").innerHTML = `
+                <p>Failed to load data. Error: ${error.message}</p>
+                <p>Ensure the subgraph-listing service is running and accessible at ${API_URL}.</p>
+            `;
+        });
+    </script>
+</body>
+</html>

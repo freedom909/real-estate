@@ -1,47 +1,68 @@
+import express from "express";
+import http from "http";
 import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from "@as-integrations/express4";
 import { buildSubgraphSchema } from "@apollo/subgraph";
 import fs from "fs";
 import path from "path";
-import  resolvers  from "./resolvers/user.resolver.js";
 import { parse } from "graphql";
+import dotenv from "dotenv";
+
+import resolvers from "./resolvers/user.resolver.js";
 import { authDirectiveTransformer } from "../../shared/directives/auth.js";
 
-const typeDefs = parse(fs.readFileSync(
-  path.join(process.cwd(), "src/subgraphs/user/schema.graphql"),
-  "utf-8"
-));
-import dotenv from "dotenv";
-dotenv.config({ path: "./.env" }); // 指定路径
-console.log("JWT_SECRET =", process.env.JWT_SECRET); // 先测试
+dotenv.config({ path: "./.env" });
 
-let schema = buildSubgraphSchema([
-  { typeDefs, resolvers },
-]);
-const transformedSchema = authDirectiveTransformer(schema);
-const server = new ApolloServer({ schema: transformedSchema });
+const app = express();
 
-startStandaloneServer(server, {
-  listen: { port: 4002 },
-  context: async ({ req }) => {
-  const body = req.body ?? {};
-  const query = body.query ?? "";
+/* ✅ THIS IS WHAT YOU WANT */
+app.use(express.json());
+app.use((req, _, next) => {
+  console.log("USER SUBGRAPH HIT:", req.body);
+  next();
+});
 
-  // federation 内部
-  if (
-    body.operationName === "IntrospectionQuery" ||
-    query.includes("_service") ||
-    query.includes("_entities")
-  ) {
-    return {};
-  }
+const typeDefs = parse(
+  fs.readFileSync(
+    path.join(process.cwd(), "src/subgraphs/user/schema.graphql"),
+    "utf-8"
+  )
+);
 
-  const userHeader = req.headers["x-user"];
-  const user = userHeader ? JSON.parse(userHeader) : null;
+let schema = buildSubgraphSchema([{ typeDefs, resolvers }]);
+schema = authDirectiveTransformer(schema);
 
-  return { user };
-}
+const server = new ApolloServer({
+  schema,
+});
 
-}).then(({ url }) => {
-  console.log(`🧑 User subgraph running at ${url}`);
+await server.start();
+
+app.use(
+  "/graphql",
+  expressMiddleware(server, {
+    context: async ({ req }) => {
+      const body = req.body ?? {};
+      const query = body.query ?? "";
+
+      // federation internal calls
+      if (
+        body.operationName === "IntrospectionQuery" ||
+        query.includes("_service") ||
+        query.includes("_entities")
+      ) {
+        return {};
+      }
+
+      const userHeader = req.headers["x-user"];
+      const user = userHeader ? JSON.parse(userHeader) : null;
+
+      return { user };
+    },
+  })
+);
+
+const httpServer = http.createServer(app);
+httpServer.listen(4020, () => {
+  console.log("🧑 User subgraph running at http://localhost:4020/graphql");
 });

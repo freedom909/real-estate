@@ -1,36 +1,33 @@
-schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
-  query: Query
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+  FACEBOOK
 }
-directive @auth(
-  requires: [Role!] = []
-) on FIELD_DEFINITION | OBJECT
-directive @public on FIELD_DEFINITION
-directive @requiresRole(
-  role: Role!
-) on FIELD_DEFINITION
 
-type Query {
-  me: User @auth
-  users: [User]! @auth(requires: [ADMIN])
+input OAuthUserInput {
+  provider: OAuthProvider!
+  providerUserId: String!
+  email: String
+  name: String
+  avatar: String
 }
 
 type User @key(fields: "id") {
   id: ID!
-  email: String! @shareable
-  role: Role! @shareable
-  phone:String @shareable
+  email: String!
+  role: Role!
+}
+
+extend type Mutation {
+  findOrCreateByOAuth(input: OAuthUserInput!): User!
 }
 
 enum Role {
-  ADMIN
+  GUEST
   AGENT
   USER
+  ADMIN
+  PENDING_AGENT
 }
 
 
-input OAuthUserInput {
-  provider: String!
-  providerUserId: String!
-  email: String
-
-}

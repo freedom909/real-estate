@@ -1,91 +1,55 @@
-import jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
-/**
- * ⚠️ 真实项目中：
- * - user 应来自 user-subgraph / user-service
- * - 这里只是 mock，方便你先跑通
- */
-const mockUsers = [
-  {
-    id: "a1",
-    email: "agent@test.com",
-    role: "AGENT",
-  },
-];
+// src/subgraphs/auth/services/auth.service.js
+import { GraphQLError } from "graphql";
 
-class AuthService {
-  constructor() {
-    this.JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
-    console.log("JWT_SECRET =", process.env.JWT_SECRET);
-    this.ACCESS_TOKEN_EXPIRES_IN = "15m";
+export default class AuthService {
+  constructor({
+    oauthService,
+    tokenService,
+    refreshTokenService,
+    userApiAdapter,
+  }) {
+    this.oauthService = oauthService;
+    this.tokenService = tokenService;
+    this.refreshTokenService = refreshTokenService;
+    this.userApiAdapter = userApiAdapter;
   }
 
-  /**
-   * OAuth / Email 登录统一入口
-   */
-  async login({ provider, payload }) {
-    // 1️⃣ 验证第三方 or email（此处简化）
-    const user = await this.validateUser(provider, payload);
+  async oauthLoginWithIdToken(provider, idToken) {
+    const oauthUser =
+      await this.oauthService.verifyIdToken(provider, idToken);
 
-    if (!user) {
-      throw new Error("Invalid credentials");
+    console.log("🚀 calling user subgraph with:", oauthUser);
+
+    let user;
+    try {
+      user = await this.userApiAdapter.findOrCreateByOAuth(oauthUser);
+    } catch (err) {
+      // ✅ 这里能看到「真实错误」
+      console.error("💥 Real user-subgraph error:", {
+        message: err.message,
+        source: err.source,
+        status: err.status,
+        responseBody: err.responseBody,
+        graphQLErrors: err.graphQLErrors,
+        stack: err.stack,
+      });
+
+      // ✅ 对外统一错误
+      throw new GraphQLError("Authentication service unavailable", {
+        extensions: {
+          code: "AUTH_DEPENDENCY_FAILED",
+          service: "USER_SUBGRAPH",
+          source: err.source,
+        },
+      });
     }
 
-    // 2️⃣ 生成 token
-    const accessToken = this.generateAccessToken(user);
+    const tokens = await this.refreshTokenService.issue(user);
 
-    // 3️⃣ 返回 AuthPayload
     return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user,
-      accessToken,
     };
   }
-
-  /**
-   * 校验 token（给 gateway / auth resolver 用）
-   */
-  verifyToken(token) {
-    try {
-       console.log("JWT_SECRET =", process.env.JWT_SECRET);
-      return jwt.verify(token, this.JWT_SECRET);
-    } catch (err) {
-      return null;
-    }
-  }
-
-  /**
-   * ===== 内部方法 =====
-   */
-
-  async validateUser(provider, payload) {
-    // 示例：email 登录
-    if (provider === "email") {
-      return mockUsers.find(
-        (u) => u.email === payload.email
-      );
-    }
-
-    // 示例：OAuth（Google / Apple）
-    if (provider === "google") {
-      return mockUsers[0];
-    }
-
-    return null;
-  }
-
-  generateAccessToken(user) {
-    return jwt.sign(
-      {
-        userId: user.id,
-        role: user.role,
-      },
-      this.JWT_SECRET,
-      {
-        expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
-      }
-    );
-  }
 }
-
-export default AuthService;

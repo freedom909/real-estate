@@ -1,34 +1,22 @@
 // src/subgraphs/auth/repos/refresh-token.repo.js
-export default class RefreshTokenRepo {
-  constructor({ db }) {
-    this.db = db;
+// src/subgraphs/auth/repos/refreshToken.repo.js
+
+class RefreshTokenRepo {
+  constructor() {
+    this.tokens = new Map(); // userId -> token
   }
 
-  async findValid(tokenHash) {
-    return this.db.refresh_tokens.findOne({
-      where: {
-        tokenHash,
-        revokedAt: null,
-        expiresAt: { $gt: new Date() },
-      },
-    });
+  async save({ userId, token }) {
+    this.tokens.set(userId, token);
   }
 
-  async create(data) {
-    return this.db.refresh_tokens.create(data);
+  async findByUserId(userId) {
+    return this.tokens.get(userId);
   }
 
-  async revoke(id) {
-    return this.db.refresh_tokens.update(
-      { revokedAt: new Date() },
-      { where: { id } }
-    );
-  }
-
-  async revokeAll(userId) {
-    return this.db.refresh_tokens.update(
-      { revokedAt: new Date() },
-      { where: { userId } }
-    );
+  async deleteByUserId(userId) {
+    this.tokens.delete(userId);
   }
 }
+
+export default RefreshTokenRepo;

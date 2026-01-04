@@ -1,86 +1,33 @@
-const users = [
-  {
-    id: "u1",
-    email: "user1@test.com",
-    phone: "123456",
-    role: "USER",
-  },
-  {
-    id: "a1",
-    email: "agent@test.com",
-    phone: "999999",
-    role: "AGENT",
-  },
-];
-
-export class UserService {
-    constructor(userRepository) {
-    this.userRepo = userRepository;
-  }
-  getById(id) {
-    return this.userRepo.findById(id);
+class UserService {
+  constructor({ userRepository }) {
+    this.userRepository = userRepository;
   }
 
-  getAll() {
-    return this.userRepo.findAll();
-  }
-   async verify({ email, password }) {
-    if (!email || !password) {
-      throw new GraphQLError('Email and password are required', {
-        extensions: { code: 'BAD_USER_INPUT' },
-      });
-    }
+  async findOrCreateByOAuth({
+    provider,
+    providerUserId,
+    email,
+  }) {
+    // // 1️⃣ 优先用 (provider + providerUserId)
+    // let user = await this.userRepository.findByOAuth(
+    //   provider,
+    //   providerUserId
+    // );
 
-    const user = await this.userRepository.findOne({ email });
-    if (!user) {
-      throw new GraphQLError('Invalid email or password', {
-        extensions: { code: 'UNAUTHORIZED' },
-      });
-    }
+    // if (user) return user;
 
-    const passwordValid = await this.passwordHasher.compare(
-      password,
-      user.password
-    );
+    // // 2️⃣ 没有就创建
+    // user = await this.userRepository.create({
+    //   provider,
+    //   providerUserId,
+    //   email,
+    //   role: 'USER', // or HOST
+    // });
 
-    if (!passwordValid) {
-      await this.accountLockService.recordFailure(user.id);
-      throw new GraphQLError('Invalid email or password', {
-        extensions: { code: 'UNAUTHORIZED' },
-      });
-    }
-
-    return {
-      userId: user.id,
-      role: user.role,
-    };
-  }
-
-  async findOrCreateByOAuth({ provider, providerUserId, email }) {
-    let user = await this.userRepo.findByOAuth(
-      provider,
-      providerUserId
-    );
-
-    if (user) return user;
-
-    // ⚠️ 同 email 绑定已有账号（可选）
-    if (email) {
-      user = await this.userRepo.findByEmail(email);
-      if (user) {
-        return this.userRepo.bindOAuth(user.id, {
-          provider,
-          providerUserId,
-        });
-      }
-    }
-
-    return this.userRepo.create({
-      email,
-      role: "USER",
-      oauthAccounts: [{ provider, providerUserId }],
-    });
-
+    return this.userRepository.findOrCreateByOAuth(input);
   }
 }
+
 export default UserService;
+
+

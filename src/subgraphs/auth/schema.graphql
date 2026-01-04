@@ -59,8 +59,8 @@ type Mutation {
   OAuth login (Google / Apple / etc.)
   """
   oauthLogin( provider: OAuthProvider! code: String!): AuthPayload! @public
-
-
+  oauthLoginWithIdToken(provider: OAuthProvider!, idToken: String!): AuthPayload!
+  
   """
   🔥 Refresh token rotation entry
   One-time-use refresh token

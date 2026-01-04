@@ -1,0 +1,52 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).",
+  "main": "next.config.js",
+  "type": "module",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.13.8",
+    "@auth/mongodb-adapter": "^3.10.0",
+    "@react-oauth/google": "^0.12.2",
+    "@tailwindcss/postcss": "^4.1.11",
+    "auth-next": "^1.0.4",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "cookie": "^1.0.2",
+    "dayjs": "^1.11.13",
+    "dotenv": "^17.2.1",
+    "font": "^0.0.4",
+    "fs": "^0.0.1-security",
+    "geist": "^1.4.2",
+    "google-auth-library": "^10.2.1",
+    "graphql": "^16.11.0",
+    "graphql-cli": "^4.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.1",
+    "morgan": "^1.10.1",
+    "next": "^15.4.6",
+    "next-auth": "^4.24.11",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.8.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "eslint": "^9",
+    "eslint-config-next": "15.3.1",
+    "tailwindcss": "^4"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

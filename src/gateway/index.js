@@ -35,9 +35,9 @@ class AuthenticatedDataSource extends RemoteGraphQLDataSource {
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
     subgraphs: [
-      { name: "auth", url: "http://localhost:4001/graphql" },
-      { name: "user", url: "http://localhost:4002/graphql" },
-      { name: "property", url: "http://localhost:4003/graphql" },
+      { name: "auth", url: "http://localhost:4010/graphql" },
+      { name: "user", url: "http://localhost:4020/graphql" },
+      //{ name: "property", url: "http://localhost:4030/graphql" },
     ],
   }),
   buildService({ url }) {
@@ -45,21 +45,21 @@ const gateway = new ApolloGateway({
   },
 });
 
-const server = new ApolloServer({ gateway,schemaTransforms: [authDirectiveTransformer], });
+const server = new ApolloServer({ gateway, schemaTransforms: [authDirectiveTransformer], });
 
 startStandaloneServer(server, {
   listen: { port: 4000 },
-context: async ({ req }) => {
-  const token = extractToken(req);
-  if (!token) return {};
+  context: async ({ req }) => {
+    const token = extractToken(req);
+    if (!token) return {};
 
-  try {
-    const payload = verifyJwt(token);
-    return { user: payload };
-  } catch {
-    return {};
+    try {
+      const payload = verifyJwt(token);
+      return { user: payload };
+    } catch {
+      return {};
+    }
   }
-}
 
 }).then(() => {
   console.log("🚀 Gateway running at http://localhost:4000/");

@@ -1,62 +1,25 @@
-import { GraphQLError } from "graphql";
-import tokenService from "../services/token/token.service.js";
-import oauthService from "../services/oauth/oauth.service.js";
-import { setRefreshCookie } from "../cookies/setRefreshCookie.js";
+// // src/subgraphs/auth/resolvers/resolver.js
+// import { GraphQLError } from "graphql";
+// import { TOKENS } from "../../../shared/container/tokens.js";
 
-const resolvers = {
+
+// src/subgraphs/auth/resolvers/resolver.js
+import { TOKENS } from "../../../shared/container/tokens.js";
+
+
+
+export default {
   Mutation: {
-login: async (_, args, { container, res }) => {
-      const authService = container.resolve("authService");
-      return authService.login(args, res);
-    },
-
-    oauthLogin: async (_, args, { container, res }) => {
-      const oauthService = container.resolve("oauthService");
-      const userService = container.resolve("userService");
-      const tokenService = container.resolve("tokenService");
-
-      const oauthUser = await oauthService.verify(args.provider, args.code);
-      const user = await userService.findOrCreateByOAuth(oauthUser);
-
-      const tokens = tokenService.issue(user);
-      // setRefreshCookie(res, tokens.refreshToken)
-
-      return {
-        user,
-        accessToken: tokens.accessToken,
-      };
-    },
-
-    refreshToken: async (_, __, { container, req, res }) => {
-      const refreshTokenService = container.resolve("refreshTokenService");
-      return refreshTokenService.rotate(req.cookies.rt, res);
-    },
-
-    refreshToken: async (_, __, { req, res, container }) => {
-      const oldToken = req.cookies?.rt;
-      if (!oldToken) {
-        throw new GraphQLError("Unauthenticated");
-      }
-
-      const refreshTokenService =
-        container.resolve("refreshTokenService");
-
-      const result = await refreshTokenService.rotate(oldToken);
-
-      setRefreshCookie(res, result.refreshToken);
-
-      return {
-        accessToken: result.accessToken,
-      };
-    },
-  },
-
-  // auth-subgraph 只负责 entity reference
-  User: {
-    __resolveReference(ref) {
-      return { id: ref.id };
+    oauthLoginWithIdToken: async (
+      _,
+      { provider, idToken },
+      context
+    ) => {
+      console.log('context keys:', Object.keys(context));
+      console.log('context.container:', context.container);
+      const authService = context.container.resolve(TOKENS.authService);
+      return authService.oauthLoginWithIdToken(provider, idToken);
     },
   },
 };
 
-export default resolvers;
