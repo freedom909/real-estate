@@ -1,33 +1,35 @@
-class UserService {
-  constructor({ userRepository }) {
-    this.userRepository = userRepository;
+// src/subgraphs/user/services/user.service.js
+
+
+
+export default class UserService {
+
+  constructor({ userRepo }) {
+    this.userRepo = userRepo;
   }
 
-  async findOrCreateByOAuth({
-    provider,
-    providerUserId,
-    email,
-  }) {
-    // // 1️⃣ 优先用 (provider + providerUserId)
-    // let user = await this.userRepository.findByOAuth(
-    //   provider,
-    //   providerUserId
-    // );
+  async findOrCreateByOAuth(input) {
+    console.log("🧠 UserService input:", input);
 
-    // if (user) return user;
+    let user = await this.userRepo.findByOAuth(
+      input.provider,
+      input.providerUserId
+    );
 
-    // // 2️⃣ 没有就创建
-    // user = await this.userRepository.create({
-    //   provider,
-    //   providerUserId,
-    //   email,
-    //   role: 'USER', // or HOST
-    // });
+    console.log("🔍 findByOAuth result:", user);
 
-    return this.userRepository.findOrCreateByOAuth(input);
+    if (!user) {
+      user = await this.userRepo.create({
+        provider: input.provider,
+        providerUserId: input.providerUserId,
+        email: input.email,
+        role: "USER",
+      });
+
+      console.log("🆕 created user:", user);
+    }
+
+    return user;
   }
+
 }
-
-export default UserService;
-
-

@@ -1,6 +1,7 @@
 
 import { GraphQLError } from "graphql";
 import { ERROR_CODES } from "../../../shared/errors/errorCodes.js";
+import { TOKENS } from "../../../shared/container/tokens.js";
 const resolvers = {
   Query: {
     me: (_, __, context) => {
@@ -21,26 +22,6 @@ const resolvers = {
     logout: (_, __, context) => {
       context.res.clearCookie("rt");
       return true;
-    },
-
-     findOrCreateByOAuth: async (_, { input }, context) => {
-      try {
-        return await context.userService.findOrCreateByOAuth(input);
-      } catch (err) {
-        if (err.code === "DUPLICATE_USER") {
-          throw new GraphQLError("User already exists", {
-            extensions: {
-              code: ERROR_CODES.USER_ALREADY_EXISTS,
-            },
-          });
-        }
-
-        throw new GraphQLError("User service failed", {
-          extensions: {
-            code: ERROR_CODES.INTERNAL_SERVICE_ERROR,
-          },
-        });
-      }
     },
   },
   User: {

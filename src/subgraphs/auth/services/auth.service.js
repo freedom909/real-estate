@@ -1,55 +1,30 @@
 // src/subgraphs/auth/services/auth.service.js
-import { GraphQLError } from "graphql";
+import mapOAuthProfileToUserInput from "../acl/oauthUserMapper.js";
 
 export default class AuthService {
-  constructor({
-    oauthService,
-    tokenService,
-    refreshTokenService,
-    userApiAdapter,
-  }) {
+  constructor({ oauthService, userClient, tokenService, refreshTokenService }) {
     this.oauthService = oauthService;
+    this.userClient = userClient;
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
-    this.userApiAdapter = userApiAdapter;
   }
 
-  async oauthLoginWithIdToken(provider, idToken) {
-    const oauthUser =
-      await this.oauthService.verifyIdToken(provider, idToken);
+  async oauthLoginWithIdToken({ provider, idToken }) {
+    // 1️⃣ 外部世界
+    const oauthProfile = await this.oauthService.verify(provider, idToken);
 
-    console.log("🚀 calling user subgraph with:", oauthUser);
+    // 2️⃣ ACL 翻译（关键）
+    const userInput = mapOAuthProfileToUserInput(oauthProfile);
 
-    let user;
-    try {
-      user = await this.userApiAdapter.findOrCreateByOAuth(oauthUser);
-    } catch (err) {
-      // ✅ 这里能看到「真实错误」
-      console.error("💥 Real user-subgraph error:", {
-        message: err.message,
-        source: err.source,
-        status: err.status,
-        responseBody: err.responseBody,
-        graphQLErrors: err.graphQLErrors,
-        stack: err.stack,
-      });
+    // 3️⃣ 内部世界
+    const user = await this.userClient.findUserByEmail(userInput.email);// where should this method be written in, in the frontend or repository?
 
-      // ✅ 对外统一错误
-      throw new GraphQLError("Authentication service unavailable", {
-        extensions: {
-          code: "AUTH_DEPENDENCY_FAILED",
-          service: "USER_SUBGRAPH",
-          source: err.source,
-        },
-      });
-    }
-
-    const tokens = await this.refreshTokenService.issue(user);
-
+    // 4️⃣ 业务流程
+    // 4️⃣ 最小返回（能跑）
     return {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
       user,
+      accessToken: "access-token-demo",
+      refreshToken: "refresh-token-demo",
     };
   }
 }
