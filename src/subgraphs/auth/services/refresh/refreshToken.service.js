@@ -1,27 +1,14 @@
+// src/subgraphs/auth/services/refresh/refreshToken.service.js
 export default class RefreshTokenService {
-  constructor({ tokenService, refreshRepo }) {
-    this.tokenService = tokenService;
+  constructor({ refreshRepo }) {
     this.refreshRepo = refreshRepo;
   }
 
-  async issue(user) {
-    const accessToken = this.tokenService.issueAccessToken({
-      userId: user.id,
-      role: user.role,
+  async save(userId, token) {
+    // MVP：先不存数据库
+    console.log("💾 save refresh token:", {
+      userId,
+      token,
     });
-
-    const refreshToken = this.tokenService.issueRefreshToken({
-      userId: user.id,
-    });
-
-    await this.refreshRepo.save({
-      userId: user.id,
-      token: refreshToken,
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
   }
 }

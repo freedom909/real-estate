@@ -1,42 +1,51 @@
 // src/subgraphs/auth/services/token/token.service.js
 import jwt from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
 
-class TokenService {
+const PRIVATE_KEY = fs.readFileSync(
+  path.join(process.cwd(), "src/keys/private.pem"),
+  "utf8"
+);
+
+export default class TokenService {
   constructor() {
-    this.JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
-    this.ACCESS_EXPIRES_IN = "15m";
-    this.REFRESH_EXPIRES_IN = "30d";
+    this.issuer = process.env.JWT_ISSUER || "auth-service";
+    this.algorithm = "RS256";
+    this.accessExpiresIn =
+      process.env.JWT_ACCESS_EXPIRES_IN || "15m";
+    this.refreshExpiresIn =
+      process.env.JWT_REFRESH_EXPIRES_IN || "30d";
   }
 
-  issueAccessToken(user) {
+  generateAccessToken({ userId, role, email }) {
     return jwt.sign(
       {
-        userId: user.id,
-        role: user.role,
+        sub: userId,
+        role,
+        email,
       },
-      this.JWT_SECRET,
+      PRIVATE_KEY,
       {
-        expiresIn: this.ACCESS_EXPIRES_IN,
+        algorithm: this.algorithm,
+        issuer: this.issuer,
+        expiresIn: this.accessExpiresIn,
       }
     );
   }
 
-  issueRefreshToken(user) {
+  generateRefreshToken({ userId }) {
     return jwt.sign(
       {
-        userId: user.id,
+        sub: userId,
         type: "refresh",
       },
-      this.JWT_SECRET,
+      PRIVATE_KEY,
       {
-        expiresIn: this.REFRESH_EXPIRES_IN,
+        algorithm: this.algorithm,
+        issuer: this.issuer,
+        expiresIn: this.refreshExpiresIn,
       }
     );
   }
-
-  verify(token) {
-    return jwt.verify(token, this.JWT_SECRET);
-  }
 }
-
-export default TokenService;

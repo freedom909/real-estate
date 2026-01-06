@@ -1,14 +1,16 @@
+// src/shared/container/tokens.js
 export const TOKENS = {
+  // auth
   oauthService: Symbol("oauthService"),
   authService: Symbol("authService"),
-
-  // ✅ 新增
-  userClient: Symbol("userClient"),
-
-  // 你原来的
   tokenService: Symbol("tokenService"),
   refreshTokenService: Symbol("refreshTokenService"),
-  userApi: Symbol("userApi"),
+  refreshTokenRepo: Symbol("refreshTokenRepo"),
+
+  // cross-subgraph
+  userClient: Symbol("userClient"),
+
+  // user subgraph internal
   userRepo: Symbol("userRepo"),
   userService: Symbol("userService"),
 };

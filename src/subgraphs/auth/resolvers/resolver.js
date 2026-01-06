@@ -18,7 +18,7 @@ export default {
       const authService = container.resolve(TOKENS.authService);
 
       // ⚠️ 这里是关键：传两个参数，不要包成对象
-      return authService.oauthLoginWithIdToken({provider, idToken});
+      return authService.oauthLoginWithIdToken(provider, idToken);
     },
   },
 };
