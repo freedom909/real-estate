@@ -1,16 +1,11 @@
-// src/shared/container/tokens.js
 export const TOKENS = {
-  // auth
-  oauthService: Symbol("oauthService"),
   authService: Symbol("authService"),
+  oauthService: Symbol("oauthService"),
+  userClient: Symbol("userClient"),
   tokenService: Symbol("tokenService"),
   refreshTokenService: Symbol("refreshTokenService"),
   refreshTokenRepo: Symbol("refreshTokenRepo"),
-
-  // cross-subgraph
-  userClient: Symbol("userClient"),
-
-  // user subgraph internal
-  userRepo: Symbol("userRepo"),
-  userService: Symbol("userService"),
+  loginRiskService: Symbol("loginRiskService"),
+  riskEventRepo: Symbol("riskEventRepo"),
+   redis: Symbol("redis"),
 };

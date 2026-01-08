@@ -40,6 +40,7 @@ enum Role {
 }
 
 type Query {
+   me: User @auth
   """
   Auth subgraph normally does not expose business queries.
   Keep this for federation health / future use.
@@ -53,7 +54,7 @@ type Mutation {
   """
   login(email: String! password: String! ): AuthPayload! @public
 
-
+  
 
   """
   OAuth login (Google / Apple / etc.)
@@ -65,7 +66,7 @@ type Mutation {
   🔥 Refresh token rotation entry
   One-time-use refresh token
   """
-  refreshToken: AuthTokens!
+  refreshToken(refreshToken: String!): AuthPayload!
 }
 
 """

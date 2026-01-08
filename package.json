@@ -8,7 +8,8 @@
     "start:user": "nodemon src/subgraphs/user/index.js",
     "start:property": "nodemon src/subgraphs/property/index.js",
     "start:all": "npm-run-all --parallel start:*",
-    "start:gateway": "nodemon --exec \"node src/gateway/index.js\""
+    "start:gateway": "nodemon --exec \"node src/gateway/index.js\"",
+    "start:debug": "DEBUG_AUTH=true DEBUG_USER=true npm run start:all"
   },
   "keywords": [],
   "author": "",
@@ -26,8 +27,10 @@
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
+    "geoip-lite": "^1.4.10",
     "graphql": "^16.12.0",
     "graphql-tag": "^2.12.6",
+    "ioredis": "^5.9.0",
     "jsonwebtoken": "^9.0.3",
     "jwks-rsa": "^3.2.0",
     "lodash": "^4.17.21",

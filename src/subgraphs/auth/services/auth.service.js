@@ -1,5 +1,6 @@
 // src/subgraphs/auth/services/auth.service.js
 import mapOAuthProfileToUserInput from "../acl/oauthUserMapper.js";
+import { debugAuth } from "../../../shared/debug.js";
 
 export default class AuthService {
   constructor({
@@ -7,49 +8,74 @@ export default class AuthService {
     userClient,
     tokenService,
     refreshTokenService,
+    loginRiskService,
   }) {
     this.oauthService = oauthService;
     this.userClient = userClient;
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
+    this.loginRiskService = loginRiskService;
   }
 
   async oauthLoginWithIdToken(provider, idToken) {
+    debugAuth("OAuth login start", { provider });
+
     // 1️⃣ OAuth 验证
     const oauthProfile = await this.oauthService.verify(
       provider,
       idToken
     );
 
-    // 2️⃣ ACL 翻译
-    const userInput = mapOAuthProfileToUserInput(oauthProfile);
+    debugAuth("OAuth verified", {
+      provider,
+      sub: oauthProfile.sub,
+      email: oauthProfile.email,
+    });
 
-    // 3️⃣ 用户查找（先用 mock / email）
+    // 2️⃣ ACL 翻译
+    const userInput =
+      mapOAuthProfileToUserInput(oauthProfile);
+
+    debugAuth("OAuth mapped to domain user", {
+      email: userInput.email,
+    });
+
+    // 3️⃣ 用户查找
     const user =
-      (await this.userClient.findUserByEmail(userInput.email)) ??
-      {
+      (await this.userClient.findUserByEmail(
+        userInput.email
+      )) ?? {
         id: "user-1",
         email: userInput.email,
         role: "USER",
       };
 
-    // 4️⃣ 生成 token
-    const accessToken = this.tokenService.generateAccessToken({
+    debugAuth("User resolved", {
       userId: user.id,
       email: user.email,
-      role: user.role,
     });
-   console.log("accessToken:", accessToken);
+
+    // 4️⃣ Token
+    const accessToken =
+      this.tokenService.generateAccessToken({
+        userId: user.id,
+        email: user.email,
+        role: user.role,
+      });
+
     const refreshToken =
       this.tokenService.generateRefreshToken({
         userId: user.id,
       });
 
-    // 5️⃣ 可选：保存 refresh token
     await this.refreshTokenService.save(
       user.id,
       refreshToken
     );
+
+    debugAuth("OAuth login success", {
+      userId: user.id,
+    });
 
     return {
       user,
@@ -58,4 +84,3 @@ export default class AuthService {
     };
   }
 }
-

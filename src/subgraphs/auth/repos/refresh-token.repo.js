@@ -1,22 +1,41 @@
 // src/subgraphs/auth/repos/refresh-token.repo.js
-// src/subgraphs/auth/repos/refreshToken.repo.js
+import  redis  from "../../../shared/redis/redis.client.js";
+import { hashToken } from "../../../shared/security/hash.js";
 
-class RefreshTokenRepo {
-  constructor() {
-    this.tokens = new Map(); // userId -> token
+export default class RefreshTokenRepo {
+  async save(userId, refreshToken) {
+    const hash = hashToken(refreshToken);
+
+    await redis.multi()
+      .set(`refresh:${hash}`, userId, "EX", 60 * 60 * 24 * 30)
+      .sadd(`user:${userId}:refreshTokens`, hash)
+      .exec();
   }
 
-  async save({ userId, token }) {
-    this.tokens.set(userId, token);
+  async exists(refreshToken) {
+    const hash = hashToken(refreshToken);
+    return Boolean(await redis.get(`refresh:${hash}`));
   }
 
-  async findByUserId(userId) {
-    return this.tokens.get(userId);
+  async delete(refreshToken) {
+    const hash = hashToken(refreshToken);
+    const userId = await redis.get(`refresh:${hash}`);
+    if (!userId) return;
+
+    await redis.multi()
+      .del(`refresh:${hash}`)
+      .srem(`user:${userId}:refreshTokens`, hash)
+      .exec();
   }
 
-  async deleteByUserId(userId) {
-    this.tokens.delete(userId);
+  async revokeAll(userId) {
+    const hashes = await redis.smembers(
+      `user:${userId}:refreshTokens`
+    );
+
+    const tx = redis.multi();
+    hashes.forEach((h) => tx.del(`refresh:${h}`));
+    tx.del(`user:${userId}:refreshTokens`);
+    await tx.exec();
   }
 }
-
-export default RefreshTokenRepo;

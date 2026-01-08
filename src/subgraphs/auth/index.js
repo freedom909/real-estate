@@ -1,24 +1,33 @@
+// src/subgraphs/auth/index.js
 import express from "express";
 import http from "http";
 import { ApolloServer } from "@apollo/server";
-import { expressMiddleware } from '@as-integrations/express4';
+import { expressMiddleware } from "@as-integrations/express4";
 import { buildSubgraphSchema } from "@apollo/subgraph";
-import { gql } from 'graphql-tag';
-import { readFileSync } from 'fs';
-import bodyParser from "body-parser";
+import { gql } from "graphql-tag";
+import { readFileSync } from "fs";
 import cors from "cors";
-import resolvers from "../auth/resolvers/resolver.js";
-import { createAuthContainer } from "../auth/container/auth.container.js";
-import userApi from "../auth/infra/userApi.js";
-import RefreshTokenRepo from "../auth/repos/refresh-token.repo.js";
 import cookieParser from "cookie-parser";
-const refreshTokenRepo = new RefreshTokenRepo();
-const authContainer = createAuthContainer({  userApi,
-  refreshTokenRepo});
+
+import resolvers from "./resolvers/resolver.js";
+import { createAuthContainer } from "./container/auth.container.js";
+import redis from "../../shared/redis/redis.client.js";
+import userApi from "./infra/userApi.js";
 
 const app = express();
 const httpServer = http.createServer(app);
-const typeDefs = gql(readFileSync('./src/subgraphs/auth/schema.graphql', { encoding: 'utf-8' }));//path is relative to the root of the project
+
+const typeDefs = gql(
+  readFileSync(
+    "./src/subgraphs/auth/schema.graphql",
+    "utf-8"
+  )
+);
+
+const authContainer = createAuthContainer({
+  redis,
+  userApi,
+});
 
 const server = new ApolloServer({
   schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
@@ -26,16 +35,16 @@ const server = new ApolloServer({
 
 await server.start();
 
-app.use(express.json());
-app.use(cookieParser());
 app.use(
   "/graphql",
   cors({
     origin: "http://localhost:3000",
     credentials: true,
   }),
+  express.json(),
+  cookieParser(),
   expressMiddleware(server, {
-    context: async ({ req, res }) => ({
+    context: ({ req, res }) => ({
       req,
       res,
       container: authContainer,
@@ -43,7 +52,8 @@ app.use(
   })
 );
 
-
 httpServer.listen(4010, () => {
-  console.log("🔐 Auth subgraph running at http://localhost:4010/graphql");
+  console.log(
+    "🔐 Auth subgraph running at http://localhost:4010/graphql"
+  );
 });
