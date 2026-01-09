@@ -6,66 +6,107 @@ export const Role = {
   AGENT: "AGENT",
   ADMIN: "ADMIN",
   GUEST: "GUEST",
+  PENDING_AGENT: "PENDING_AGENT",
 };
-
-const identitySchema = new mongoose.Schema(
-  {
-    provider: {
-      type: String,
-      enum: ["GOOGLE", "GITHUB", "APPLE", "LINE", "LOCAL"],
-      required: true,
-    },
-    sub: {
-      type: String,
-      required: true,
-    },
-    email: { type: String },
-    createdAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
-);
 
 const userSchema = new mongoose.Schema(
   {
+    // ===== Core identity =====
     userId: {
       type: String,
+      required: true,
       unique: true,
-      index: true,
+      immutable: true,
     },
-
     email: {
       type: String,
-      index: true,
+      unique: true,
       sparse: true,
+      trim: true,
+      lowercase: true,
     },
 
-    passwordHash: { type: String },
+    password: {
+      type: String,
+      select: false, // 默认不返回
+    },
 
     fullname: { type: String },
+    firstName: { type: String },
+    lastName: { type: String },
+    phone: { type: String },
     picture: { type: String },
 
+    // ===== OAuth fields =====
+    provider: {
+      type: String, // google / apple / github / line / local
+      index: true,
+    },
+
+    providerSub: {
+      type: String,
+      index: true,
+    },
+
+    // ===== Role & status =====
     role: {
       type: String,
       enum: Object.values(Role),
       default: Role.USER,
+      required: true,
     },
 
-    identities: [identitySchema],
+    agentStatus: {
+      type: String,
+      enum: ["NOT_APPLIED", "PENDING", "APPROVED", "REJECTED"],
+      default: "NOT_APPLIED",
+    },
 
-    version: { type: Number, default: 0 },
+    kycVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    version: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
+//
+// 🔐 企业级关键索引（OAuth 幂等）
+//
+userSchema.index(
+  { provider: 1, providerSub: 1 },
+  {
+    unique: true,
+    sparse: true, // 允许 local 用户
+  }
+);
+
+//
+// 🔐 Email 唯一（可选，推荐）
+//
+userSchema.index(
+
+  {
+    unique: true,
+    sparse: true,
+  }
+);
+
+//
+// 🔧 自动生成 userId
+//
 userSchema.pre("validate", function () {
   if (!this.userId) {
     this.userId = uuidv4();
   }
-
 });
 
 const UserModel =
-  mongoose.models.User ||
-  mongoose.model("User", userSchema);
+  mongoose.models.User || mongoose.model("User", userSchema);
 
 export default UserModel;

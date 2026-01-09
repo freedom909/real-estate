@@ -1,59 +1,37 @@
-// src/subgraphs/auth/index.js
-import express from "express";
-import http from "http";
-import { ApolloServer } from "@apollo/server";
-import { expressMiddleware } from "@as-integrations/express4";
-import { buildSubgraphSchema } from "@apollo/subgraph";
-import { gql } from "graphql-tag";
-import { readFileSync } from "fs";
-import cors from "cors";
-import cookieParser from "cookie-parser";
+import express from 'express'
+import http from 'http'
+import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
-import resolvers from "./resolvers/resolver.js";
-import { createAuthContainer } from "./container/auth.container.js";
-import redis from "../../shared/redis/redis.client.js";
-import userApi from "./infra/userApi.js";
+import { ApolloServer } from '@apollo/server'
+import { expressMiddleware } from '@as-integrations/express4'
+import { buildSubgraphSchema } from '@apollo/subgraph'
 
-const app = express();
-const httpServer = http.createServer(app);
+import schemaTypeDefs from './schema/schema.typeDefs.js'
+import oauthTypeDefs from './schema/oauth.typeDefs.js'
+import resolvers from './resolvers/resolver.js'
 
-const typeDefs = gql(
-  readFileSync(
-    "./src/subgraphs/auth/schema.graphql",
-    "utf-8"
-  )
-);
+import mongoose from 'mongoose'
 
-const authContainer = createAuthContainer({
-  redis,
-  userApi,
-});
+await mongoose.connect('mongodb://localhost:27017/auth_subgraph')
+
+const app = express()
+const httpServer = http.createServer(app)
 
 const server = new ApolloServer({
-  schema: buildSubgraphSchema([{ typeDefs, resolvers }]),
-});
+  schema: buildSubgraphSchema({ typeDefs: [schemaTypeDefs, oauthTypeDefs], resolvers })
+})
 
-await server.start();
+await server.start()
 
 app.use(
-  "/graphql",
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  }),
+  '/graphql',
+  cors({ origin: 'http://localhost:3000', credentials: true }),
   express.json(),
   cookieParser(),
-  expressMiddleware(server, {
-    context: ({ req, res }) => ({
-      req,
-      res,
-      container: authContainer,
-    }),
-  })
-);
+  expressMiddleware(server, { context: ({ req, res }) => ({ req, res }) })
+)
 
 httpServer.listen(4010, () => {
-  console.log(
-    "🔐 Auth subgraph running at http://localhost:4010/graphql"
-  );
-});
+  console.log('🔐 Auth subgraph running at http://localhost:4010/graphql')
+})

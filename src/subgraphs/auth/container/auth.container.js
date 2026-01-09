@@ -1,6 +1,10 @@
 // src/subgraphs/auth/container/auth.container.js
+
+
 import createContainer from "../../../shared/container/createContainer.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
+import UserRepo from "../repos/user.repo.js";
+import CredentialRepo from "../repos/credential.repo.js";
 
 import TokenService from "../services/token/token.service.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
@@ -10,6 +14,9 @@ import RiskEventRepo from "../repos/riskEvent.repo.js";
 import OAuthService from "../services/oauth/oauth.service.js";
 import AuthService from "../services/auth.service.js";
 import UserClient from "../adapters/user.client.js";
+console.log("TOKENS.userRepo =", TOKENS.userRepo);
+console.log("TOKENS.credentialRepo =", TOKENS.credentialRepo);
+console.log("TOKENS.userClient =", TOKENS.userClient);
 
 export function createAuthContainer({ redis, userApi }) {
   const container = createContainer();
@@ -55,8 +62,22 @@ export function createAuthContainer({ redis, userApi }) {
 
   container.register(
     TOKENS.oauthService,
-    () => new OAuthService()
+     () =>
+   new OAuthService({
+     userRepo: container.resolve(TOKENS.userRepo),
+     credentialRepo: container.resolve(TOKENS.credentialRepo),
+   })
   );
+
+container.register(
+   TOKENS.userRepo,
+   () => new UserRepo()
+ );
+
+ container.register(
+   TOKENS.credentialRepo,
+   () => new CredentialRepo()
+ );
 
   container.register(
     TOKENS.authService,

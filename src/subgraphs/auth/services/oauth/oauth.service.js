@@ -1,50 +1,106 @@
 // src/subgraphs/auth/services/oauth/oauth.service.js
-// ⚠️ MVP VERSION – 能跑优先
+
+import User from "../../models/user.model.js";
+import Credential from "../../credentials/Credential.js"
+
 export default class OAuthService {
-  async verify(provider, idToken) {
-    if (!provider) {
-      throw new Error("OAuthService.verify: provider is required");
-    }
-    if (!idToken) {
-      throw new Error("OAuthService.verify: idToken is required");
-    }
-
-    switch (provider) {
-      case "GOOGLE":
-        return this.verifyGoogle(idToken);
-
-      case "GITHUB":
-        return this.verifyGithub(idToken);
-
-      default:
-        throw new Error(`Unsupported OAuth provider: ${provider}`);
-    }
+  constructor({ userRepo, credentialRepo }) {
+    this.userRepo = userRepo;
+    this.credentialRepo = credentialRepo;
   }
 
-  // 🚧 暂时 fake，先跑通流程
-  async verifyGoogle(idToken) {
-    console.log("🟢 [OAuthService] verifyGoogle called");
+  async findOrCreateOAuthUser(input) {
+    const {
+      provider,
+      providerUserId,
+      email,
+      emailVerified,
+      profile,
+    } = input;
 
-    // TODO: 后面再接 Google 官方 SDK
-    return {
-      provider: "GOOGLE",
-      providerUserId: "google-" + idToken.slice(0, 8),
-      email: "test@gmail.com",
-      name: "Test User",
-      avatar: "https://example.com/avatar.png",
-    };
+    // 1️⃣ provider 唯一匹配
+    let credential =
+      await this.credentialRepo.findByProvider(provider, providerUserId);
+
+    if (credential) {
+      await this.credentialRepo.updateLastLogin(credential.id);
+      return credential.userId;
+    }
+
+    // 2️⃣ email 合并
+    let user = email
+      ? await this.userRepo.findByEmail(email)
+      : null;
+
+    // 3️⃣ 新用户
+    if (!user) {
+      user = await this.userRepo.create({
+        email,
+        emailVerified: !!emailVerified,
+      });
+    }
+
+    // 4️⃣ 创建 credential
+    await this.credentialRepo.create({
+      userId: user.id,
+      provider,
+      providerUserId,
+      email,
+      emailVerified,
+      profile,
+    });
+
+    return user.id;
   }
 
-  async verifyGithub(idToken) {
-    console.log("🟢 [OAuthService] verifyGithub called");
+  async loginOrRegister(profile) {
+  const {
+    provider,
+    providerUserId,
+    email,
+    emailVerified,
+  } = profile;
 
-    return {
-      provider: "GITHUB",
-      providerUserId: "github-" + idToken.slice(0, 8),
-      email: "test@github.com",
-      name: "Github User",
-      avatar: null,
-    };
+  // 1️⃣ provider 已存在
+  const credential =
+    await this.credentialRepo.findOAuth(
+      provider,
+      providerUserId
+    );
+
+  if (credential) {
+    return this.userRepo.findById(credential.userId);
   }
+
+  // 2️⃣ email 不可信
+  if (!email || !emailVerified) {
+    return this.createOAuthOnlyUser(profile);
+  }
+
+  // 3️⃣ email 已存在 → 合并
+  const user = await this.userRepo.findByEmail(email);
+
+  if (user) {
+    await this.credentialRepo.createOAuthCredential({
+      userId: user.id,
+      provider,
+      providerUserId,
+    });
+    return user;
+  }
+
+  // 4️⃣ 全新用户
+  const newUser = await this.userRepo.create({ email });
+
+  await this.credentialRepo.createOAuthCredential({
+    userId: newUser.id,
+    provider,
+    providerUserId,
+  });
+
+  return newUser;
 }
+
+}
+
 

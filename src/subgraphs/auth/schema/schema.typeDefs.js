@@ -1,3 +1,6 @@
+import { gql } from 'graphql-tag'
+
+export default gql`
 schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.8"
@@ -6,25 +9,15 @@ schema
   query: Query
   mutation: Mutation
 }
-directive @auth(
-  requires: [Role!] = []
-) on FIELD_DEFINITION | OBJECT
-directive @public on FIELD_DEFINITION
-directive @requiresRole(
-  role: Role!
-) on FIELD_DEFINITION
 
-"""
-JWT tokens returned by auth mutations
-"""
+directive @auth(requires: [Role!] = []) on FIELD_DEFINITION | OBJECT
+directive @public on FIELD_DEFINITION
+
 type AuthTokens {
   accessToken: String!
   refreshToken: String!
 }
 
-"""
-User owned by auth domain
-"""
 type User @key(fields: "id") {
   id: ID!
   email: String! @shareable
@@ -40,27 +33,18 @@ enum Role {
 }
 
 type Query {
-   me: User @auth
-  """
-  Auth subgraph normally does not expose business queries.
-  Keep this for federation health / future use.
-  """
+  me: User @auth
   _empty: String
 }
 
 type Mutation {
-  """
-  Email + password login
-  """
-  login(email: String! password: String! ): AuthPayload! @public
-  oauthLogin( provider: OAuthProvider! code: String!): AuthPayload! @public
-  oauthLoginWithIdToken(provider: OAuthProvider!, idToken: String!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload! @public
+  register(email: String!, password: String!): AuthPayload! @public
+  oauthLogin(provider: OAuthProvider!, code: String!): AuthPayload! @public
   refreshToken(refreshToken: String!): AuthPayload!
+  oauthLoginWithIdToken(provider: OAuthProvider!, idToken: String!): AuthPayload! @public
 }
 
-"""
-Login / OAuth response
-"""
 type AuthPayload {
   user: User!
   accessToken: String!
@@ -71,5 +55,6 @@ enum OAuthProvider {
   GOOGLE
   FACEBOOK
   GITHUB
+  APPLE
 }
-
+`

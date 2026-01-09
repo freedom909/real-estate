@@ -26,7 +26,7 @@ const httpServer = http.createServer(app);
 
 const typeDefs = gql(
   readFileSync(
-    "./src/subgraphs/user/schema.graphql",
+    "./src/subgraphs/user/schema/schema.graphql",
     "utf-8"
   )
 );

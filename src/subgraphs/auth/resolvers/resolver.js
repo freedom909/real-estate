@@ -7,6 +7,9 @@ import { TOKENS } from "../../../shared/container/tokens.js";
 
 
 export default {
+    Query: {
+    me: async (_, __, { user }) => user || null,
+  },
   Mutation: {
     oauthLoginWithIdToken: async (
       _,
@@ -45,7 +48,36 @@ export default {
       );
     },
 
+ register: async (_, { email, password }) => {
+      const user = await authService.register(email, password)
+      return {
+        user,
+        accessToken: 'dummyAccessToken',
+        refreshToken: 'dummyRefreshToken'
+      }
+    },
 
+    login: async (_, { email, password }) => {
+      const user = await authService.login(email, password)
+      return {
+        user,
+        accessToken: 'dummyAccessToken',
+        refreshToken: 'dummyRefreshToken'
+      }
+    },
+
+    oauthLogin: async (_, { provider, code }) => {
+      // For simplicity, assume code → providerUserId & email
+      const providerUserId = code + '_id'
+      const email = code + '@example.com'
+      const user = await authService.oauthLogin(provider, providerUserId, email)
+      return {
+        user,
+        accessToken: 'dummyAccessToken',
+        refreshToken: 'dummyRefreshToken'
+      }
+    },
+    
     refreshAccessToken: async (
       _,
       __,

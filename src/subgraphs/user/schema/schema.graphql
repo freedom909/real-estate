@@ -1,3 +1,11 @@
+
+enum OAuthProvider {
+  google
+  github
+  apple
+  line
+}
+
 type User {
   userId: ID!
   email: String
@@ -7,7 +15,7 @@ type User {
 }
 
 input OAuthUserInput {
-  provider: String!
+  provider: OAuthProvider!
   providerSub: String!
   email: String
   fullname: String
@@ -19,7 +27,5 @@ type Query {
 }
 
 type Mutation {
-  findOrCreateOAuthUser(
-    input: OAuthUserInput!
-  ): User
+  findOrCreateOAuthUser(input: OAuthUserInput!): User!
 }

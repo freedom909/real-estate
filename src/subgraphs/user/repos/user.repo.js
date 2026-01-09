@@ -1,12 +1,49 @@
 // src/subgraphs/user/repos/user.repo.js
 import UserModel from "../models/user.model.js";
+import { v4 as uuidv4 } from "uuid";
 
 export default class UserRepo {
   constructor({ UserModel }) {
     this.UserModel = UserModel;
   }
-  
-    async findByProvider(provider, providerSub) {
+  async findOrCreateOAuthUser({
+    email,
+    fullname,
+    picture,
+    provider,
+    providerSub,
+  }) {
+    const now = new Date();
+
+    const user = await this.UserModel.findOneAndUpdate(
+      { provider, providerSub },
+      {
+        $setOnInsert: {
+          userId: uuidv4(),   // ✅ 核心
+          email,
+          fullname,
+          picture,
+          provider,
+          providerSub,
+          role: "USER",
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+      
+    ).lean();
+    
+    if (!user.userId) {
+      user.userId = uuidv4();
+      await user.save();
+    }
+    
+    return user;
+  }
+
+  async findByProvider(provider, providerSub) {
     return this.UserModel.findOne({
       provider,
       providerSub,
@@ -29,7 +66,7 @@ export default class UserRepo {
     });
   }
 
- async create(user) {
+  async create(user) {
     return this.UserModel.create(user);
   }
 

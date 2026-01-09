@@ -1,14 +1,18 @@
 export const TOKENS = {
-  mongodb: Symbol("mongodb"),
-  userRepo: Symbol("userRepo"),
-  userService: Symbol("userService"),
-  authService: Symbol("authService"),
-  oauthService: Symbol("oauthService"),
+  // infra
+  redis: Symbol("redis"),
   userClient: Symbol("userClient"),
+
+  // repos
+  userRepo: Symbol("userRepo"),
+  credentialRepo: Symbol("credentialRepo"),
+  refreshTokenRepo: Symbol("refreshTokenRepo"),
+  riskEventRepo: Symbol("riskEventRepo"),
+
+  // services
   tokenService: Symbol("tokenService"),
   refreshTokenService: Symbol("refreshTokenService"),
-  refreshTokenRepo: Symbol("refreshTokenRepo"),
   loginRiskService: Symbol("loginRiskService"),
-  riskEventRepo: Symbol("riskEventRepo"),
-   redis: Symbol("redis"),
+  oauthService: Symbol("oauthService"),
+  authService: Symbol("authService"),
 };
