@@ -1,7 +1,7 @@
 
 import { GraphQLError } from "graphql";
-import { ERROR_CODES } from "../../../shared/errors/errorCodes.js";
-import { TOKENS } from "../../../shared/container/tokens.js";
+import { ERROR_CODES } from "../../../../shared/errors/errorCodes.js";
+import { TOKENS } from "../../../../shared/container/tokens.js";
 const resolvers = {
   Query: {
     me: (_, __, context) => {

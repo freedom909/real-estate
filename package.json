@@ -22,6 +22,7 @@
     "@as-integrations/express4": "^1.1.2",
     "@graphql-tools/utils": "^10.11.0",
     "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.19",

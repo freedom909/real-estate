@@ -1,20 +1,29 @@
-// src/subgraphs/user/container/user.container.js
 import createContainer from "../../../shared/container/createContainer.js";
+import mongoose from "../../../shared/db/mongo.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
+
+import UserRepo from "../repos/user.repo.js";
 import UserService from "../services/user.service.js";
-import UserRepo from "../repositories/user.repo.js";
-console.log("TOKENS =", TOKENS);
 
 export function createUserContainer() {
   const container = createContainer();
 
-  // 1️⃣ Repo —— 不依赖任何 Service
+  // 🥭 Mongo（实例注入）
   container.register(
-    TOKENS.userRepo,
-    () => new UserRepo()
+    TOKENS.mongodb,
+    () => mongoose
   );
 
-  // 2️⃣ Service —— 只依赖 Repo
+  // 📦 Repo
+  container.register(
+    TOKENS.userRepo,
+    () =>
+      new UserRepo({
+        UserModel: mongoose.model("User"),
+      })
+  );
+
+  // 🧠 Service
   container.register(
     TOKENS.userService,
     () =>

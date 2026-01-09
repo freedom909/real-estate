@@ -42,13 +42,9 @@ export default class AuthService {
 
     // 3️⃣ 用户查找
     const user =
-      (await this.userClient.findUserByEmail(
-        userInput.email
-      )) ?? {
-        id: "user-1",
-        email: userInput.email,
-        role: "USER",
-      };
+  await this.userClient.findOrCreateOAuthUser(
+    userInput
+  );
 
     debugAuth("User resolved", {
       userId: user.id,

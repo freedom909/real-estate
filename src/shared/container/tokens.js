@@ -1,4 +1,7 @@
 export const TOKENS = {
+  mongodb: Symbol("mongodb"),
+  userRepo: Symbol("userRepo"),
+  userService: Symbol("userService"),
   authService: Symbol("authService"),
   oauthService: Symbol("oauthService"),
   userClient: Symbol("userClient"),

@@ -1,18 +1,25 @@
-
-
-
-type User @key(fields: "id") {
-  id: ID!
-  email: String!
-  role: Role!
+type User {
+  userId: ID!
+  email: String
+  fullname: String
+  picture: String
+  role: String
 }
 
-enum Role {
-  GUEST
-  AGENT
-  USER
-  ADMIN
-  PENDING_AGENT
+input OAuthUserInput {
+  provider: String!
+  providerSub: String!
+  email: String
+  fullname: String
+  picture: String
 }
 
+type Query {
+  user(userId: ID!): User
+}
 
+type Mutation {
+  findOrCreateOAuthUser(
+    input: OAuthUserInput!
+  ): User
+}

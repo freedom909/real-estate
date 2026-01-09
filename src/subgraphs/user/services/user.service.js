@@ -1,35 +1,26 @@
-// src/subgraphs/user/services/user.service.js
-
-
+import { Role } from "../models/user.model.js";
 
 export default class UserService {
-
   constructor({ userRepo }) {
     this.userRepo = userRepo;
   }
 
-  async findOrCreateByOAuth(input) {
-    console.log("🧠 UserService input:", input);
+async findOrCreateOAuthUser(input) {
+    const existing =
+      await this.userRepo.findByProvider(
+        input.provider,
+        input.providerSub
+      );
 
-    let user = await this.userRepo.findByOAuth(
-      input.provider,
-      input.providerUserId
-    );
+    if (existing) return existing;
 
-    console.log("🔍 findByOAuth result:", user);
-
-    if (!user) {
-      user = await this.userRepo.create({
-        provider: input.provider,
-        providerUserId: input.providerUserId,
-        email: input.email,
-        role: "USER",
-      });
-
-      console.log("🆕 created user:", user);
-    }
-
-    return user;
+    return this.userRepo.create({
+      email: input.email,
+      fullname: input.fullname,
+      picture: input.picture,
+      provider: input.provider,
+      providerSub: input.providerSub,
+      role: "USER",
+    });
   }
-
 }
