@@ -4,7 +4,7 @@ import { TOKENS } from "../../../shared/container/tokens.js";
 export default {
   Query: {
     user: (_, { userId }, { container }) =>
-      container.resolve(TOKENS.userService).findById(
+      container.resolve(TOKENS.user.userService).findById(
         userId
       ),
   },
@@ -15,7 +15,7 @@ export default {
       { input },
       { container }
     ) =>
-      container.resolve(TOKENS.userService).findOrCreateOAuthUser(
+      container.resolve(TOKENS.user.userService).findOrCreateOAuthUser(
         input
       ),
   },

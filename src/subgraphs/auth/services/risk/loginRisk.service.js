@@ -3,18 +3,24 @@ import redis from "../../../../shared/redis/redis.client.js";
 import { debugRisk } from "../../../../shared/debug.js";
 
 export default class LoginRiskService {
-    constructor({ riskEventRepo }) {
+  constructor({ riskEventRepo }) {
     this.riskEventRepo = riskEventRepo;
   }
 
-    async record(event) {
+  isRisky({ oldIp, newIp, oldUA, newUA }) {
+    if (oldIp && oldIp !== newIp) return true;
+    if (oldUA && oldUA !== newUA) return true;
+    return false;
+  }
+
+  async record(event) {
     await this.riskEventRepo.save({
       ...event,
       createdAt: new Date(),
     });
   }
 
-  async handleRefreshTokenReuse({ 
+  async handleRefreshTokenReuse({
     userId,
     ip,
     userAgent,
@@ -150,4 +156,3 @@ export default class LoginRiskService {
     }
   }
 }
- 

@@ -1,8 +1,7 @@
 // src/subgraphs/auth/services/auth.service.js
 import mapOAuthProfileToUserInput from "../acl/oauthUserMapper.js";
 import { debugAuth } from "../../../shared/debug.js";
-import User from '../models/user.model.js'
-import CredentialService from './credential/credential.service.js'
+
 
 export default class AuthService {
   constructor({
@@ -10,15 +9,18 @@ export default class AuthService {
     userClient,
     tokenService,
     refreshTokenService,
+    credentialRepo,
     loginRiskService,
-    credentialService,
   }) {
+    if (!oauthService || !userClient || !tokenService || !refreshTokenService || !loginRiskService || !credentialRepo) {
+      throw new Error("Missing oauthService, userClient, tokenService, refreshTokenService, loginRiskService, or credentialRepo");
+    }
     this.oauthService = oauthService;
     this.userClient = userClient;
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
     this.loginRiskService = loginRiskService;
-    this.credService = credentialService
+    this.credRepo = credentialRepo;
   }
 
   async oauthLoginWithIdToken(provider, idToken) {
@@ -84,32 +86,122 @@ export default class AuthService {
     };
   }
 
-  async register(email, password) {
-    // 1️⃣ Create user
-    const user = await User.create({ email })
-    // 2️⃣ Create password credential
-    await this.credService.registerPassword(user._id, email, password)
-    return user
+  // =======================
+  // REGISTER
+  // =======================
+  async register({ email, password }) {
+    // 1️⃣ email 是否已存在
+    const existingUser = await this.userClient.findByEmail(email);
+    if (existingUser) {
+      throw new Error("EMAIL_ALREADY_EXISTS");
+    }
+
+    // 2️⃣ 创建 User
+    const user = await this.userClient.createUser({
+      email,
+      role: "USER",
+    });
+
+    // 3️⃣ 创建 PASSWORD credential
+    await this.credentialRepo.createPassword({
+      userId: user.userId,
+      password,
+    });
+
+    // 4️⃣ 签发 token
+    return this.tokenService.issueAuthTokens(user.userId);
   }
 
-  async login(email, password) {
-    const userId = await this.credService.loginWithPassword(email, password)
-    const user = await User.findById(userId)
-    return user
+  // =======================
+  // LOGIN
+  // =======================
+
+  async login({ email, password }) {
+    // 1️⃣ 找 credential
+    const credential =
+      await this.credentialRepo.findPasswordByEmail(
+        email,
+        this.userClient
+      );
+
+    if (!credential) {
+      throw new Error("INVALID_CREDENTIALS");
+    }
+
+    // 2️⃣ 校验密码
+    const ok = await this.credentialRepo.verifyPassword(
+      credential,
+      password
+    );
+
+    if (!ok) {
+      throw new Error("INVALID_CREDENTIALS");
+    }
+
+    // 3️⃣ 发 token
+    return this.tokenService.issueAuthTokens(credential.userId);
   }
 
-  async oauthLogin(provider, providerUserId, email) {
-    let cred = await this.credService.findOAuth(provider, providerUserId)
-    if (cred) return User.findById(cred.userId)
+  async oauthLogin({ provider, profile }) {
+    const { sub, email, emailVerified, name, picture } = profile;
 
-    // merge by email
-    let user = null
-    if (email) user = await User.findOne({ email })
+    // 1️⃣ 已有 identity？
+    let credential = await this.credentialRepo.findByProvider(
+      provider,
+      sub
+    );
 
-    if (!user) user = await User.create({ email })
-    await this.credService.registerOAuth(user._id, provider, providerUserId)
-    return user
+    if (credential) {
+      return this.issueTokens(credential.userId);
+    }
+
+    // 2️⃣ email 是否已有 user？
+    let user = null;
+    if (email && emailVerified) {
+      user = await this.userClient.findByEmail(email);
+    }
+
+    // 3️⃣ 没 user → 创建
+    if (!user) {
+      user = await this.userClient.createUser({
+        email,
+        fullname: name,
+        picture,
+      });
+    }
+
+    // 4️⃣ 绑定 identity
+    await this.credentialRepo.createOAuth({
+      userId: user.userId,
+      provider,
+      providerSub: sub,
+    });
+
+    return this.issueTokens(user.userId);
   }
+
+  async refresh({ refreshToken, ip, userAgent }) {
+    const newRefreshToken =
+      await this.refreshTokenService.rotate({
+        refreshToken,
+        ip,
+        userAgent,
+      });
+
+    const payload =
+      this.tokenService.verifyRefreshToken(newRefreshToken);
+
+    const accessToken =
+      this.tokenService.signAccessToken({
+        sub: payload.sub,
+      });
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
+  }
+
 
   async loginWithPassword({ email, password }) {
     const credential =

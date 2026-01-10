@@ -3,6 +3,9 @@ import  redis  from "../../../shared/redis/redis.client.js";
 import { hashToken } from "../../../shared/security/hash.js";
 
 export default class RefreshTokenRepo {
+    constructor({ RefreshTokenModel }) {
+    this.model = RefreshTokenModel;
+  }
   async save(userId, refreshToken) {
     const hash = hashToken(refreshToken);
 
@@ -10,6 +13,10 @@ export default class RefreshTokenRepo {
       .set(`refresh:${hash}`, userId, "EX", 60 * 60 * 24 * 30)
       .sadd(`user:${userId}:refreshTokens`, hash)
       .exec();
+  }
+
+    async create(data) {
+    return this.model.create(data);
   }
 
   async exists(refreshToken) {
@@ -28,6 +35,29 @@ export default class RefreshTokenRepo {
       .exec();
   }
 
+async revoke(tokenId, replacedByTokenId = null) {
+    console.log("🟢 [RT] revoke", { tokenId, replacedByTokenId });
+    return this.model.updateOne(
+      { tokenId },
+      {
+        revoked: true,
+        revokedAt: new Date(),
+        replacedByTokenId,
+      }
+    );
+  }
+
+async revokeAllByUser(userId) {
+    console.log("🟢 [RT] revokeAllByUser", { userId });
+    return this.model.updateMany(
+      { userId, revoked: false },
+      {
+        revoked: true,
+        revokedAt: new Date(),
+      }
+    );
+  }
+
   async revokeAll(userId) {
     const hashes = await redis.smembers(
       `user:${userId}:refreshTokens`
@@ -37,5 +67,9 @@ export default class RefreshTokenRepo {
     hashes.forEach((h) => tx.del(`refresh:${h}`));
     tx.del(`user:${userId}:refreshTokens`);
     await tx.exec();
+  }
+
+    async findByTokenId(tokenId) {
+    return this.model.findOne({ tokenId });
   }
 }

@@ -6,7 +6,7 @@ import { expressMiddleware } from "@as-integrations/express4";
 import { buildSubgraphSchema } from "@apollo/subgraph";
 import { gql } from "graphql-tag";
 import { readFileSync } from "fs";
-
+import mongoose from "../../shared/db/mongo.js";
 import { connectMongo } from "../../shared/db/mongo.js";
 import { createUserContainer } from "./container/user.container.js";
 import resolvers from "./resolvers/index.js";
@@ -14,11 +14,13 @@ import resolvers from "./resolvers/index.js";
 // 🥭 1️⃣ Mongo
 await connectMongo(
   process.env.MONGO_URI ||
-    "mongodb://localhost:27017/real-estate"
+    "mongodb://localhost:27017/real_estate_user"
 );
 
 // 🧰 2️⃣ Container
-const userContainer = createUserContainer();
+const userContainer = createUserContainer({
+  mongo: mongoose,
+});
 
 // 🚀 3️⃣ App
 const app = express();

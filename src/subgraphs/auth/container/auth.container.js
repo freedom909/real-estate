@@ -1,95 +1,112 @@
-// src/subgraphs/auth/container/auth.container.js
-
-
 import createContainer from "../../../shared/container/createContainer.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
-import UserRepo from "../repos/user.repo.js";
-import CredentialRepo from "../repos/credential.repo.js";
 
-import TokenService from "../services/token/token.service.js";
-import RefreshTokenService from "../services/refresh/refreshToken.service.js";
+// models
+import CredentialModel from "../models/credential.model.js";
+
+// repos
+import CredentialRepo from "../repos/credential.repo.js";
 import RefreshTokenRepo from "../repos/refresh-token.repo.js";
 import LoginRiskService from "../services/risk/loginRisk.service.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
+// adapters
+import UserClient from "../adapters/user.client.js";
+
+// services
+import TokenService from "../services/token/token.service.js";
+import RefreshTokenService from "../services/refresh/refreshToken.service.js";
 import OAuthService from "../services/oauth/oauth.service.js";
 import AuthService from "../services/auth.service.js";
-import UserClient from "../adapters/user.client.js";
-console.log("TOKENS.userRepo =", TOKENS.userRepo);
-console.log("TOKENS.credentialRepo =", TOKENS.credentialRepo);
-console.log("TOKENS.userClient =", TOKENS.userClient);
 
 export function createAuthContainer({ redis, userApi }) {
   const container = createContainer();
 
-  // infra
-  container.register(TOKENS.redis, () => redis);
-  container.register(TOKENS.userClient, () => new UserClient(userApi));
+  // ===== infra =====
+  container.register(TOKENS.infra.redis, () => redis);
 
-  // repos
+  // ===== models =====
   container.register(
-    TOKENS.refreshTokenRepo,
-    () => new RefreshTokenRepo({ redis })
+    TOKENS.auth.credentialModel,
+    CredentialModel
   );
 
+  // ===== adapters =====
   container.register(
-    TOKENS.riskEventRepo,
-    () => new RiskEventRepo({ redis })
+    TOKENS.auth.userClient,
+    () => new UserClient(userApi)
   );
 
-  // services
+  // ===== repos =====
   container.register(
-    TOKENS.tokenService,
+    TOKENS.auth.credentialRepo,
+    () =>
+      new CredentialRepo({
+        credentialModel: container.resolve(TOKENS.auth.credentialModel),
+      })
+  );
+
+container.register(
+  TOKENS.auth.riskEventRepo,
+  () => new RiskEventRepo({ redis })
+);
+
+container.register(
+  TOKENS.auth.loginRiskService,
+  () =>
+    new LoginRiskService({
+      riskEventRepo: container.resolve(TOKENS.auth.riskEventRepo),
+    })
+);
+
+  container.register(
+    TOKENS.auth.refreshTokenRepo,
+    () =>
+      new RefreshTokenRepo({
+        redis: container.resolve(TOKENS.infra.redis),
+      })
+  );
+
+  // ===== services =====
+  container.register(
+    TOKENS.auth.tokenService,
     () => new TokenService()
   );
 
   container.register(
-    TOKENS.loginRiskService,
-    () =>
-      new LoginRiskService({
-        riskEventRepo: container.resolve(TOKENS.riskEventRepo),
-      })
-  );
-
-  container.register(
-    TOKENS.refreshTokenService,
+    TOKENS.auth.refreshTokenService,
     () =>
       new RefreshTokenService({
-        tokenService: container.resolve(TOKENS.tokenService),
-        refreshTokenRepo: container.resolve(TOKENS.refreshTokenRepo),
-        loginRiskService: container.resolve(TOKENS.loginRiskService),
+        tokenService: container.resolve(TOKENS.auth.tokenService),
+        refreshTokenRepo: container.resolve(TOKENS.auth.refreshTokenRepo),
       })
   );
 
   container.register(
-    TOKENS.oauthService,
-     () =>
-   new OAuthService({
-     userRepo: container.resolve(TOKENS.userRepo),
-     credentialRepo: container.resolve(TOKENS.credentialRepo),
-   })
+    TOKENS.auth.oauthService,
+    () =>
+      new OAuthService({
+        userClient: container.resolve(TOKENS.auth.userClient),
+        credentialRepo: container.resolve(TOKENS.auth.credentialRepo),
+      })
   );
 
-container.register(
-   TOKENS.userRepo,
-   () => new UserRepo()
- );
-
- container.register(
-   TOKENS.credentialRepo,
-   () => new CredentialRepo()
- );
-
   container.register(
-    TOKENS.authService,
+    TOKENS.auth.authService,
     () =>
       new AuthService({
-        oauthService: container.resolve(TOKENS.oauthService),
-        userClient: container.resolve(TOKENS.userClient),
-        tokenService: container.resolve(TOKENS.tokenService),
-        refreshTokenService: container.resolve(TOKENS.refreshTokenService),
-        loginRiskService: container.resolve(TOKENS.loginRiskService),
+      oauthService: container.resolve(TOKENS.auth.oauthService),
+      userClient: container.resolve(TOKENS.auth.userClient),
+      tokenService: container.resolve(TOKENS.auth.tokenService),
+      refreshTokenService: container.resolve(TOKENS.auth.refreshTokenService),
+      loginRiskService: container.resolve(TOKENS.auth.loginRiskService),
+      credentialRepo: container.resolve(TOKENS.auth.credentialRepo),
       })
   );
+console.log(
+  "OAuth deps =",
+  !!container.resolve(TOKENS.auth.userClient),
+  !!container.resolve(TOKENS.auth.credentialRepo)
+);
 
   return container;
 }

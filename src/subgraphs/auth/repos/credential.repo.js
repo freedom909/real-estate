@@ -1,56 +1,73 @@
-import Credential from "../credentials/Credential.js";
-// import Credential from '../models/credential.model.js'
+// src/subgraphs/auth/repos/credential.repo.js
+import bcrypt from "bcrypt";
 
 export default class CredentialRepo {
-async findPasswordByEmail(email) {
-    return db.credential.findOne({
-      where: {
-        type: "password",
-        email,
-      },
+  constructor({ credentialModel }) {
+    if (!credentialModel) {
+      throw new Error("Missing credentialModel");
+    }
+    this.credentialModel = credentialModel;
+  }
+
+  // =====================
+  // PASSWORD
+  // =====================
+
+  async findPasswordByEmail(email, userClient) {
+    const user = await userClient.findByEmail(email);
+    if (!user) return null;
+
+    return this.credentialModel
+      .findOne({
+        userId: user.userId,
+        type: "PASSWORD",
+        provider: "local",
+      })
+      .select("+passwordHash");
+  }
+
+  async verifyPassword(credential, password) {
+    return bcrypt.compare(password, credential.passwordHash);
+  }
+
+  async createPassword({ userId, password }) {
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    return this.credentialModel.create({
+      userId,
+      type: "PASSWORD",
+      provider: "local",
+      passwordHash,
     });
   }
 
-  async createPasswordCredential({ userId, email, passwordHash }) {
-    return db.credential.create({
-      data: {
-        userId,
-        type: "password",
-        email,
-        passwordHash,
-      },
+  // =====================
+  // OAUTH
+  // =====================
+
+  async findByProvider(provider, providerSub) {
+    return this.credentialModel.findOne({
+      provider,
+      providerSub,
+      type: "OAUTH",
     });
   }
 
-  async findPasswordByEmail(email) {
-    return Credential.findOne({ type: 'password', email })
-  }
-
-  async findOAuth(provider, providerUserId) {
-    return Credential.findOne({ type: 'oauth', provider, providerUserId })
-  }
-
-  async createPasswordCredential({ userId, email, passwordHash }) {
-    return Credential.create({ userId, type: 'password', email, passwordHash })
-  }
-
-  async createOAuthCredential({ userId, provider, providerUserId }) {
-    return Credential.create({ userId, type: 'oauth', provider, providerUserId })
-  }
-
-  findByProvider(provider, providerUserId) {
-    return Credential.findOne({ provider, providerUserId });
-  }
-
-  updateLastLogin(id) {
-    return Credential.findByIdAndUpdate(id, {
-      lastLoginAt: new Date(),
+  async createOAuth({ userId, provider, providerSub }) {
+    return this.credentialModel.create({
+      userId,
+      type: "OAUTH",
+      provider,
+      providerSub,
     });
   }
 
-  create(data) {
-    return Credential.create({
-      ...data,
+  // =====================
+  // COMMON
+  // =====================
+
+  async updateLastLogin(id) {
+    return this.credentialModel.findByIdAndUpdate(id, {
       lastLoginAt: new Date(),
     });
   }

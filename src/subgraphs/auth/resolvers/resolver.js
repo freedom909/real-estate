@@ -17,7 +17,7 @@ export default {
       { container, req }
     ) => {
       const authService =
-        container.resolve(TOKENS.authService);
+        container.resolve(TOKENS.auth.authService);
 
       return authService.oauthLoginWithIdToken(
         provider,
@@ -48,25 +48,25 @@ export default {
       );
     },
 
- register: async (_, { email, password }) => {
-      const user = await authService.register(email, password)
-      return {
-        user,
-        accessToken: 'dummyAccessToken',
-        refreshToken: 'dummyRefreshToken'
-      }
-    },
+    register: (_, args, { container }) =>
+      container
+        .resolve(TOKENS.auth.authService)
+        .register(args),
 
-    login: async (_, { email, password }) => {
-      const user = await authService.login(email, password)
-      return {
-        user,
-        accessToken: 'dummyAccessToken',
-        refreshToken: 'dummyRefreshToken'
-      }
+    login: async (_, args, { container }) =>{
+      return await container.resolve(TOKENS.auth.authService).login(args)
     },
+      
+      
+      
 
-    oauthLogin: async (_, { provider, code }) => {
+    oauthLogin: async (
+      _,
+      { provider, code },
+      { container }
+    ) => {
+      const authService =
+        container.resolve(TOKENS.auth.authService); 
       // For simplicity, assume code → providerUserId & email
       const providerUserId = code + '_id'
       const email = code + '@example.com'

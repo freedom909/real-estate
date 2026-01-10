@@ -43,6 +43,8 @@ type Mutation {
   oauthLogin(provider: OAuthProvider!, code: String!): AuthPayload! @public
   refreshToken(refreshToken: String!): AuthPayload!
   oauthLoginWithIdToken(provider: OAuthProvider!, idToken: String!): AuthPayload! @public
+  linkOAuth(provider: OAuthProvider!, code: String!): Boolean! @auth(requires: [USER])
+  unlinkOAuth(provider: OAuthProvider!): Boolean! @auth(requires: [USER])
 }
 
 type AuthPayload {

@@ -1,15 +1,64 @@
-import mongoose from 'mongoose'
+// src/subgraphs/auth/models/credential.model.js
+import mongoose from "mongoose";
+import { v4 as uuidv4 } from "uuid";
 
-const credentialSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  type: { type: String, enum: ['password','oauth'], required: true },
-  provider: { type: String }, // only for oauth
-  providerUserId: { type: String }, // only for oauth
-  email: { type: String }, // only for password
-  passwordHash: { type: String }, // only for password
-}, { timestamps: true })
+const credentialSchema = new mongoose.Schema(
+  {
+    credentialId: {
+      type: String,
+      default: uuidv4,
+      immutable: true,
+      unique: true,
+    },
 
-credentialSchema.index({ provider: 1, providerUserId: 1 }, { unique: true, sparse: true })
-credentialSchema.index({ type: 1, email: 1 }, { unique: true, sparse: true })
+    userId: {
+      type: String,
+      required: true,
+      index: true,
+    },
 
-export default mongoose.model('Credential', credentialSchema)
+    type: {
+      type: String,
+      enum: ["PASSWORD", "OAUTH"],
+      required: true,
+    },
+
+    provider: {
+      type: String, // local / google / github / apple
+      required: true,
+      index: true,
+    },
+
+    providerSub: {
+      type: String,
+      index: true,
+      sparse: true,
+    },
+
+    passwordHash: {
+      type: String,
+      select: false,
+    },
+
+    verified: {
+      type: Boolean,
+      default: true,
+    },
+  },
+  { timestamps: true }
+);
+
+// 🔐 OAuth 幂等唯一
+credentialSchema.index( 
+  { provider: 1, providerSub: 1 },
+  { unique: true, sparse: true }
+);
+
+// 🔐 password 唯一（一个 user 只能一个 local）
+credentialSchema.index(
+  { userId: 1, provider: 1 },
+  { unique: true }
+);
+
+export default mongoose.models.Credential ||
+  mongoose.model("Credential", credentialSchema);

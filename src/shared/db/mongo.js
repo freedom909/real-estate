@@ -6,7 +6,7 @@ export async function connectMongo(uri) {
 
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 5000,
-     autoIndex: true
+    autoIndex: true
   });
 
   console.log("🍃 MongoDB connected");

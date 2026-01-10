@@ -4,6 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 
 export default class UserRepo {
   constructor({ UserModel }) {
+    if (!UserModel) {
+      throw new Error("UserRepo: UserModel is required");
+    }
     this.UserModel = UserModel;
   }
   async findOrCreateOAuthUser({
@@ -15,7 +18,7 @@ export default class UserRepo {
   }) {
     const now = new Date();
 
-    const user = await this.UserModel.findOneAndUpdate(
+    const user = await this.UserModel.findOneAndUpdate( // 
       { provider, providerSub },
       {
         $setOnInsert: {
@@ -33,7 +36,7 @@ export default class UserRepo {
         new: true,
       },
       
-    ).lean();
+    );
     
     if (!user.userId) {
       user.userId = uuidv4();

@@ -1,7 +1,5 @@
 // src/subgraphs/auth/services/token/token.service.js
 
-
-// src/subgraphs/auth/services/token/token.service.js
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
@@ -67,7 +65,6 @@ export default class TokenService {
     if (payload.type !== "refresh") {
       throw new Error("Invalid refresh token type");
     }
-
     return payload;
   }
 

@@ -1,36 +1,31 @@
 import createContainer from "../../../shared/container/createContainer.js";
-import mongoose from "../../../shared/db/mongo.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
-
+import UserModel from "../models/user.model.js";
 import UserRepo from "../repos/user.repo.js";
 import UserService from "../services/user.service.js";
 
 export function createUserContainer() {
   const container = createContainer();
 
-  // 🥭 Mongo（实例注入）
+  // ✅ Repo（先注册）
   container.register(
-    TOKENS.mongodb,
-    () => mongoose
-  );
-
-  // 📦 Repo
-  container.register(
-    TOKENS.userRepo,
+    TOKENS.user.userRepo,
     () =>
       new UserRepo({
-        UserModel: mongoose.model("User"),
+        UserModel,   // 👈 真实 mongoose model
       })
   );
 
-  // 🧠 Service
+  // ✅ Service（后注册）
   container.register(
-    TOKENS.userService,
+    TOKENS.user.userService,
     () =>
       new UserService({
-        userRepo: container.resolve(TOKENS.userRepo),
+        userRepo: container.resolve(TOKENS.user.userRepo),
       })
   );
 
   return container;
 }
+
+

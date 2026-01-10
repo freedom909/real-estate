@@ -9,6 +9,10 @@ export default function createContainer() {
       if (!token) {
         throw new Error("DI register failed: token is undefined");
       }
+      if (!factory) {
+  console.error("❌ DI token not registered:", token.toString());
+}
+
       if (typeof factory !== "function") {
         throw new Error(
           `DI register failed: factory for ${token.toString()} is not a function`

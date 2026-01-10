@@ -8,4 +8,8 @@ export default class UserService {
   async findOrCreateOAuthUser(input) {
     return this.userRepo.findOrCreateOAuthUser(input);
   }
+
+  async findById(userId) {
+    return this.userRepo.findById(userId);
+  }
 }
