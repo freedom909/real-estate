@@ -58,5 +58,13 @@ enum OAuthProvider {
   FACEBOOK
   GITHUB
   APPLE
+  LINE
+  LOCAL
+}
+
+input OAuthUserInput {
+  email: String!
+  fullname: String
+  picture: String
 }
 `

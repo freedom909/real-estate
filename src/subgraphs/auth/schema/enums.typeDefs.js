@@ -15,5 +15,12 @@ export default gql`
     FACEBOOK
     APPLE
     LINE
+    LOCAL
+  }
+
+  type User {
+    userId: ID!
+    email: String!
+    role: Role
   }
 `

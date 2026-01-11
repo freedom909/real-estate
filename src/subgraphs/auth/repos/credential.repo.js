@@ -19,9 +19,9 @@ export default class CredentialRepo {
 
     return this.credentialModel
       .findOne({
-        userId: user.userId,
+        userId: user.id,
         type: "PASSWORD",
-        provider: "local",
+        provider: "LOCAL",
       })
       .select("+passwordHash");
   }
@@ -36,7 +36,7 @@ export default class CredentialRepo {
     return this.credentialModel.create({
       userId,
       type: "PASSWORD",
-      provider: "local",
+      provider: "LOCAL",
       passwordHash,
     });
   }
@@ -71,4 +71,5 @@ export default class CredentialRepo {
       lastLoginAt: new Date(),
     });
   }
+  
 }

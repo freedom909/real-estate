@@ -1,26 +1,33 @@
 export const TOKENS = {
   infra: {
     redis: Symbol("infra.redis"),
-    mongodb: Symbol("infra.mongodb"),
   },
 
   auth: {
-    authService: Symbol("auth.authService"),
-    tokenService: Symbol("auth.tokenService"),
-    credentialModel: Symbol("auth.credentialModel"),
-    credentialRepo: Symbol("auth.credentialRepo"),
-    refreshTokenService: Symbol("auth.refreshTokenService"),
-    refreshTokenRepo: Symbol("auth.refreshTokenRepo"),
-    oauthService: Symbol("auth.oauthService"),
+    // adapters
+    userApi: Symbol("auth.userApi"),
     userClient: Symbol("auth.userClient"),
-    loginRiskService: Symbol("auth.loginRiskService"),
+
+    // models
+    credentialModel: Symbol("auth.credentialModel"),
+    refreshTokenModel: Symbol("auth.refreshTokenModel"),
+
+    // repos
+    credentialRepo: Symbol("auth.credentialRepo"),
+    refreshTokenRepo: Symbol("auth.refreshTokenRepo"),
     riskEventRepo: Symbol("auth.riskEventRepo"),
+
+    // services
+    tokenService: Symbol("auth.tokenService"),
+    refreshTokenService: Symbol("auth.refreshTokenService"),
+    oauthService: Symbol("auth.oauthService"),
+    loginRiskService: Symbol("auth.loginRiskService"),
+    authService: Symbol("auth.authService"),
   },
 
-  user: {
+    user: {
     userService: Symbol("user.userService"),
     userRepo: Symbol("user.userRepo"),
     profileRepo: Symbol("user.profileRepo"),
-    profileService: Symbol("user.profileService"),
   },
 };

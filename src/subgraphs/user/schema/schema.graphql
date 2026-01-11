@@ -1,10 +1,17 @@
 
 enum OAuthProvider {
-  google
-  github
-  apple
-  line
+  GOOGLE
+  GITHUB
+  APPLE
+  LINE
+  LOCAL
 }
+enum Role {
+  USER
+  AGENT
+  ADMIN
+}
+
 
 type User {
   userId: ID!
@@ -24,6 +31,7 @@ input OAuthUserInput {
 
 type Query {
   user(userId: ID!): User
+  userByEmail(email: String!): User
 }
 
 type Mutation {

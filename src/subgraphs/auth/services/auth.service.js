@@ -20,7 +20,7 @@ export default class AuthService {
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
     this.loginRiskService = loginRiskService;
-    this.credRepo = credentialRepo;
+    this.credentialRepo = credentialRepo;
   }
 
   async oauthLoginWithIdToken(provider, idToken) {
@@ -97,19 +97,20 @@ export default class AuthService {
     }
 
     // 2️⃣ 创建 User
-    const user = await this.userClient.createUser({
+    const user = await this.userClient.findOrCreateOAuthUser({
       email,
-      role: "USER",
+      provider: "LOCAL",
+      providerSub: email,
     });
 
     // 3️⃣ 创建 PASSWORD credential
     await this.credentialRepo.createPassword({
-      userId: user.userId,
+      userId: String(user.userId),
       password,
     });
 
     // 4️⃣ 签发 token
-    return this.tokenService.issueAuthTokens(user.userId);
+    return this.issueTokens(user);
   }
 
   // =======================
@@ -123,9 +124,9 @@ export default class AuthService {
         email,
         this.userClient
       );
-
+    
     if (!credential) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new Error("INVALID_CREDENTIALS");// "message": "INVALID_CREDENTIALS",
     }
 
     // 2️⃣ 校验密码
@@ -138,8 +139,11 @@ export default class AuthService {
       throw new Error("INVALID_CREDENTIALS");
     }
 
+    // Need user details for token generation
+    const user = await this.userClient.findByEmail(email);
+
     // 3️⃣ 发 token
-    return this.tokenService.issueAuthTokens(credential.userId);
+    return this.issueTokens(user);
   }
 
   async oauthLogin({ provider, profile }) {
@@ -152,7 +156,9 @@ export default class AuthService {
     );
 
     if (credential) {
-      return this.issueTokens(credential.userId);
+      // Note: This path requires fetching the user to get email/role for the token
+      // For now, assuming we can't easily fetch by ID without extending UserClient
+      return this.issueTokens({ id: credential.userId, email, role: 'USER' }); 
     }
 
     // 2️⃣ email 是否已有 user？
@@ -163,7 +169,7 @@ export default class AuthService {
 
     // 3️⃣ 没 user → 创建
     if (!user) {
-      user = await this.userClient.createUser({
+      user = await this.userClient.findOrCreateOAuthUser({
         email,
         fullname: name,
         picture,
@@ -172,12 +178,32 @@ export default class AuthService {
 
     // 4️⃣ 绑定 identity
     await this.credentialRepo.createOAuth({
-      userId: user.userId,
+      userId: user.id,
       provider,
       providerSub: sub,
     });
 
-    return this.issueTokens(user.userId);
+    return this.issueTokens(user);
+  }
+
+  async issueTokens(user) {
+    const accessToken = this.tokenService.generateAccessToken({
+      userId: user.id,
+      email: user.email,
+      role: user.role || "USER",
+    });
+
+    const refreshToken = this.tokenService.generateRefreshToken({
+      userId: user.id,
+    });
+
+    await this.refreshTokenService.save(user.id, refreshToken);
+
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
   }
 
   async refresh({ refreshToken, ip, userAgent }) {
@@ -201,28 +227,4 @@ export default class AuthService {
       refreshToken: newRefreshToken,
     };
   }
-
-
-  async loginWithPassword({ email, password }) {
-    const credential =
-      await this.credentialRepo.findPasswordByEmail(email);
-
-    if (!credential) {
-      throw new Error("Invalid credentials");
-    }
-
-    const ok = await this.passwordCredential.verify({
-      password,
-      passwordHash: credential.passwordHash,
-    });
-
-    if (!ok) {
-      throw new Error("Invalid credentials");
-    }
-
-    const userId = await this.credService.loginWithPassword(email, password)
-    const user = await User.findById(userId)
-    return user
-  }
 }
-

@@ -12,4 +12,8 @@ export default class UserService {
   async findById(userId) {
     return this.userRepo.findById(userId);
   }
+
+  async findByEmail(email) {
+    return this.userRepo.findByEmail(email);
+  }
 }

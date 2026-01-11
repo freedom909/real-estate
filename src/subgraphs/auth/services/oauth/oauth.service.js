@@ -38,7 +38,7 @@ export default class OAuthService {
       });
 
       credential = await this.credentialRepo.createOAuthCredential({
-        userId: user.userId,
+        userId: user.id,
         provider,
         providerSub,
       });
@@ -47,6 +47,3 @@ export default class OAuthService {
     return credential;
   }
 }
-
-
-
