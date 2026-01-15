@@ -5,11 +5,13 @@ import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
 // ===== models =====
 import CredentialModel from "../models/credential.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
+import OAuthAccountModel from "../models/oauthAccounts.model.js";
 
 // ===== repos =====
 import CredentialRepo from "../repos/credential.repo.js";
 import RefreshTokenRepo from "../repos/refresh-token.repo.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
+import OAuthAccountRepo from "../repos/oauthAccount.repo.js";
 
 // ===== services =====
 import LoginRiskService from "../services/risk/loginRisk.service.js";
@@ -21,6 +23,9 @@ import AuthService from "../services/auth.service.js";
 
 // ===== adapters =====
 import UserClient from "../adapters/user.client.js";
+import OAuthAdapter from "../adapters/oauth/index.js";
+import GoogleOAuthAdapter from "../adapters/oauth/google.adapter.js";
+import GitHubOAuthAdapter from "../adapters/oauth/github.adapter.js";
 
 export function createAuthContainer({ redis }) {
   const container = createContainer();
@@ -46,7 +51,7 @@ export function createAuthContainer({ redis }) {
     () =>
       new UserClient(
         container.resolve(TOKENS.auth.userGraphQLClient)
-      )
+      ),
   );
 
   // ======================================================
@@ -121,10 +126,29 @@ export function createAuthContainer({ redis }) {
       })
   );
 
+container.register(
+  TOKENS.auth.oauthAdapter,
+  () => new OAuthAdapter({
+    google: new GoogleOAuthAdapter({
+        clientId: process.env.GOOGLE_CLIENT_ID,
+      }),
+      // github: new GitHubOAuthAdapter({
+      //   githubApi: container.resolve(
+      //     TOKENS.infra.githubApi
+      //   ),
+      // }),
+  })
+);
+
   container.register(
     TOKENS.auth.oauthVerifier,
     () => new OAuthVerifier()
   );
+
+container.register(
+  TOKENS.auth.oauthAccountRepo,
+  () => new OAuthAccountRepo(OAuthAccountModel)// OAuthAccountModel undefined
+);
 
   container.register(
     TOKENS.auth.oauthService,
@@ -149,6 +173,9 @@ export function createAuthContainer({ redis }) {
     TOKENS.auth.authService,
     () =>
       new AuthService({
+        oauthAccountRepo: container.resolve(
+        TOKENS.auth.oauthAccountRepo
+      ),
         oauthService: container.resolve(
           TOKENS.auth.oauthService
         ),

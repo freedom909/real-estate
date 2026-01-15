@@ -1,6 +1,7 @@
 export const TOKENS = {
   infra: {
     redis: Symbol("infra.redis"),
+    githubApi: Symbol("infra.githubApi"),
   },
 
   auth: {
@@ -10,6 +11,12 @@ export const TOKENS = {
     userService: Symbol("auth.userService"),
     userGraphQLClient: Symbol("auth.userGraphQLClient"),
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
+    oauthAdapter: Symbol("auth.oauthAdapter"),
+    oauthVerifier: Symbol("auth.oauthVerifier"),
+    googleOAuthAdapter: Symbol("auth.googleOAuthAdapter"),
+    
+    
+
 
     // models
     credentialModel: Symbol("auth.credentialModel"),
@@ -21,7 +28,7 @@ export const TOKENS = {
     riskEventRepo: Symbol("auth.riskEventRepo"),
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
     oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
-
+    
     // services
     tokenService: Symbol("auth.tokenService"),
     refreshTokenService: Symbol("auth.refreshTokenService"),

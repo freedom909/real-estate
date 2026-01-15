@@ -8,6 +8,7 @@ constructor({
     tokenService,
     refreshTokenService,
     loginRiskService,
+    oauthAccountRepo,
   }) {
     this.oauthService = oauthService;
     this.userClient = userClient;
@@ -15,6 +16,7 @@ constructor({
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
     this.loginRiskService = loginRiskService;
+    this.oauthAccountRepo = oauthAccountRepo
   }
 
   /**
@@ -80,6 +82,61 @@ async oauthLoginWithIdToken(provider, idToken, context = {}) {
   });
 
   return this._login(user.id, context);
+}
+
+// auth.service.js
+async oauthLogin(profile, meta) {
+  const {
+    provider,
+    providerUserId,
+    email,
+    name,
+    avatar,
+  } = profile;
+
+  let oauthAccount =
+    await this.oauthAccountRepo.findByProviderUserId( //undefined
+      provider,
+      providerUserId
+    );
+
+  let userId;
+  let isNewUser = false;
+
+  if (oauthAccount) {
+    userId = oauthAccount.userId;
+  } else {
+    const user = email
+      ? await this.userClient.findByEmail(email)
+      : null;
+
+    if (user) {
+      userId = user.id;
+
+      await this.oauthAccountRepo.create({
+    userId,
+    provider,
+    providerUserId,
+    email,
+  });
+    } else {
+      const created = await this.userClient.createOAuthUser({
+        email,
+        profile: { name, avatar },
+      });
+
+      userId = created.id;
+      isNewUser = true;
+    }
+  }
+
+  const tokens = await this.tokenService.issueTokens({userId});// 
+
+  return {
+    userId,
+    isNewUser,
+    ...tokens,
+  };
 }
 
 

@@ -78,7 +78,7 @@ generateRefreshToken({ userId }) {
   }
 
   issueTokens({ userId }) {
-    if (!userId) throw new Error("Invalid userId");
+    if (!userId) throw new Error("Invalid userId");// if 'id' not 'userId'?
     const accessToken = this.generateAccessToken({ userId });
     const refreshToken = this.generateRefreshToken({userId });
     return {
