@@ -2,16 +2,8 @@ import bcrypt from 'bcrypt'
 import CredentialRepo from '../../repos/credential.repo.js'
 
 export default class CredentialService {
-  constructor() {
-    this.repo = new CredentialRepo()
-  }
-
-  async hashPassword(password) {
-    return bcrypt.hash(password, 12)
-  }
-
-  async verifyPassword(password, hash) {
-    return bcrypt.compare(password, hash)
+  constructor(credentialRepo) {
+    this.repo = credentialRepo// this should not use new keyword, use DI
   }
 
   // login with password
@@ -21,11 +13,6 @@ export default class CredentialService {
     const ok = await this.verifyPassword(password, credential.passwordHash)
     if (!ok) throw new Error('Invalid credentials')
     return credential.userId
-  }
-
-  async registerPassword(userId, email, password) {
-    const hash = await this.hashPassword(password)
-    return this.repo.createPasswordCredential({ userId, email, passwordHash: hash })
   }
 
   async findOAuth(provider, providerUserId) {

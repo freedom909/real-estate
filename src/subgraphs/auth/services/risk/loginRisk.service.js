@@ -44,22 +44,22 @@ export default class LoginRiskService {
     });
   }
 
-
   async evaluate({
     userId,
     ip,
     deviceId,
+    
   }) {
     let risk = 0;
     const flags = [];
-
+   
     const geo = geoip.lookup(ip);
     const country = geo?.country ?? "UNKNOWN";
 
     const profileKey = `user:${userId}:loginProfile`;
 
     const profile = await redis.hgetall(profileKey);
-
+    
     // 1️⃣ IP 变化
     if (profile.lastIp && profile.lastIp !== ip) {
       risk += 20;
@@ -96,7 +96,7 @@ export default class LoginRiskService {
       flags.push("ODD_HOUR");
     }
 
-    return { risk, flags, country };
+    return { risk, flags, country};
   }
 
   async recordSuccess({

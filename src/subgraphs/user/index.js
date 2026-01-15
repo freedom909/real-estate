@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -11,6 +13,11 @@ import { connectMongo } from "../../shared/db/mongo.js";
 import { createUserContainer } from "./container/user.container.js";
 import resolvers from "./resolvers/index.js";
 
+// 🔍 启动时验证 env
+console.log(
+  "BOOT USER_SUBGRAPH_URL =",
+  process.env.USER_SUBGRAPH_URL
+);
 // 🥭 1️⃣ Mongo
 await connectMongo(
   process.env.MONGO_URI ||

@@ -1,75 +1,114 @@
 // src/subgraphs/auth/repos/credential.repo.js
-import bcrypt from "bcrypt";
 
 export default class CredentialRepo {
-  constructor({ credentialModel }) {
-    if (!credentialModel) {
-      throw new Error("Missing credentialModel");
+  constructor({ CredentialModel }) {
+    if (!CredentialModel) {
+      throw new Error(
+        "CredentialRepo: CredentialModel is required"
+      );
     }
-    this.credentialModel = credentialModel;
+    this.Credential = CredentialModel;
   }
 
-  // =====================
-  // PASSWORD
-  // =====================
-
-  async findPasswordByEmail(email, userClient) {
-    const user = await userClient.findByEmail(email);
-    if (!user) return null;
-
-    return this.credentialModel
-      .findOne({
-        userId: user.id,
-        type: "PASSWORD",
-        provider: "LOCAL",
-      })
-      .select("+passwordHash");
-  }
-
-  async verifyPassword(credential, password) {
-    return bcrypt.compare(password, credential.passwordHash);
-  }
-
-  async createPassword({ userId, password }) {
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    return this.credentialModel.create({
-      userId,
-      type: "PASSWORD",
-      provider: "LOCAL",
-      passwordHash,
-    });
-  }
-
-  // =====================
-  // OAUTH
-  // =====================
-
-  async findByProvider(provider, providerSub) {
-    return this.credentialModel.findOne({
+  /**
+   * Find by provider + sub
+   */
+  async findByProviderSub(
+    { provider, providerSub },
+    { session } = {}
+  ) {
+    return this.Credential.findOne({
       provider,
       providerSub,
-      type: "OAUTH",
-    });
+    }).session(session || null);
   }
 
-  async createOAuth({ userId, provider, providerSub }) {
-    return this.credentialModel.create({
+  /**
+   * All credentials for user
+   */
+  async findByUserId(
+    userId,
+    { session } = {}
+  ) {
+    return this.Credential.find({
       userId,
-      type: "OAUTH",
+    }).session(session || null);
+  }
+
+  /**
+   * Create new credential
+   * ⚠️ Relies on DB unique constraints
+   */
+  async create(
+    {
+      userId,
+      provider: provider,
+      providerSub,
+      email,
+      source = "OAUTH_LOGIN",
+    },
+    { session } = {}
+  ) {
+    const doc = new this.Credential({
+      userId,
       provider,
       providerSub,
-    });
-  }
-
-  // =====================
-  // COMMON
-  // =====================
-
-  async updateLastLogin(id) {
-    return this.credentialModel.findByIdAndUpdate(id, {
+      email,
+      source,
       lastLoginAt: new Date(),
     });
+
+    return doc.save({ session });
   }
-  
+
+  /**
+   * Delete credential by id
+   */
+  async deleteById(
+    id,
+    { session } = {}
+  ) {
+    return this.Credential.deleteOne(
+      { _id: id },
+      { session }
+    );
+  }
+
+  /**
+   * Update last login timestamp
+   */
+  async updateLastLogin(
+    id,
+    { session } = {}
+  ) {
+    return this.Credential.updateOne(
+      { _id: id },
+      {
+        $set: {
+          lastLoginAt: new Date(),
+        },
+      },
+      { session }
+    );
+  }
+
+  /**
+   * 🔀 Merge: move all credentials
+   */
+  async reassignUser(
+    fromUserId,
+    toUserId,
+    { session } = {}
+  ) {
+    return this.Credential.updateMany(
+      { userId: fromUserId },
+      {
+        $set: {
+          userId: toUserId,
+          source: "MERGE",
+        },
+      },
+      { session }
+    );
+  }
 }

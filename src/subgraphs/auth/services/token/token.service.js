@@ -24,36 +24,37 @@ export default class TokenService {
       process.env.JWT_REFRESH_EXPIRES_IN || "30d";
   }
 
-  generateAccessToken({ userId, role, email }) {
-    return jwt.sign(
-      {
-        sub: userId,
-        role,
-        email,
-      },
-      PRIVATE_KEY,
-      {
-        algorithm: this.algorithm,
-        issuer: this.issuer,
-        expiresIn: this.accessExpiresIn,
-      }
-    );
-  }
+generateAccessToken({ userId, role, email }) {
+  return jwt.sign(
+    {
+      sub: userId,
+      role,
+      email,
+    },
+    PRIVATE_KEY,
+    {
+      algorithm: this.algorithm,
+      issuer: this.issuer,
+      expiresIn: this.accessExpiresIn,
+    }
+  );
+}
 
-  generateRefreshToken({ userId }) {
-    return jwt.sign(
-      {
-        sub: userId,
-        type: "refresh",
-      },
-      PRIVATE_KEY,
-      {
-        algorithm: this.algorithm,
-        issuer: this.issuer,
-        expiresIn: this.refreshExpiresIn,
-      }
-    );
-  }
+generateRefreshToken({ userId }) {
+  return jwt.sign(
+    {
+      sub: userId,
+      type: "refresh",
+    },
+    PRIVATE_KEY,
+    {
+      algorithm: this.algorithm,
+      issuer: this.issuer,
+      expiresIn: this.refreshExpiresIn,
+    }
+  );
+}
+
 
   // ✅ 新增
   verifyRefreshToken(token) {
@@ -75,5 +76,17 @@ export default class TokenService {
       issuer: this.issuer,
     });
   }
+
+  issueTokens({ userId }) {
+    if (!userId) throw new Error("Invalid userId");
+    const accessToken = this.generateAccessToken({ userId });
+    const refreshToken = this.generateRefreshToken({userId });
+    return {
+      accessToken,
+      refreshToken,
+    };
+ 
+  }
+  
 }
 

@@ -1,3 +1,4 @@
+// src/subgraphs/user/models/user.js
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
@@ -18,8 +19,17 @@ const userSchema = new mongoose.Schema(
       unique: true,
       immutable: true,
     },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "BANNED"],
+      default: "ACTIVE",
+      required: true,
+    },
+
+
     email: {
       type: String,
+      required: true,
       unique: true,
       sparse: true,
       trim: true,
@@ -85,6 +95,7 @@ userSchema.index(
     sparse: true, // 允许 local 用户
   }
 );
+
 
 //
 // 🔐 Email 唯一（可选，推荐）

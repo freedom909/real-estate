@@ -1,27 +1,88 @@
+import { gql } from "graphql-request";
+
+import {
+  FIND_USER_BY_ID,
+  FIND_USER_BY_EMAIL,
+  CREATE_OAUTH_USER,
+  
+} from "./queries.js";
+
 export default class UserClient {
-  constructor({userApi}) {
-    if (!userApi) {
-      throw new Error("UserClient: userApi is required");
+  constructor(client) {
+    if (!client) {
+      throw new Error("UserClient: GraphQLClient is required");
     }
-    this.userApi = userApi;
+    this.client = client;
   }
+
+  /* =========================
+     Queries
+  ========================= */
+
+  async findById(id) {
+    if (!id) return null;
+
+    const res = await this.client.request(
+      FIND_USER_BY_ID,
+      { id }
+    );
+
+    return res?.userById ?? null;
+  }
+
   async findByEmail(email) {
-    const user = await this.userApi.userByEmail(email);
-    if (!user) return null;
+    if (!email) return null;
 
-    return {
-      userId: user.userId, // ⚠️ 注意统一字段
-      email: user.email,
-      role: user.role,
-    };
+    const res = await this.client.request(
+      FIND_USER_BY_EMAIL,
+      { email }
+    );
+
+    return res?.userByEmail ?? null;
   }
 
+  /* =========================
+     Mutations
+  ========================= */
 
-  async findOrCreateOAuthUser(input) {
-    return this.userApi.findOrCreateByOAuth(input);
+  async createOAuthUser(input) {
+    if (!input?.email) {
+      throw new Error("createOAuthUser: email is required");
+    }
+
+    const res = await this.client.request(
+      CREATE_OAUTH_USER,
+      { input }
+    );
+
+    return res?.createOAuthUser ?? null;
   }
 
-  async createUser(input) {
-    return this.userApi.createUser(input);
-  }
+async linkOAuthProvider({ userId, provider, providerUserId }) {
+  const mutation = gql`
+    mutation LinkOAuthProvider(
+      $userId: ID!
+      $provider: OAuthProvider!
+      $providerUserId: String!
+    ) {
+      linkOAuthProvider(
+        userId: $userId
+        provider: $provider
+        providerUserId: $providerUserId
+      ) {
+        id
+        email
+      }
+    }
+  `;
+
+  const res = await this.client.request(mutation, {
+    userId,
+    provider,
+    providerUserId,
+  });
+
+  return res.linkOAuthProvider;
+}
+
 }

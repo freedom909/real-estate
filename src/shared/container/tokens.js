@@ -7,6 +7,9 @@ export const TOKENS = {
     // adapters
     userApi: Symbol("auth.userApi"),
     userClient: Symbol("auth.userClient"),
+    userService: Symbol("auth.userService"),
+    userGraphQLClient: Symbol("auth.userGraphQLClient"),
+    userSubgraphClient: Symbol("auth.userSubgraphClient"),
 
     // models
     credentialModel: Symbol("auth.credentialModel"),
@@ -16,11 +19,14 @@ export const TOKENS = {
     credentialRepo: Symbol("auth.credentialRepo"),
     refreshTokenRepo: Symbol("auth.refreshTokenRepo"),
     riskEventRepo: Symbol("auth.riskEventRepo"),
+    userSubgraphClient: Symbol("auth.userSubgraphClient"),
+    oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
 
     // services
     tokenService: Symbol("auth.tokenService"),
     refreshTokenService: Symbol("auth.refreshTokenService"),
     oauthService: Symbol("auth.oauthService"),
+    oauthVerifier: Symbol("auth.oauthVerifier"),
     loginRiskService: Symbol("auth.loginRiskService"),
     authService: Symbol("auth.authService"),
   },

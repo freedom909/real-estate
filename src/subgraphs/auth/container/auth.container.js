@@ -1,89 +1,98 @@
 import createContainer from "../../../shared/container/createContainer.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
+import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
 
-// models
+// ===== models =====
 import CredentialModel from "../models/credential.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
 
-// repos
+// ===== repos =====
 import CredentialRepo from "../repos/credential.repo.js";
 import RefreshTokenRepo from "../repos/refresh-token.repo.js";
-import LoginRiskService from "../services/risk/loginRisk.service.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
-// adapters
-import UserClient from "../adapters/user.client.js";
-import userApiAdapter from "../../../infrastructure/userApi.js";
-import UserApi from "../adapters/user.api.js";
 
-// services
+// ===== services =====
+import LoginRiskService from "../services/risk/loginRisk.service.js";
 import TokenService from "../services/token/token.service.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
+import OAuthVerifier from "../services/oauth/oauthVerifier.js";
 import OAuthService from "../services/oauth/oauth.service.js";
 import AuthService from "../services/auth.service.js";
 
-export function createAuthContainer({ redis, userApolloClient }) {
+// ===== adapters =====
+import UserClient from "../adapters/user.client.js";
+
+export function createAuthContainer({ redis }) {
   const container = createContainer();
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
-  // ===== infra =====
+
+  // ======================================================
+  // INFRA
+  // ======================================================
   container.register(TOKENS.infra.redis, () => redis);
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
-  // ===== adapters =====
+
+  // ======================================================
+  // GRAPHQL CLIENT (User Subgraph)
+  // ======================================================
   container.register(
-    TOKENS.auth.userApi,
-    () =>
-      new UserApi({
-        apolloClient: userApolloClient,
-      })
+    TOKENS.auth.userGraphQLClient,
+    () => createUserGraphQLClient()
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
+  // ======================================================
+  // ACL — UserClient (Auth → User Subgraph)
+  // ======================================================
   container.register(
     TOKENS.auth.userClient,
     () =>
-      new UserClient({
-        userApi: container.resolve(TOKENS.auth.userApi),
-      })
+      new UserClient(
+        container.resolve(TOKENS.auth.userGraphQLClient)
+      )
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
-  // ===== models =====
+
+  // ======================================================
+  // MODELS
+  // ======================================================
   container.register(
     TOKENS.auth.credentialModel,
     () => CredentialModel
   );
-  console.log("REGISTER TOKEN =", TOKENS.auth?.credentialModel);
+
   container.register(
-
-
     TOKENS.auth.refreshTokenModel,
     () => RefreshTokenModel
-  ),
-    console.log("REGISTER TOKEN =", TOKENS.auth?.credentialModel);
-  // ===== repos =====
+  );
+
+  // ======================================================
+  // REPOSITORIES
+  // ======================================================
   container.register(
     TOKENS.auth.credentialRepo,
     () =>
       new CredentialRepo({
-        credentialModel: container.resolve(
+        CredentialModel: container.resolve(
           TOKENS.auth.credentialModel
         ),
       })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
   container.register(
     TOKENS.auth.refreshTokenRepo,
     () =>
       new RefreshTokenRepo({
-        refreshTokenModel: container.resolve(
+        RefreshTokenModel: container.resolve(
           TOKENS.auth.refreshTokenModel
         ),
       })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
   container.register(
     TOKENS.auth.riskEventRepo,
     () => new RiskEventRepo({ redis })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
-  // ===== services =====
+
+  // ======================================================
+  // DOMAIN SERVICES
+  // ======================================================
   container.register(
     TOKENS.auth.loginRiskService,
     () =>
@@ -93,12 +102,12 @@ export function createAuthContainer({ redis, userApolloClient }) {
         ),
       })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
   container.register(
     TOKENS.auth.tokenService,
     () => new TokenService()
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
   container.register(
     TOKENS.auth.refreshTokenService,
     () =>
@@ -111,7 +120,12 @@ export function createAuthContainer({ redis, userApolloClient }) {
         ),
       })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
+  container.register(
+    TOKENS.auth.oauthVerifier,
+    () => new OAuthVerifier()
+  );
+
   container.register(
     TOKENS.auth.oauthService,
     () =>
@@ -122,9 +136,15 @@ export function createAuthContainer({ redis, userApolloClient }) {
         credentialRepo: container.resolve(
           TOKENS.auth.credentialRepo
         ),
+        oauthVerifier: container.resolve(
+          TOKENS.auth.oauthVerifier
+        ),
       })
   );
-  console.log("REGISTER TOKENS.auth.userApi =", TOKENS.auth.userApi);
+
+  // ======================================================
+  // APPLICATION SERVICE
+  // ======================================================
   container.register(
     TOKENS.auth.authService,
     () =>
@@ -147,9 +167,11 @@ export function createAuthContainer({ redis, userApolloClient }) {
         credentialRepo: container.resolve(
           TOKENS.auth.credentialRepo
         ),
+        refreshTokenRepo: container.resolve(
+          TOKENS.auth.refreshTokenRepo
+        ),
       })
   );
 
   return container;
 }
-

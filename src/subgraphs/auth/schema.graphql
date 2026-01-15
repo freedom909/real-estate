@@ -1,0 +1,141 @@
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.11"
+    import: ["@key", "@shareable"]
+  )
+
+
+scalar DateTime
+
+directive @auth(requires: [Role!] = []) on FIELD_DEFINITION | OBJECT
+directive @public on FIELD_DEFINITION
+
+# =====================
+# User 
+# =====================
+type User @key(fields: "id") {
+  id: ID!
+  email: String @shareable
+  role: Role! @shareable
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  USER
+  GUEST
+  PENDING_AGENT
+}
+
+# =====================
+# OAuth Provider
+# =====================
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+  GITHUB
+  APPLE
+  LINE
+}
+
+# =====================
+# Query
+# =====================
+type Query {
+  me: User @auth
+}
+
+# =====================
+# Mutation
+# =====================
+type Mutation {
+  # OAuth 唯一入口
+  oauthLogin(
+    provider: OAuthProvider!
+    idToken: String!
+  ): AuthPayload! @public
+
+  # 绑定新的 OAuth（必须已登录）
+  bindOAuth(
+    provider: OAuthProvider!
+    idToken: String!
+  ): User! @auth
+
+  # 解绑 OAuth（至少保留一个）
+  unbindOAuth(
+    provider: OAuthProvider!
+  ): User! @auth
+
+  refreshToken(
+    refreshToken: String!
+  ): AuthTokens!
+
+  adminMergeAccounts(
+    fromUserId: ID!
+    toUserId: ID!
+    reason: String!
+  ): AdminMergeResult!
+    @auth(requires: [ADMIN])
+
+      adminPreviewMerge(
+    fromUserId: ID!
+    toUserId: ID!
+  ): AdminMergePreview!
+    @auth(requires: [ADMIN])
+}
+type AdminMergeResult {
+  success: Boolean!
+  mergedFrom: ID!
+  mergedInto: ID!
+}
+
+# =====================
+# Auth Payload
+# =====================
+type AuthPayload {
+  user: User!
+  accessToken: String!
+  refreshToken: String!
+}
+
+type AuthTokens {
+  accessToken: String!
+  refreshToken: String!
+}
+
+type RiskEvent {
+  userId: ID!
+  type: String  
+  provider:OAuthProvider 
+  ip: String
+  userAgent: String
+  createdAt: DateTime
+  deviceId: String
+}
+
+type AdminMergePreview {
+  fromUser: MergeUserSnapshot!
+  toUser: MergeUserSnapshot!
+
+  credentialsToMove: [CredentialPreview!]!
+  refreshTokensToMove: Int!
+
+  warnings: [String!]!
+  mergeAllowed: Boolean!
+}
+
+type MergeUserSnapshot {
+  userId: ID!
+  email: String
+  role: Role!
+  createdAt: DateTime
+  credentialCount: Int!
+  providers: [OAuthProvider!]!
+}
+
+type CredentialPreview {
+  id: ID!
+  provider: OAuthProvider!
+  email: String
+  lastLoginAt: DateTime
+}

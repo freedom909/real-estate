@@ -1,23 +1,16 @@
-// subgraphs/user/repos/user.repo.js
-import UserModel from "../models/user.model.js";
+// adapters/user-subgraph.client.js
+import { GraphQLClient } from "graphql-request";
 
-export default class UserRepo {
-  async findByEmail(email) {
-    return UserModel.findOne({ email });
+export function createUserSubgraphClient() {
+  const url = process.env.USER_SUBGRAPH_URL || "http://localhost:4020/graphql";
+
+  if (!url) {
+    throw new Error("USER_SUBGRAPH_URL is not defined");
   }
 
-  async findByProviderSub(provider, sub) {
-    return UserModel.findOne({
-      provider,
-      sub,
-    });
-  }
-
-  async create(data) {
-    return UserModel.create(data);
-  }
-
-  async save(user) {
-    return user.save();
-  }
+  return new GraphQLClient(url, {
+    headers: {
+      "content-type": "application/json",
+    },
+  });
 }

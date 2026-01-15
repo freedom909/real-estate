@@ -1,0 +1,49 @@
+extend schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.11",
+    import: ["@key", "@shareable", "@external"]
+  )
+
+type Query {
+  adminMe: AdminUser
+
+  pendingMergeRequests(
+    status: ApprovalStatus
+    limit: Int
+  ): [MergeRequest!]!
+
+  previewAccountMerge(
+    fromUserId: ID!
+    toUserId: ID!
+  ): MergePreview!
+
+  auditLogs(
+    targetUserId: ID
+    action: AdminAction
+    limit: Int
+  ): [AdminAuditLog!]!
+}
+
+type Mutation {
+  approveMergeRequest(
+    requestId: ID!
+    note: String
+  ): Boolean!
+
+  rejectMergeRequest(
+    requestId: ID!
+    reason: String!
+  ): Boolean!
+
+  forceMergeAccount(
+    fromUserId: ID!
+    toUserId: ID!
+    reason: String!
+  ): Boolean!
+
+  forceUnbindOAuth(
+    userId: ID!
+    provider: OAuthProvider!
+    reason: String!
+  ): Boolean!
+}

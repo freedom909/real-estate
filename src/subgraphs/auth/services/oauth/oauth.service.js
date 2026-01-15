@@ -1,49 +1,29 @@
 // src/subgraphs/auth/services/oauth/oauth.service.js
-
+import verifyGoogleIdToken from "./verifiers/google.id.js";
 export default class OAuthService {
-  constructor({ userClient, credentialRepo }) {
-    if (!userClient || !credentialRepo) {
-      throw new Error("Missing userClient or credentialRepo");
-    }
-
+   constructor({ userClient, credentialRepo, oauthVerifier }) {
     this.userClient = userClient;
     this.credentialRepo = credentialRepo;
+    this.oauthVerifier = oauthVerifier;
   }
+  // src/subgraphs/auth/services/oauth/oauth.service.js
 
-  async loginWithOAuth({
-    provider,
-    providerSub,
-    email,
-    fullname,
-    picture,
-  }) {
-    /**
-     * 1️⃣ 查 credential（OAuth 幂等）
-     */
-    let credential = await this.credentialRepo.findByProvider(
-      provider,
-      providerSub
-    );
-
-    /**
-     * 2️⃣ 如果不存在 → 创建 user（通过 User subgraph）
-     */
-    if (!credential) {
-      const user = await this.userClient.findOrCreateOAuthUser({
-        email,
-        fullname,
-        picture,
-        provider,
-        providerSub,
-      });
-
-      credential = await this.credentialRepo.createOAuthCredential({
-        userId: user.id,
-        provider,
-        providerSub,
-      });
+  async verifyIdToken(provider, idToken) {
+    switch (provider) {
+      case "GOOGLE":
+        return verifyGoogleIdToken(idToken);
+      case "FACEBOOK":
+        return verifyFacebookIdToken(idToken);
+      case "LINE":
+        return verifyLineIdToken(idToken);
+      case "GITHUB":
+        return verifyGithubIdToken(idToken);
+      case "APPLE":
+        return verifyAppleIdToken(idToken);
+      default:
+        throw new Error("UNSUPPORTED_OAUTH_PROVIDER");
     }
-
-    return credential;
   }
 }
+
+

@@ -21,7 +21,12 @@ const OAuthUserSchema = new mongoose.Schema(
     email: { type: String },
     fullname: String,
     picture: String,
-
+    status: {
+  type: String,
+  enum: ["ACTIVE", "INACTIVE", "BANNED"],
+  default: "ACTIVE",
+  required: true,
+},
     provider: { type: String, required: true },
     providerSub: { type: String, required: true },
 

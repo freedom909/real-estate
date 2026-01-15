@@ -1,64 +1,95 @@
 // src/subgraphs/auth/models/credential.model.js
+
 import mongoose from "mongoose";
-import { v4 as uuidv4 } from "uuid";
 
-const credentialSchema = new mongoose.Schema(
+const CredentialSchema = new mongoose.Schema(
   {
-    credentialId: {
-      type: String,
-      default: uuidv4,
-      immutable: true,
-      unique: true,
-    },
-
     userId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: true,
       index: true,
     },
 
-    type: {
-      type: String,
-      enum: ["PASSWORD", "OAUTH"],
-      required: true,
-    },
-
+    /**
+     * OAuth provider
+     */
     provider: {
-      type: String, // local / google / github / apple
+      type: String,
       required: true,
-      index: true,
+      enum: [
+        "GOOGLE",
+        "FACEBOOK",
+        "GITHUB",
+        "APPLE",
+        "LINE",
+        "LOCAL",
+      ],
     },
 
+    /**
+     * Provider unique subject (sub)
+     */
     providerSub: {
       type: String,
-      index: true,
-      sparse: true,
+      required: true,
     },
 
-    passwordHash: {
+    /**
+     * Email returned by provider (snapshot)
+     */
+    email: {
       type: String,
-      select: false,
+      lowercase: true,
+      trim: true,
+      index: true,
     },
 
-    verified: {
-      type: Boolean,
-      default: true,
+    /**
+     * How this credential was created
+     */
+    source: {
+      type: String,
+      enum: [
+        "OAUTH_LOGIN",
+        "USER_BIND",
+        "MERGE",
+        "ADMIN",
+      ],
+      default: "OAUTH_LOGIN",
+    },
+
+    /**
+     * Last successful login time
+     */
+    lastLoginAt: {
+      type: Date,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+  }
 );
 
-// 🔐 OAuth 幂等唯一
-credentialSchema.index( 
+/**
+ * =========================
+ * 🔒 Physical Constraints
+ * =========================
+ */
+
+// One provider account → one credential globally
+CredentialSchema.index(
   { provider: 1, providerSub: 1 },
-  { unique: true, sparse: true }
+  { unique: true }
 );
 
-// 🔐 password 唯一（一个 user 只能一个 local）
-credentialSchema.index(
+// One user cannot bind same provider twice
+CredentialSchema.index(
   { userId: 1, provider: 1 },
   { unique: true }
 );
 
-export default mongoose.models.Credential ||
-  mongoose.model("Credential", credentialSchema);
+export default mongoose.model(
+  "Credential",
+  CredentialSchema
+);
