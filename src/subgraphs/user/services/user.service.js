@@ -1,10 +1,10 @@
 export default class UserService {
-  constructor({ userRepo }) {
+  constructor( userRepo ) {
     this.userRepo = userRepo;
   }
 
   async findByEmail(email) {
-    return this.userRepo.findByEmail(email);
+    return this.userRepo.findByEmail(email);//  "message": "Cannot read properties of undefined (reading 'findByEmail')",
   }
 
   async findById(id) {

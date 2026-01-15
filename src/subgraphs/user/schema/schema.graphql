@@ -1,13 +1,18 @@
-# user.schema.graphql
-
 schema
-  @link(url: "https://specs.apollo.dev/federation/v2.11", import: ["@key", "@shareable","@external"]) {
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.11"
+    import: ["@key"]
+  ) {
   query: Query
   mutation: Mutation
 }
 
 scalar DateTime
-type User {
+
+"""
+User subgraph 是 User 的唯一 owner
+"""
+type User @key(fields: "id") {
   id: ID!
   email: String
   role: UserRole!
@@ -31,17 +36,11 @@ enum UserStatus {
   DEACTIVATED
 }
 
-"""
-⚠️ 只允许被 Auth 子图调用
-"""
 type Query {
   userByEmail(email: String!): User
   userById(id: ID!): User
 }
 
-"""
-⚠️ OAuth 专用写入口
-"""
 type Mutation {
   createOAuthUser(input: CreateOAuthUserInput!): User!
   deactivateUser(userId: ID!): Boolean!
@@ -50,18 +49,9 @@ type Mutation {
 input CreateOAuthUserInput {
   email: String!
   profile: UserProfileInput
-  provider: OAuthProvider!
 }
 
 input UserProfileInput {
   name: String
   avatar: String
-}
-
-enum OAuthProvider {
-  GOOGLE
-  GITHUB
-  FACEBOOK
-  LINE
-  APPLE
 }

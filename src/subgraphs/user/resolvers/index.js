@@ -5,45 +5,28 @@ import { TOKENS } from "../../../shared/container/tokens.js";
 
 export default {
   
-  Query: {
-  
-
-    me: async (_, __, { user, container }) => {
-      if (!user) {
-        throw new GraphQLError("Unauthorized", {
-          extensions: { code: ERROR_CODES.UNAUTHORIZED },
-        });
-      }
-
-      const repo = container.resolve(TOKENS.userRepository);// no the layer of userService?
-      return repo.findById(user.userId);
-    },
-
-    userByEmail: async (_, { email }, { container }) => {
-        console.log("🔥 USER SUBGRAPH RESOLVER HIT");
-      const userService = container.resolve(
-        TOKENS.user.userService
-      );
-      return userService.findByEmail(email);
-    },
-
-    user: async (_, { userId }, { container }) => {
-      return container
+Query: {
+    userById: (_, { id }, { container }) =>
+      container
         .resolve(TOKENS.user.userService)
-        .findById(userId);
-    },
-    userById: (_, { id }, { services }) =>
-      services.userService.findById(id),
+        .findById(id),
+
+    userByEmail: (_, { email }, { container }) =>
+      container
+        .resolve(TOKENS.user.userService)
+        .findByEmail(email),
   },
 
-  User: {
-    __resolveReference: async (ref, { container }) => {
-        console.log("🔥 USER SUBGRAPH RESOLVER HIT");
-      const repo = container.resolve(TOKENS.userRepository);
-      return repo.findById(ref.userId);
-    },
-   email: (user) => user.email
+User: {
+  __resolveReference: async (ref, { container }) => {
+    const userRepo = container.resolve(TOKENS.user.userRepo);
+    return userRepo.findById(ref.id);
   },
+  async __resolveReference(ref, { dataSources }) {
+    return await UserModel.findOne({ _id: ref.id });
+  },
+},
+
   Mutation: {
     createOAuthUser: (_, { input }, { container }) =>{
         console.log("🔥 USER SUBGRAPH RESOLVER HIT");

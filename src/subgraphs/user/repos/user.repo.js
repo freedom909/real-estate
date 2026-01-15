@@ -1,8 +1,10 @@
 // src/subgraphs/user/repos/user.repo.js
+
+
 export default class UserRepo {
   constructor({ UserModel }) {
     if (!UserModel) {
-      throw new Error("UserRepo: UserModel is required");
+      throw new Error("UserRepo: UserModel is required");//   "message": "UserRepo: UserModel is required",
     }
     this.UserModel = UserModel;
   }

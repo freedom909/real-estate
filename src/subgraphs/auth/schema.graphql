@@ -1,9 +1,8 @@
 extend schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.11"
-    import: ["@key", "@shareable"]
+    import: ["@key"]
   )
-
 
 scalar DateTime
 
@@ -11,14 +10,16 @@ directive @auth(requires: [Role!] = []) on FIELD_DEFINITION | OBJECT
 directive @public on FIELD_DEFINITION
 
 # =====================
-# User 
+# User (REFERENCE ONLY)
 # =====================
 type User @key(fields: "id") {
   id: ID!
-  email: String @shareable
-  role: Role! @shareable
 }
 
+# =====================
+# Auth-only Role
+# (used ONLY for authorization, NOT user data)
+# =====================
 enum Role {
   ADMIN
   AGENT
@@ -49,19 +50,16 @@ type Query {
 # Mutation
 # =====================
 type Mutation {
-  # OAuth 唯一入口
   oauthLogin(
     provider: OAuthProvider!
     idToken: String!
   ): AuthPayload! @public
 
-  # 绑定新的 OAuth（必须已登录）
   bindOAuth(
     provider: OAuthProvider!
     idToken: String!
   ): User! @auth
 
-  # 解绑 OAuth（至少保留一个）
   unbindOAuth(
     provider: OAuthProvider!
   ): User! @auth
@@ -77,20 +75,15 @@ type Mutation {
   ): AdminMergeResult!
     @auth(requires: [ADMIN])
 
-      adminPreviewMerge(
+  adminPreviewMerge(
     fromUserId: ID!
     toUserId: ID!
   ): AdminMergePreview!
     @auth(requires: [ADMIN])
 }
-type AdminMergeResult {
-  success: Boolean!
-  mergedFrom: ID!
-  mergedInto: ID!
-}
 
 # =====================
-# Auth Payload
+# Payloads
 # =====================
 type AuthPayload {
   user: User!
@@ -103,10 +96,19 @@ type AuthTokens {
   refreshToken: String!
 }
 
+# =====================
+# Admin / Audit Types
+# =====================
+type AdminMergeResult {
+  success: Boolean!
+  mergedFrom: ID!
+  mergedInto: ID!
+}
+
 type RiskEvent {
   userId: ID!
-  type: String  
-  provider:OAuthProvider 
+  type: String
+  provider: OAuthProvider
   ip: String
   userAgent: String
   createdAt: DateTime
@@ -124,6 +126,7 @@ type AdminMergePreview {
   mergeAllowed: Boolean!
 }
 
+# ⚠️ These are SNAPSHOTS, not User
 type MergeUserSnapshot {
   userId: ID!
   email: String

@@ -8,11 +8,11 @@ import {
 } from "./queries.js";
 
 export default class UserClient {
-  constructor(client) {
-    if (!client) {
+  constructor(graphqlClient) {
+    if (!graphqlClient) {
       throw new Error("UserClient: GraphQLClient is required");
     }
-    this.client = client;
+    this.client = graphqlClient;
   }
 
   /* =========================

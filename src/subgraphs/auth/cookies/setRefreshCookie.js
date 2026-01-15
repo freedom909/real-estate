@@ -6,6 +6,7 @@ export function setRefreshCookie(
   refreshToken,
   options
 ) {
+  console.log("🍪 Setting refresh cookie");
   const isProd = process.env.NODE_ENV === "production";
 
   res.cookie("refresh_token", refreshToken, {
