@@ -22,9 +22,11 @@ User: {
     const userRepo = container.resolve(TOKENS.user.userRepo);
     return userRepo.findById(ref.id);
   },
-  async __resolveReference(ref, { dataSources }) {
-    return await UserModel.findOne({ _id: ref.id });
-  },
+async __resolveReference(ref, { container }) {
+  const userRepo = container.resolve(TOKENS.user.userRepo);
+  return userRepo.findById(ref.id);
+}
+
 },
 
   Mutation: {

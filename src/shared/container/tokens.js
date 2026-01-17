@@ -1,3 +1,5 @@
+import UserModel from "../../subgraphs/user/models/user.model.js";
+
 export const TOKENS = {
   infra: {
     redis: Symbol("infra.redis"),
@@ -32,7 +34,7 @@ export const TOKENS = {
     // services
     tokenService: Symbol("auth.tokenService"),
     refreshTokenService: Symbol("auth.refreshTokenService"),
-    oauthService: Symbol("auth.oauthService"),
+    
     oauthVerifier: Symbol("auth.oauthVerifier"),
     loginRiskService: Symbol("auth.loginRiskService"),
     authService: Symbol("auth.authService"),
@@ -42,5 +44,7 @@ export const TOKENS = {
     userService: Symbol("user.userService"),
     userRepo: Symbol("user.userRepo"),
     profileRepo: Symbol("user.profileRepo"),
+    userModel: Symbol("user.userModel"),
+    profileModel: Symbol("user.profileModel"),
   },
 };

@@ -18,7 +18,7 @@ import LoginRiskService from "../services/risk/loginRisk.service.js";
 import TokenService from "../services/token/token.service.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
 import OAuthVerifier from "../services/oauth/oauthVerifier.js";
-import OAuthService from "../services/oauth/oauth.service.js";
+
 import AuthService from "../services/auth.service.js";
 
 // ===== adapters =====
@@ -150,25 +150,14 @@ container.register(
   () => new OAuthAccountRepo(OAuthAccountModel)// OAuthAccountModel undefined
 );
 
-  container.register(
-    TOKENS.auth.oauthService,
-    () =>
-      new OAuthService({
-        userClient: container.resolve(
-          TOKENS.auth.userClient
-        ),
-        credentialRepo: container.resolve(
-          TOKENS.auth.credentialRepo
-        ),
-        oauthVerifier: container.resolve(
-          TOKENS.auth.oauthVerifier
-        ),
-      })
-  );
-
   // ======================================================
   // APPLICATION SERVICE
   // ======================================================
+container.register(
+  TOKENS.auth.oauthAccountModel,
+  () => OAuthAccountModel
+);
+
   container.register(
     TOKENS.auth.authService,
     () =>
@@ -176,9 +165,7 @@ container.register(
         oauthAccountRepo: container.resolve(
         TOKENS.auth.oauthAccountRepo
       ),
-        oauthService: container.resolve(
-          TOKENS.auth.oauthService
-        ),
+      
         userClient: container.resolve(
           TOKENS.auth.userClient
         ),

@@ -52,9 +52,11 @@ app.use(
   express.json(),
   cookieParser(),
   expressMiddleware(server, {
-    context: async ({ req }) => ({
+    context: async ({ req,res }) => ({
       req,
-      container, // ✅ 现在作用域里有了
+      res,
+      container,
+      user:req.user??null,
     }),
   })
 );

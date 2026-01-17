@@ -1,0 +1,46 @@
+# -------------------------------
+# PowerShell: OAuthLogin via Gateway
+# -------------------------------
+
+# 1️⃣ 准备 GraphQL 请求体
+$bodyObject = @{
+    query = 'mutation OAuthLogin($provider: OAuthProvider!, $idToken: String!) {
+  oauthLogin(provider: $provider, idToken: $idToken) {
+    accessToken
+    refreshToken
+    user {
+      id
+      email
+      role
+    }
+  }
+}'
+    variables = @{
+        provider = "GOOGLE"
+        idToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjdiZjU5NTQ4OWEwYmIxNThiMDg1ZTIzZTdiNTJiZjk4OTFlMDQ1MzgiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI4MDAwNzY1MDgyMjYtdGNuc3VjZ2F2NTZwZXQ1anFqN3VldnJpdmtnYTdtM3IuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI4MDAwNzY1MDgyMjYtdGNuc3VjZ2F2NTZwZXQ1anFqN3VldnJpdmtnYTdtM3IuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTM5NzQ5MTYwNzA2NDg5MzMxMjMiLCJlbWFpbCI6Im1wZWc1NkBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiYXRfaGFzaCI6InJNYW9LOEg2TmZ6NVNoSmRxQzRSUUEiLCJuYW1lIjoid2luIFVrcmFpbmUiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUNnOG9jSXVWYklhNnRXRXJJWTFrZm15SVA4amlwMW93SlZxcFBvMkowSnZWZzFTS29HeTJaVEY9czk2LWMiLCJnaXZlbl9uYW1lIjoid2luIiwiZmFtaWx5X25hbWUiOiJVa3JhaW5lIiwiaWF0IjoxNzY4NTU0OTA0LCJleHAiOjE3Njg1NTg1MDR9.iyftCKbLL5Yy8Za8zGlakaY2NdssO_7MOOE16gES_KXvUSgpXK_PBHamh1UvXRSOCHSsxNsULsXbiYcuh3tp0Bd2IG01fNTRm4mK6QF_PutKcsDsTHQvBbDUeMbVfcBZpwdsZEiCOJoejh6UwphALg-vZRT7yOFkYGvAnM8KOFBxlDuYAU7xcNxKv3i1nRinf1kauEmht3GYMLmB0vm5EGM5_hmzwvDjXWePU0JugnR55OVGdSM7WgycUIztU6LS9W8Nrs3k3IeuIDkuv9FjaDafSQSVb90AJhQdvEmvgBoY1OZaC2a6gkKuNkHDWaHPKuvBVpWJ7kbKNWoeLSSQcg"
+    }
+}
+
+# ✅ 关键：必须 ConvertTo-Json 且 Depth 至少 5
+$bodyJson = $bodyObject | ConvertTo-Json -Depth 5 -Compress
+
+# 2️⃣ 初始化 session（保存 cookie）
+$session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
+
+# 3️⃣ 发送 POST 请求到 Gateway
+$response = Invoke-RestMethod `
+    -Uri "http://localhost:4000/graphql" `
+    -Method POST `
+    -Headers @{ "Content-Type" = "application/json" } `
+    -Body $bodyJson `
+    -WebSession $session
+
+# 4️⃣ 打印 GraphQL 返回结果
+Write-Host "=== Response ==="
+$response | ConvertTo-Json -Depth 5 | Write-Host
+
+# 5️⃣ 打印 Cookie 信息
+Write-Host "=== Cookies ==="
+$session.Cookies.GetCookies("http://localhost:4000") | ForEach-Object {
+    "{0} = {1}" -f $_.Name, $_.Value
+}

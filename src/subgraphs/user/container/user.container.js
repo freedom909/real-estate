@@ -14,9 +14,10 @@ export function createUserContainer() {
   // =========================
   container.register(
     TOKENS.user.userRepo,
-    () => new UserRepo({ UserModel })
+    () => new UserRepo({ UserModel }),
+    
   );
-
+console.log("userRepo:", new UserRepo({ UserModel }))
   // =========================
   // Service
   // =========================

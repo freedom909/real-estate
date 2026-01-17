@@ -16,7 +16,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@apollo/client": "^4.0.11",
+    "@apollo/client": "^4.0.13",
     "@apollo/gateway": "^2.12.2",
     "@apollo/server": "^5.2.0",
     "@apollo/subgraph": "^2.12.2",

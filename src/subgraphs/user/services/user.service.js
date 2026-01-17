@@ -1,14 +1,21 @@
 export default class UserService {
-  constructor( userRepo ) {
-    this.userRepo = userRepo;
-  }
+  constructor(userRepo) {
+    if (!userRepo) {
+      throw new Error("UserService: userRepo is required")
+    }
 
-  async findByEmail(email) {
-    return this.userRepo.findByEmail(email);//  "message": "Cannot read properties of undefined (reading 'findByEmail')",
+    this.userRepo = userRepo
   }
+ 
+ async findByEmail(email) {
+  if (!this) throw new Error("this is undefined")
+  if (!this.userRepo) throw new Error("userRepo not injected")
+  if (!this.userRepo.findByEmail) throw new Error("findByEmail missing")
+  return this.userRepo.findByEmail(email)
+}
 
   async findById(id) {
-    return this.userRepo.findById(id);
+    return this.userRepo.findById(id);// is not a function
   }
 
  async createOAuthUser({ email, profile }) {

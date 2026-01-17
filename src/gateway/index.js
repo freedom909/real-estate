@@ -1,46 +1,29 @@
+// src/gateway/cookies/index.ts
 import "dotenv/config";
 import { ApolloServer } from "@apollo/server";
-import { startStandaloneServer } from "@apollo/server/standalone";
+import { expressMiddleware } from '@as-integrations/express4'
 import {
   ApolloGateway,
   IntrospectAndCompose,
   RemoteGraphQLDataSource,
 } from "@apollo/gateway";
-import jwt from "jsonwebtoken";
+import { authCookiePlugin } from "./plugins/authCookiePlugin.js";
 import { authDirectiveTransformer } from "../shared/directives/auth.js";
-
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import http from "http";
+import verifyJwt from "../infrastructure/auth/verifyJwt.js";
+import AuthenticatedDataSource from "../infrastructure/auth/authenticatedDataSource.js";
+import extractToken from "../infrastructure/auth/extractToken.js";
+import authCookieInterceptor from "./cookies/authCookieInterceptor.js";
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret";
 
-/**
- * 从 Authorization header 中提取 token
- */
-function extractToken(req) {
-  const auth = req.headers.authorization;
-  if (!auth) return null;
-
-  if (auth.startsWith("Bearer ")) {
-    return auth.slice(7);
-  }
-  return null;
-}
-
-function verifyJwt(token) {
-  return jwt.verify(token, JWT_SECRET);
-}
 
 /**
  * 给 subgraph 注入 user 信息
  */
-class AuthenticatedDataSource extends RemoteGraphQLDataSource {
-  willSendRequest({ request, context }) {
-    if (context.user) {
-      request.http.headers.set(
-        "x-user",
-        JSON.stringify(context.user)
-      );
-    }
-  }
-}
+
 
 const gateway = new ApolloGateway({
   supergraphSdl: new IntrospectAndCompose({
@@ -59,27 +42,47 @@ const gateway = new ApolloGateway({
 const server = new ApolloServer({
   gateway,
   schemaTransforms: [authDirectiveTransformer],
+  plugins: [authCookiePlugin()],
 });
 
-startStandaloneServer(server, {
-  listen: { port: 4000 },
+await server.start();
+const app = express();
+const httpServer = http.createServer(app);
+app.use(
+  "/graphql",
 
-  context: async ({ req }) => {
-    const token = extractToken(req);
-    if (!token) return {};
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
 
-    try {
-      const payload = verifyJwt(token);
-      return {
-        user: {
-          userId: payload.sub ?? payload.userId,
-        },
-      };
-    } catch (e) {
-      console.error("JWT verify failed:", e.message);
-      return {};
-    }
-  },
-}).then(({ url }) => {
-  console.log(`🚀 Gateway running at ${url}`);
+  cookieParser(),
+  express.json(),
+
+  // ✅ 1️⃣ 必须在 expressMiddleware 之前
+  authCookieInterceptor,
+
+  // ✅ 2️⃣ 最后才是 Apollo
+  expressMiddleware(server, {
+    context: async ({ req, res }) => {
+      const token =
+        req.cookies?.access_token || extractToken(req);
+
+      let user = null;
+      if (token) {
+        try {
+          const payload = verifyJwt(token);
+          user = { userId: payload.sub };
+        } catch {}
+      }
+
+      return { user, res };
+    },
+  })
+);
+
+
+
+httpServer.listen(4000, () => {
+  console.log(`🚀 Gateway running at http://localhost:4000/graphql`);
 });

@@ -15,25 +15,30 @@ export default {
 
   Mutation: {
 
-  oauthLogin: async (_, { provider, idToken }, { container, req }) => {
-    const oauthAdapter =
-      container.resolve(TOKENS.auth.oauthAdapter);
+oauthLogin: async (
+  _,
+  { provider, idToken },
+  { container, req, res }
+) => {
+  const oauthAdapter =
+    container.resolve(TOKENS.auth.oauthAdapter);
 
-    // ✅ 边界层：解析外部 token
-    const profile = await oauthAdapter.parse(provider, idToken);
+  // 1️⃣ 验证第三方 token
+  const profile = await oauthAdapter.parse(provider, idToken);
 
-    const authService =
-      container.resolve(TOKENS.auth.authService);
+  const authService =
+    container.resolve(TOKENS.auth.authService);
 
-    // ✅ 领域层：只处理“已验证的 profile”
-    return authService.oauthLogin(profile, {
-      ip: req.ip,
-      deviceId: req.headers["x-device-id"],
-      userAgent: req.headers["user-agent"],
-    });
-  },
+  // 2️⃣ 领域登录
+  const result = await authService.oauthLogin(profile, {
+    ip: req.ip,
+    deviceId: req.headers["x-device-id"],
+    userAgent: req.headers["user-agent"],
+  });
 
-
+  // 4️⃣ 返回 payload（不含 refreshToken）
+  return result;
+},
 
     refreshToken: async (_, { refreshToken }, { container, req }) => {
       const service = container.resolve(

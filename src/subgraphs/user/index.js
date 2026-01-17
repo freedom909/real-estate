@@ -21,7 +21,7 @@ console.log(
 // 🥭 1️⃣ Mongo
 await connectMongo(
   process.env.MONGO_URI ||
-    "mongodb://localhost:27017/real_estate_user"
+  "mongodb://localhost:27017/real_estate_user"
 );
 
 // 🧰 2️⃣ Container
@@ -35,7 +35,7 @@ const httpServer = http.createServer(app);
 
 const typeDefs = gql(
   readFileSync(
-    "./src/subgraphs/user/schema/schema.graphql",
+    "./src/subgraphs/user/schema.graphql",
     "utf-8"
   )
 );
@@ -53,9 +53,18 @@ app.use(
   cors(),
   express.json(),
   expressMiddleware(server, {
-    context: async () => ({
-      container: userContainer,
-    }),
+    context: ({ req }) => {
+      const userHeader = req.headers["x-user"];
+
+      if (userHeader) {
+        console.log("🟢 x-user:", userHeader);
+      }
+
+      return {
+        user: userHeader ? JSON.parse(userHeader) : null,
+      };
+    },
+
   })
 );
 
