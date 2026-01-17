@@ -3,7 +3,7 @@
 import {
   accessCookieOptions,
   refreshCookieOptions,
-} from "./cookieOptions.js";
+} from "../../gateway/cookies/cookieOptions.js";
 
 export function setAuthCookies(
   res,
@@ -20,10 +20,12 @@ export function setAuthCookies(
   );
 
   if (refreshToken) {
-    res.cookie(
-      "refresh_token",
-      refreshToken,
-      refreshCookieOptions
-    );
+    res.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      sameSite: "lax",   // ⭐ 本地 & 同站点最稳
+      secure: false,    // ⭐ localhost 必须 false
+      path: "/",        // ⭐ GraphQL /graphql 能收到
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
   }
 }

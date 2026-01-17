@@ -1,14 +1,5 @@
 // src/subgraphs/auth/services/refresh/refreshToken.service.js
-import jwt from "jsonwebtoken";
-import fs from "fs";
-import path from "path";
 import { debugToken, debugRisk } from "../../../../shared/debug.js";
-
-const PUBLIC_KEY = fs.readFileSync(
-  path.join(process.cwd(), "src/keys/public.pem"),
-  "utf8"
-);
-
 
 export default class RefreshTokenService {
   constructor({
@@ -21,61 +12,62 @@ export default class RefreshTokenService {
     this.loginRiskService = loginRiskService;
   }
 
-  async save(userId, refreshToken, { deviceId } = {}) {
-    await this.refreshTokenRepo.save(
-      userId,
-      refreshToken,
-      { deviceId }
-    );
-
-    debugToken("Refresh token saved", {
-      userId,
-      deviceId,
-    });
-  }
-
+  /**
+   * 🔁 Refresh access token with rotation
+   */
   async refreshAccessToken(
     oldRefreshToken,
-    { ip, userAgent } = {}
+    { ip, userAgent, deviceId } = {}
   ) {
-    // 1️⃣ JWT 验证（交给 TokenService）
-    const payload =
-      this.tokenService.verifyRefreshToken(
-        oldRefreshToken
-      );
-
-    debugToken("Refresh token verified", payload);
+    // 1️⃣ Verify JWT (signature / exp / type)
+    let payload;
+    try {
+      payload =
+        this.tokenService.verifyRefreshToken(oldRefreshToken);
+    } catch (err) {
+      debugRisk("Invalid refresh token", { ip, userAgent });
+      throw new Error("Invalid refresh token");
+    }
 
     const userId = payload.sub;
+    const tokenId = payload.jti ?? null;
 
-    // 2️⃣ Redis / DB 检查
-    const exists = await this.refreshTokenRepo.exists(
+    debugToken("Refresh token verified", {
       userId,
-      oldRefreshToken
-    );
+      tokenId,
+    });
+
+    // 2️⃣ Check storage (reuse detection)
+    const exists =
+      await this.refreshTokenRepo.exists(
+        userId,
+        oldRefreshToken
+      );
 
     if (!exists) {
       debugRisk("Refresh token reuse detected", {
         userId,
         ip,
         userAgent,
+        tokenId,
       });
+
+      // 🚨 security response
+      await this.refreshTokenRepo.revokeAll(userId);
 
       await this.loginRiskService.handleRefreshTokenReuse({
         userId,
         ip,
         userAgent,
-        refreshTokenId: payload.jti ?? null,
+        tokenId,
       });
-
-      await this.refreshTokenRepo.revokeAll(userId);
 
       throw new Error(
         "Security incident: refresh token reuse"
       );
     }
 
-    // 3️⃣ rotation
+    // 3️⃣ Rotate (atomic intent)
     await this.refreshTokenRepo.delete(
       userId,
       oldRefreshToken
@@ -94,7 +86,8 @@ export default class RefreshTokenService {
 
     await this.refreshTokenRepo.save(
       userId,
-      newRefreshToken
+      newRefreshToken,
+      { deviceId }
     );
 
     debugToken("Refresh token rotated", {
@@ -104,74 +97,39 @@ export default class RefreshTokenService {
     return {
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
-      user: { id: userId },
+      userId,
     };
   }
 
-  async issue({ userId, ip, userAgent }) {
-      console.log("🟢 [RT] issue", { userId, ip, userAgent });
-    const tokenId = uuidv4();
+  /**
+   * ❌ Revoke a single refresh token (logout)
+   */
+  async revoke(refreshToken) {
+    try {
+      const payload =
+        this.tokenService.verifyRefreshToken(refreshToken);
 
-    const refreshToken = this.tokenService.signRefreshToken({
-      sub: userId,
-      jti: tokenId,
-    }); 
-    await this.repo.create({
-      tokenId,
-      userId,
-      ip,
-      userAgent,
-      expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
-    });
+      await this.refreshTokenRepo.delete(
+        payload.sub,
+        refreshToken
+      );
 
-    return refreshToken;
+      debugToken("Refresh token revoked", {
+        userId: payload.sub,
+      });
+    } catch {
+      // swallow — logout should be idempotent
+    }
   }
 
-  async rotate({ refreshToken, ip, userAgent }) {
-    console.log("🟢 [RT] rotate", { refreshToken, ip, userAgent });
-    const payload = this.tokenService.verifyRefreshToken(refreshToken);
-    console.log("🔍 [RT] payload", payload);
-    const tokenId = payload.jti;
-    const userId = payload.sub;
+  /**
+   * 🔥 Revoke all refresh tokens of a user
+   */
+  async revokeAll(userId) {
+    await this.refreshTokenRepo.revokeAll(userId);
 
-    const stored = await this.repo.findByTokenId(tokenId);
-    if (!stored || stored.revoked) {
-      throw new Error("Refresh token revoked");
-    }
-
-    // 🚨 Risk detection
-    if (
-      this.risk.isRisky({
-        oldIp: stored.ip,
-        newIp: ip,
-        oldUA: stored.userAgent,
-        newUA: userAgent,
-      })
-    ) {
-      await this.repo.revokeAllByUser(userId);
-      throw new Error("Suspicious refresh detected");
-    }
-
-    // 🔁 Rotation
-    const newTokenId = uuidv4();
-
-    await this.repo.revoke(tokenId, newTokenId);
-
-    const newRefreshToken = this.tokenService.signRefreshToken({
-      sub: userId,
-      jti: newTokenId,
-    });
-
-    await this.repo.create({
-      tokenId: newTokenId,
+    debugToken("All refresh tokens revoked", {
       userId,
-      ip,
-      userAgent,
-      expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
     });
-  console.log("🔁 [RT] old token revoked:", tokenId);
-  console.log("🆕 [RT] new token issued:", newTokenId);
-    return newRefreshToken;
   }
 }
-

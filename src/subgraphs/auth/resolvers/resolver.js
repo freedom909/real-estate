@@ -1,5 +1,6 @@
 // src/subgraphs/auth/resolvers.js
 import { TOKENS } from "../../../shared/container/tokens.js";
+import { setAuthCookies } from "../../../infrastructure/auth/setAuthCookies.js";
 
 
 
@@ -15,41 +16,61 @@ export default {
 
   Mutation: {
 
-oauthLogin: async (
-  _,
-  { provider, idToken },
-  { container, req, res }
-) => {
-  const oauthAdapter =
-    container.resolve(TOKENS.auth.oauthAdapter);
+    oauthLogin: async (
+      _,
+      { provider, idToken },
+      { container, req, res }
+    ) => {
+      const oauthAdapter =
+        container.resolve(TOKENS.auth.oauthAdapter);
 
-  // 1️⃣ 验证第三方 token
-  const profile = await oauthAdapter.parse(provider, idToken);
+      // 1️⃣ 验证第三方 token
+      const profile = await oauthAdapter.parse(provider, idToken);
 
-  const authService =
-    container.resolve(TOKENS.auth.authService);
+      const authService =
+        container.resolve(TOKENS.auth.authService);
 
-  // 2️⃣ 领域登录
-  const result = await authService.oauthLogin(profile, {
+      // 2️⃣ 领域登录
+      const result = await authService.oauthLogin(profile,
+        {
+          ip: req.ip,
+          deviceId: req.headers["x-device-id"],
+          userAgent: req.headers["user-agent"],
+        });
+     setAuthCookies(res, result);
+      console.log("🍪 setting refresh_token cookie");
+      return result;
+    },
+
+   refreshToken: async (_, __, { container, req }) => {
+  const token = req.cookies?.refresh_token;
+
+  console.log("🍪 refresh_token cookie =", token);
+
+  if (!token) {
+    throw new Error("No refresh token");
+  }
+
+  const service = container.resolve(
+    TOKENS.auth.refreshTokenService
+  );
+
+  return service.refreshAccessToken(token, {
     ip: req.ip,
-    deviceId: req.headers["x-device-id"],
     userAgent: req.headers["user-agent"],
   });
-
-  // 4️⃣ 返回 payload（不含 refreshToken）
-  return result;
 },
 
-    refreshToken: async (_, { refreshToken }, { container, req }) => {
-      const service = container.resolve(
-        TOKENS.auth.refreshTokenService
-      );
 
-      return service.refreshAccessToken(refreshToken, {
-        ip: req.ip,
-        userAgent: req.headers["user-agent"],
-      });
+    revokeToken: async (_, __, { container, user }) => {
+      if (!user) throw new Error("Unauthorized");
+
+      const service = container.resolve(TOKENS.auth.refreshTokenService);
+      await service.revokeAll(user.userId);
+
+      return true;
     },
+
 
     bindOAuth: async (_, { provider, idToken }, { container, req, user }) => {
       if (!user) throw new Error("Unauthorized");
@@ -79,15 +100,26 @@ oauthLogin: async (
         deviceId: req.headers["x-device-id"],
       });
     },
+
+    logout: async (_, __, { container, req }) => {
+      const refreshToken = req.cookies?.refresh_token;
+      if (!refreshToken) return true;
+
+      const service = container.resolve(TOKENS.auth.refreshTokenService);
+      await service.revokeAll(user.userId);
+
+      return true;
+    },
+
   },
 
   // ✅ ✅ ✅ 类型 resolver 在这里
-AuthPayload: {
-user: (parent) => ({
-    __typename: "User",
-    id: parent.userId.toString(),
-  }),
-},
+  AuthPayload: {
+    user: (parent) => ({
+      __typename: "User",
+      id: parent.userId.toString(),
+    }),
+  },
 
 };
 

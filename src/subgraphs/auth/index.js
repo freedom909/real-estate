@@ -60,6 +60,19 @@ app.use(
     }),
   })
 );
+app.use(cookieParser());
+app.use((req, res, next) => {
+  if (req.method === "POST") {
+    const csrfHeader = req.headers["x-csrf-token"];
+    const csrfCookie = req.cookies?.csrf_token;
+    console.log("🔐 Auth req.cookies:", req.cookies);
+
+    if (!csrfHeader || csrfHeader !== csrfCookie) {
+      return res.status(403).json({ error: "CSRF validation failed" });
+    }
+  }
+  next();
+});
 
 httpServer.listen(4010, () => {
   console.log("🔐 Auth subgraph running at http://localhost:4010/graphql");

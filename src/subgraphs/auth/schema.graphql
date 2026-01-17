@@ -56,6 +56,11 @@ type Mutation {
     idToken: String!
   ): AuthPayload! @public
 
+  refreshToken: AuthTokens!
+
+  logout: Boolean!
+  revokeToken: Boolean!
+
   bindOAuth(
     provider: OAuthProvider!
     idToken: String!
@@ -64,24 +69,8 @@ type Mutation {
   unbindOAuth(
     provider: OAuthProvider!
   ): User! @auth
-
-  refreshToken(
-    refreshToken: String!
-  ): AuthTokens!
-
-  adminMergeAccounts(
-    fromUserId: ID!
-    toUserId: ID!
-    reason: String!
-  ): AdminMergeResult!
-    @auth(requires: [ADMIN])
-
-  adminPreviewMerge(
-    fromUserId: ID!
-    toUserId: ID!
-  ): AdminMergePreview!
-    @auth(requires: [ADMIN])
 }
+
 
 # =====================
 # Payloads
@@ -89,12 +78,11 @@ type Mutation {
 type AuthPayload {
   user: User!
   accessToken: String!
-  refreshToken: String!
 }
 
 type AuthTokens {
   accessToken: String!
-  refreshToken: String!
+  
 }
 
 # =====================

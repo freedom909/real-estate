@@ -1,14 +1,13 @@
-
+// infrastructure/auth/authenticatedDataSource.js
 import { RemoteGraphQLDataSource } from "@apollo/gateway";
+
 export default class AuthenticatedDataSource extends RemoteGraphQLDataSource {
   willSendRequest({ request, context }) {
-    if (context.user) {
+    if (context.req?.headers?.cookie) {
       request.http.headers.set(
-        "x-user",
-        JSON.stringify(context.user)
+        "cookie",
+        context.req.headers.cookie
       );
     }
   }
 }
-
-

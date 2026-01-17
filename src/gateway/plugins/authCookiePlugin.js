@@ -1,34 +1,66 @@
-import { setAuthCookies } from "../cookies/setAuthCookies.js";
+
+
+// src/gateway/plugins/authCookiePlugin.ts
+import crypto from "crypto";
 
 export function authCookiePlugin() {
   return {
     async requestDidStart() {
       return {
-        async willSendResponse(ctx) {
-          // 🔒 防御 1：context 可能不存在
-          const context = ctx.contextValue;
-          if (!context) return;
-
-          // 🔒 防御 2：res 可能不存在
-          const res = context.res;
+        async willSendResponse(context) {
+          const { res } = context.contextValue;
           if (!res) return;
 
-          const response = ctx.response;
+          const data = context.response.body?.singleResult?.data;
+          if (!data) return;
 
-          // 🔒 防御 3：只处理普通 GraphQL response
-          if (!response?.body || response.body.kind !== "single") {
+          const payload =
+            data.oauthLogin ||
+            data.refreshToken ||
+            data.logout ||
+            data.revokeToken;
+
+          if (!payload) return;
+
+          /** ===== LOGOUT / REVOKE ===== */
+          if (payload === true) {
+            res.clearCookie("access_token", { path: "/" });
+            res.clearCookie("refresh_token", { path: "/" });
+            res.clearCookie("csrf_token", { path: "/" });
             return;
           }
 
-          const data = response.body.singleResult?.data;
-          if (!data) return;
+          /** ===== LOGIN / REFRESH ===== */
+          const { accessToken, refreshToken } = payload;
 
-          // 统一检测 login, oauthLogin, refreshToken 等返回
-          const payload = data.oauthLogin || data.refreshToken || data.login;
-
-          if (payload?.accessToken) {
-            setAuthCookies(res, payload);
+          if (accessToken) {
+            res.cookie("access_token", accessToken, {
+              httpOnly: true,
+              sameSite: "none", // ✅ Required for Apollo Studio (Cross-Site)
+              secure: true,     // ✅ Required when SameSite is none
+              path: "/",
+              maxAge: 15 * 60 * 1000,
+            });
           }
+
+          if (refreshToken) {
+            res.cookie("refresh_token", refreshToken, {
+              httpOnly: true,
+              sameSite: "none", // ✅ Required for Apollo Studio (Cross-Site)
+              secure: true,     // ✅ Required when SameSite is none
+              path: "/",
+              maxAge: 30 * 24 * 60 * 60 * 1000,
+            });
+          }
+
+          /** ===== CSRF ===== */
+          const csrf = crypto.randomBytes(16).toString("hex");
+          res.cookie("csrf_token", csrf, {
+            httpOnly: false,
+            sameSite: "none",
+            secure: true,
+            path: "/",
+          });
         },
       };
     },
