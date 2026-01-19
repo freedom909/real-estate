@@ -36,30 +36,32 @@ export default {
           ip: req.ip,
           deviceId: req.headers["x-device-id"],
           userAgent: req.headers["user-agent"],
+
         });
-     setAuthCookies(res, result);
+      setAuthCookies(res, result);
       console.log("🍪 setting refresh_token cookie");
       return result;
     },
 
-   refreshToken: async (_, __, { container, req }) => {
-  const token = req.cookies?.refresh_token;
+    refreshToken: async (_, __, { container, req }) => {
+      const token = req.cookies?.refresh_token;
 
-  console.log("🍪 refresh_token cookie =", token);
+      console.log("🍪 auth refresh_token cookie =", token);
 
-  if (!token) {
-    throw new Error("No refresh token");
-  }
+      if (!token) {
+        throw new Error("No refresh token");
+      }
 
-  const service = container.resolve(
-    TOKENS.auth.refreshTokenService
-  );
+      const service = container.resolve(
+        TOKENS.auth.refreshTokenService
+      );
 
-  return service.refreshAccessToken(token, {
-    ip: req.ip,
-    userAgent: req.headers["user-agent"],
-  });
-},
+      return service.refreshAccessToken(token, {
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        deviceId: req.headers["x-device-id"],
+      });
+    },
 
 
     revokeToken: async (_, __, { container, user }) => {

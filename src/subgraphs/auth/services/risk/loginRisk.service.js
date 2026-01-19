@@ -1,5 +1,5 @@
 import geoip from "geoip-lite";
-import redis from "../../../../shared/redis/redis.client.js";
+import redis from "../../../../infrastructure/redis/redis.js";
 import { debugRisk } from "../../../../shared/debug.js";
 
 export default class LoginRiskService {

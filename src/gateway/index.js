@@ -11,7 +11,7 @@ import {
   ApolloGateway,
   IntrospectAndCompose,
 } from "@apollo/gateway";
-
+import { RemoteGraphQLDataSource } from "@apollo/gateway";
 import { authCookiePlugin } from "./plugins/authCookiePlugin.js";
 import { authDirectiveTransformer } from "../shared/directives/auth.js";
 import AuthenticatedDataSource from "../infrastructure/auth/authenticatedDataSource.js";
@@ -41,14 +41,27 @@ const gateway = new ApolloGateway({
       { name: "auth", url: "http://localhost:4010/graphql" },
     ],
   }),
-  buildService({ url }) {
-    return new AuthenticatedDataSource({ url });
-  },
+buildService({ name, url }) {
+  return new RemoteGraphQLDataSource({
+    url,
+
+    willSendRequest({ request, context }) {
+      // 🚨 启动阶段没有 context
+      if (!context?.req?.headers?.cookie) return;
+
+      request.http.headers.set(
+        "cookie",
+        context.req.headers.cookie
+      );
+    },
+  });
+}
 });
 
 const server = new ApolloServer({
   gateway,
   plugins: [authCookiePlugin()],
+  
 });
 
 await server.start();
@@ -58,8 +71,9 @@ app.use(
   "/graphql",
   expressMiddleware(server, {
     context: async ({ req, res }) => {
-      console.log("🔐 Gateway req.cookies:", req.cookies);
-      console.log("🔐 Gateway req.headers.cookie:", req.headers.cookie);
+      // console.log("🔐 Gateway req.cookies:", req.cookies);
+      // console.log("🔐 Gateway req.headers.cookie:", req.headers.cookie);
+      // console.log("🍪 incoming refresh_token:", req.cookies.refresh_token);
 
       const token =
         req.cookies?.access_token || extractToken(req);

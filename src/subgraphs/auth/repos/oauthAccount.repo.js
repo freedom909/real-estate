@@ -1,15 +1,13 @@
 // src/subgraphs/auth/repositories/oauthAccount.repo.js
-
+import OAuthAccountModel from "../models/oauthAccounts.model.js";
 export default class OAuthAccountRepo {
-  /**
-   * @param {import("mongoose").Model} model
-   */
-  constructor(model) {
+  constructor({ model }) {
     if (!model) {
       throw new Error("OAuthAccountRepo: model is required");
     }
     this.model = model;
   }
+
 
   /* =========================
      Queries

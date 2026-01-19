@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 const OAuthUserSchema = new mongoose.Schema(
   {
     userId: { type: String, required: true, unique: true },
-
+    familyId: { type: String, required: true },
     email: { type: String },
     fullname: String,
     picture: String,

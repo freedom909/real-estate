@@ -1,23 +1,55 @@
+
+
+// src/subgraphs/auth/models/refreshToken.model.js
 import mongoose from "mongoose";
 
-const refreshTokenSchema = new mongoose.Schema(
-  {
-    tokenId: { type: String, required: true, unique: true },
-    userId: { type: String, required: true, index: true },
+const { Schema } = mongoose;
 
+const refreshTokenSchema = new Schema(
+  {
+    tokenId: {
+      type: String,
+      required: true,
+      unique: true, // ✅ 只约束 tokenId
+      index: true,
+    },
+
+    userId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      index: true,
+    },
+
+    familyId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    deviceId: String,
     ip: String,
     userAgent: String,
 
-    revoked: { type: Boolean, default: false },
-    revokedAt: Date,
-    replacedByTokenId: String,
+    status: {
+      type: String,
+      enum: ["active", "used", "revoked"],
+      default: "active",
+      index: true,
+    },
 
-    expiresAt: { type: Date, required: true },
+    issuedAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    rotatedAt: Date,
+    revokedAt: Date,
   },
   { timestamps: true }
 );
 
-refreshTokenSchema.index({ userId: 1 });
-refreshTokenSchema.index({ expiresAt: 1 });
+export default mongoose.model(
+  "RefreshToken",
+  refreshTokenSchema
+);
 
-export default mongoose.model("RefreshToken", refreshTokenSchema);

@@ -16,8 +16,6 @@ export const TOKENS = {
     oauthAdapter: Symbol("auth.oauthAdapter"),
     oauthVerifier: Symbol("auth.oauthVerifier"),
     googleOAuthAdapter: Symbol("auth.googleOAuthAdapter"),
-    
-    
 
 
     // models
@@ -30,6 +28,7 @@ export const TOKENS = {
     riskEventRepo: Symbol("auth.riskEventRepo"),
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
     oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
+    userRepo:Symbol("auth.userRepo"),
     
     // services
     tokenService: Symbol("auth.tokenService"),

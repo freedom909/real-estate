@@ -6,13 +6,13 @@ import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
 import CredentialModel from "../models/credential.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
 import OAuthAccountModel from "../models/oauthAccounts.model.js";
-
+import UserModel from "../../user/models/user.model.js";
 // ===== repos =====
 import CredentialRepo from "../repos/credential.repo.js";
 import RefreshTokenRepo from "../repos/refresh-token.repo.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
 import OAuthAccountRepo from "../repos/oauthAccount.repo.js";
-
+import UserRepo from "../repos/user.repo.js";
 // ===== services =====
 import LoginRiskService from "../services/risk/loginRisk.service.js";
 import TokenService from "../services/token/token.service.js";
@@ -34,7 +34,14 @@ export function createAuthContainer({ redis }) {
   // INFRA
   // ======================================================
   container.register(TOKENS.infra.redis, () => redis);
-
+  container.register(
+  TOKENS.auth.userRepo,
+  () =>
+    new UserRepo({
+      UserModel: UserModel, // your Mongoose User model
+      redis: container.resolve(TOKENS.infra.redis),
+    })
+);
   // ======================================================
   // GRAPHQL CLIENT (User Subgraph)
   // ======================================================
@@ -123,6 +130,12 @@ export function createAuthContainer({ redis }) {
         refreshTokenRepo: container.resolve(
           TOKENS.auth.refreshTokenRepo
         ),
+        loginRiskService: container.resolve(
+          TOKENS.auth.loginRiskService
+        ),
+        userRepo: container.resolve(
+          TOKENS.auth.userRepo
+        ),
       })
   );
 
@@ -147,7 +160,7 @@ container.register(
 
 container.register(
   TOKENS.auth.oauthAccountRepo,
-  () => new OAuthAccountRepo(OAuthAccountModel)// OAuthAccountModel undefined
+  () => new OAuthAccountRepo({ model: OAuthAccountModel })
 );
 
   // ======================================================
@@ -162,6 +175,9 @@ container.register(
     TOKENS.auth.authService,
     () =>
       new AuthService({
+        oauthService: container.resolve(
+          TOKENS.auth.oauthAdapter
+        ),
         oauthAccountRepo: container.resolve(
         TOKENS.auth.oauthAccountRepo
       ),

@@ -8,8 +8,14 @@ const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true, immutable: true },
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },
   role: { type: String, enum: Object.values(Role), default: Role.USER, required: true },
-  status: { type: String, enum: ["ACTIVE","INACTIVE","BANNED"], default:"ACTIVE" },
-}, { timestamps: true });
+  status: { type: String, enum: ["ACTIVE", "INACTIVE", "BANNED"], default: "ACTIVE" },
+  tokenVersion: {
+    type: Number,
+    default: 0,
+  },
+},
+
+  { timestamps: true });
 
 userSchema.pre("validate", function () { if (!this.userId) this.userId = uuidv4(); });
 

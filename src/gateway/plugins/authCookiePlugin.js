@@ -39,7 +39,7 @@ export function authCookiePlugin() {
               sameSite: "none", // ✅ Required for Apollo Studio (Cross-Site)
               secure: true,     // ✅ Required when SameSite is none
               path: "/",
-              maxAge: 15 * 60 * 1000,
+              maxAge: 2*60 * 60 * 1000,
             });
           }
 
