@@ -44,9 +44,18 @@ enum OAuthProvider {
 # =====================
 type Query {
   me: User @auth
-  
+  mySessions: [Session!]!
+  OnlineSessions: [Session!]!
+
 }
 
+type Session {
+  id: ID!
+  deviceId: String
+  userAgent: String
+  ip: String
+  lastSeenAt: DateTime
+}
 # =====================
 # Mutation
 # =====================
@@ -69,6 +78,8 @@ type Mutation {
   unbindOAuth(
     provider: OAuthProvider!
   ): User! @auth
+
+  revokeSession(sessionId: String!): Boolean!
 }
 
 

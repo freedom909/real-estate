@@ -1,5 +1,4 @@
 // src/subgraphs/auth/services/refresh/refreshToken.service.js
-import { randomUUID } from "crypto";
 import { debugRisk, debugToken } from "../../../../shared/debug.js";
 
 export default class RefreshTokenService {
@@ -24,7 +23,7 @@ export default class RefreshTokenService {
     throw new Error("Invalid token type");
   }
 
-  const { sub: userId, familyId, tokenVersion } = payload;
+  const { sub: userId, familyId, tokenVersion = 0, sessionId, scope } = payload;
 
   // tokenVersion 校验
   const currentVersion = await this.userRepo.getTokenVersion(userId);
@@ -36,7 +35,7 @@ export default class RefreshTokenService {
   const consumed = await this.refreshTokenRepo.consume(refreshToken);
 
   if (!consumed) {
-    await this.refreshTokenRepo.revokeFamily(familyId);
+    await this.refreshTokenRepo.revokeBySession(sessionId);
     await this.loginRiskService.handleRefreshTokenReuse({
       userId,
       familyId,
@@ -50,24 +49,30 @@ export default class RefreshTokenService {
     sub: userId,
     tokenVersion,
     familyId,
-    deviceId: payload.deviceId,
-    ip: payload.ip,
-    userAgent: payload.userAgent,
+    deviceId: ctx.deviceId || payload.deviceId,
+    ip: ctx.ip || payload.ip,
+    userAgent: ctx.userAgent || payload.userAgent,
+    sessionId,
+    scope,
   });
 
   await this.refreshTokenRepo.save(newRefreshToken, {
     userId,
     familyId,
-    deviceId: payload.deviceId,
-    ip: payload.ip,
-    userAgent: payload.userAgent,
+    deviceId:ctx.deviceId ?? payload.deviceId,
+    ip:ctx.ip ?? payload.ip,
+    userAgent:ctx.userAgent ??  payload.userAgent,
+    sessionId,
+    issuedAt: new Date(),
     ...ctx,
   });
 
   return {
     accessToken: this.tokenService.signAccessToken({
-      userId,
+      sub: userId,
       tokenVersion,
+      sessionId,
+      scope
     }),
     refreshToken: newRefreshToken,
   };

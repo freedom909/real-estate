@@ -200,6 +200,9 @@ container.register(
         refreshTokenRepo: container.resolve(
           TOKENS.auth.refreshTokenRepo
         ),
+        sessionRepo: container.resolve(
+          TOKENS.auth.sessionRepo
+        ),
       })
   );
 

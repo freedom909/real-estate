@@ -33,7 +33,13 @@ export default class RefreshTokenRepo {
     );
   }
 
-
+  async revokeBySession(sessionId) {
+    return this.model.updateMany(
+      { sessionId, revokedAt: null },
+      { $set: { revokedAt: new Date() } }
+    );
+  }
+  
   /**
    * 💾 保存新 refresh token（只存 hash）
    */

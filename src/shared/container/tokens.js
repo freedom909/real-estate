@@ -29,7 +29,8 @@ export const TOKENS = {
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
     oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
     userRepo:Symbol("auth.userRepo"),
-    
+    sessionRepo: Symbol("auth.sessionRepo"),
+
     // services
     tokenService: Symbol("auth.tokenService"),
     refreshTokenService: Symbol("auth.refreshTokenService"),

@@ -1,6 +1,6 @@
 // src/subgraphs/auth/services/token/token.service.js
 
-import jwt from "jsonwebtoken";
+import * as jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -48,9 +48,11 @@ export default class TokenService {
         ...payload,
         type: "access",
       },
-      process.env.ACCESS_TOKEN_SECRET,
+      PRIVATE_KEY,
       {
-        expiresIn: this.getAccessTokenTTL(),//not a func
+        algorithm: this.algorithm,
+        issuer: this.issuer,
+        expiresIn: this.getAccessTokenTTL(),
       }
     );
   }
@@ -62,8 +64,10 @@ export default class TokenService {
         ...payload,
         type: "refresh",
       },
-      process.env.REFRESH_TOKEN_SECRET,
+      PRIVATE_KEY,
       {
+        algorithm: this.algorithm,
+        issuer: this.issuer,
         expiresIn: this.getRefreshTokenTTL(),
         jwtid: randomUUID(), // ✅ 关键：jti
       }

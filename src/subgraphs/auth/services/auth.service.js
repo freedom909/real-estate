@@ -11,6 +11,7 @@ constructor(deps) {
     "loginRiskService",
     "refreshTokenRepo",
     "oauthAccountRepo",
+    "sessionRepo",
   ];
 
   for (const key of required) {
@@ -207,6 +208,16 @@ constructor(deps) {
         issuedAt: new Date(),
       }
     );
+    // auth.service.js (_login)
+await this.sessionRepo.create({
+  userId,
+  familyId,
+  deviceId,
+  userAgent,
+  ip,
+  refreshTokenId: tokens.refreshJti,
+  lastSeenAt: new Date(),
+});
 
     return {
       userId,

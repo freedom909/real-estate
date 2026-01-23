@@ -12,10 +12,41 @@ export default {
       const userClient = container.resolve(TOKENS.auth.userClient);
       return userClient.findById(user.userId);
     },
+    mySessions: async (_, __, ctx) => {
+    return requireScope(["session:read"])(
+      ctx,
+      () =>
+        sessionRepo.listByUser(ctx.user.sub)
+    );
+  },
+  OnlineSessions: async (_, __, ctx) => {
+    return requireScope(["session:read"])(
+      ctx,
+      () =>
+        listOnlineSessions(ctx.redis)
+          .filter(
+            (s) => s.userId === ctx.user.sub
+          )
+    );
+  },
   },
 
   Mutation: {
-
+    revokeSession: async (
+    _,
+    { sessionId },
+    ctx
+  ) =>
+    requireScope(["session:revoke"])(
+      ctx,
+      async () => {
+        await sessionRepo.revoke(sessionId);
+        await refreshTokenRepo.revokeBySession(
+          sessionId
+        );
+        return true;
+      }
+    ),
     oauthLogin: async (
       _,
       { provider, idToken },
@@ -61,8 +92,8 @@ export default {
         userAgent: req.headers["user-agent"],
         deviceId: req.headers["x-device-id"],
       });
+      
     },
-
 
     revokeToken: async (_, __, { container, user }) => {
       if (!user) throw new Error("Unauthorized");
