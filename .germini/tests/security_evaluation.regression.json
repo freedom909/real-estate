@@ -1,0 +1,32 @@
+{
+  "testCaseId": "AUTH_LOGIN_MULTIPLE_FAILURES",
+  "description": "Repeated failed login attempts from same IP",
+  "input": {
+    "eventId": "e2",
+    "action": "AUTH_LOGIN",
+    "actor": {
+      "userId": null,
+      "role": "ANONYMOUS",
+      "isAuthenticated": false
+    },
+    "context": {
+      "ip": "9.9.9.9",
+      "userAgent": "Unknown",
+      "requestId": "r2"
+    },
+    "resource": {
+      "type": "AUTH",
+      "id": null
+    },
+    "signals": {
+      "failedLoginCount": 7,
+      "requestRate": "high"
+    }
+  },
+  "expected": {
+    "riskLevel": "HIGH",
+    "suggestedAction": "CHALLENGE",
+    "confidenceMin": 0.7,
+    "requiredSignals": ["multiple_failed_logins"]
+  }
+}

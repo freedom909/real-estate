@@ -1,0 +1,79 @@
+version: "1.0"
+featureFlag: ENABLE_RBAC
+defaultRole: Customer
+
+roles:
+  Admin: System administrator with full access
+  Agent: Verified real estate agent
+  Owner: Property owner
+  Customer: Default end user
+  Pending_Agent: Unverified agent
+
+hardConstraints:
+  Pending_Agent:
+    denyAllWrite: true
+    allowOnly:
+      - GET /users/me
+      - GET /agents/onboarding/status
+      - POST /agents/onboarding/documents
+
+policies:
+  - resource: auth
+    rules:
+      - path: /auth/status
+        methods: [GET]
+        allow: [Admin, Agent, Owner, Customer, Pending_Agent]
+
+  - resource: users
+    rules:
+      - path: /users/me
+        methods: [GET]
+        allow: [Admin, Agent, Owner, Customer, Pending_Agent]
+
+      - path: /users/me
+        methods: [PATCH]
+        allow: [Customer]
+
+      - path: /users/:id
+        methods: [GET]
+        allow: [Admin]
+
+      - path: /users/:id/role
+        methods: [PATCH]
+        allow: [Admin]
+
+  - resource: listings
+    rules:
+      - path: /listings
+        methods: [GET]
+        allow: [Admin, Agent, Owner, Customer, Pending_Agent]
+
+      - path: /listings/:id
+        methods: [GET]
+        allow: [Admin, Agent, Owner, Customer, Pending_Agent]
+
+      - path: /listings
+        methods: [POST]
+        allow: [Admin, Agent, Owner]
+
+      - path: /listings/:id
+        methods: [PATCH]
+        allow: [Admin, Agent, Owner]
+
+      - path: /listings/:id
+        methods: [DELETE]
+        allow: [Admin]
+
+  - resource: contracts
+    rules:
+      - path: /contracts/:id
+        methods: [GET]
+        allow: [Admin, Agent, Owner]
+
+      - path: /contracts
+        methods: [POST]
+        allow: [Admin, Agent]
+
+      - path: /contracts/:id
+        methods: [PATCH]
+        allow: [Admin, Agent]

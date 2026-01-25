@@ -27,8 +27,11 @@ type UserProfile {
 }
 
 enum UserRole {
-  USER
   ADMIN
+  AGENT
+  OWNER
+  CUSTOMER
+  PENDING_AGENT
 }
 
 enum UserStatus {

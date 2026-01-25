@@ -16,7 +16,7 @@ const server = new ApolloServer({
 });
 
 startStandaloneServer(server, {
-  listen: { port: 4003 },
+  listen: { port: 4030 },
 context: async ({ req }) => {
   const body = req.body ?? {};
   const query = body.query ?? "";
@@ -37,5 +37,5 @@ context: async ({ req }) => {
 }
 
 }).then(() => {
-  console.log("🏠 Property subgraph running at http://localhost:4003/graphql");
+  console.log("🏠 Property subgraph running at http://localhost:4030/graphql");
 });

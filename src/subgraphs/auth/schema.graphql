@@ -23,8 +23,8 @@ type User @key(fields: "id") {
 enum Role {
   ADMIN
   AGENT
-  USER
-  GUEST
+  OWNER
+  CUSTOMER
   PENDING_AGENT
 }
 

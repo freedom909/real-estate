@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "required": ["eventId", "action", "actor", "context", "resource", "signals"],
+  "properties": {
+    "eventId": { "type": "string" },
+    "action": { "type": "string" },
+    "actor": {
+      "type": "object",
+      "required": ["userId", "role", "isAuthenticated"],
+      "properties": {
+        "userId": { "type": ["string", "null"] },
+        "role": { "type": "string" },
+        "isAuthenticated": { "type": "boolean" }
+      }
+    },
+    "context": {
+      "type": "object",
+      "required": ["ip", "userAgent", "requestId"]
+    },
+    "resource": {
+      "type": "object",
+      "required": ["type", "id"]
+    },
+    "signals": { "type": "object" }
+  }
+}

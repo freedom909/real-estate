@@ -1,0 +1,200 @@
+
+
+{
+  "version": "1.0",
+  "featureFlag": "ENABLE_RBAC",
+  "defaultRole": "Customer",
+
+  "roles": {
+    "Admin": {
+      "description": "System administrator with full access"
+    },
+    "Agent": {
+      "description": "Verified real estate agent"
+    },
+    "Owner": {
+      "description": "Property owner"
+    },
+    "Customer": {
+      "description": "Default end user"
+    },
+    "Pending_Agent": {
+      "description": "Unverified agent with restricted access"
+    }
+  },
+
+  "hardConstraints": {
+    "Pending_Agent": {
+      "denyAllWrite": true,
+      "allowOnly": [
+        "GET /users/me",
+        "GET /agents/onboarding/status",
+        "POST /agents/onboarding/documents"
+      ]
+    }
+  },
+
+  "policies": [
+    {
+      "resource": "auth",
+      "rules": [
+        {
+          "methods": ["GET"],
+          "path": "/auth/status",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/auth/login",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/auth/logout",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        }
+      ]
+    },
+
+    {
+      "resource": "users",
+      "rules": [
+        {
+          "methods": ["GET"],
+          "path": "/users/me",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        },
+        {
+          "methods": ["PATCH"],
+          "path": "/users/me",
+          "allow": ["Customer","Admin"]
+        },
+        {
+          "methods": ["GET"],
+          "path": "/users/:id",
+          "allow": ["Admin"]
+        },
+        {
+          "methods": ["PATCH"],
+          "path": "/users/:id/role",
+          "allow": ["Admin"]
+        }
+      ]
+    },
+
+    {
+      "resource": "listings",
+      "rules": [
+        {
+          "methods": ["GET"],
+          "path": "/listings",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        },
+        {
+          "methods": ["GET"],
+          "path": "/listings/:id",
+          "allow": ["Admin", "Agent", "Owner", "Customer", "Pending_Agent"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/listings",
+          "allow": ["Admin", "Agent", "Owner"]
+        },
+        {
+          "methods": ["PATCH"],
+          "path": "/listings/:id",
+          "allow": ["Admin", "Agent", "Owner"]
+        },
+        {
+          "methods": ["DELETE"],
+          "path": "/listings/:id",
+          "allow": ["Admin"]
+        }
+      ]
+    },
+
+    {
+      "resource": "contracts",
+      "rules": [
+        {
+          "methods": ["GET"],
+          "path": "/contracts/:id",
+          "allow": ["Admin", "Agent", "Owner"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/contracts",
+          "allow": ["Admin", "Agent"]
+        },
+        {
+          "methods": ["PATCH"],
+          "path": "/contracts/:id",
+          "allow": ["Admin", "Agent"]
+        }
+      ]
+    },
+
+    {
+      "resource": "transactions",
+      "rules": [
+        {
+          "methods": ["POST"],
+          "path": "/transactions",
+          "allow": ["Admin", "Agent"]
+        }
+      ]
+    },
+
+    {
+      "resource": "agent_onboarding",
+      "rules": [
+        {
+          "methods": ["POST"],
+          "path": "/agents/apply",
+          "allow": ["Customer"]
+        },
+        {
+          "methods": ["GET"],
+          "path": "/agents/onboarding/status",
+          "allow": ["Pending_Agent"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/agents/onboarding/documents",
+          "allow": ["Pending_Agent"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/agents/approve",
+          "allow": ["Admin"]
+        },
+        {
+          "methods": ["POST"],
+          "path": "/agents/reject",
+          "allow": ["Admin"]
+        }
+      ]
+    },
+
+    {
+      "resource": "admin",
+      "rules": [
+        {
+          "methods": ["GET"],
+          "path": "/admin/users",
+          "allow": ["Admin"]
+        },
+        {
+          "methods": ["GET"],
+          "path": "/admin/metrics",
+          "allow": ["Admin"]
+        },
+        {
+          "methods": ["PATCH"],
+          "path": "/admin/feature-flags",
+          "allow": ["Admin"]
+        }
+      ]
+    }
+  ]
+}
