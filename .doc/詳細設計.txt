@@ -1,0 +1,318 @@
+| Event名               | 対応する状態遷移  | 業務的意味                      | 判断主体      | 発火条件（成立根拠）                                  | ERPとの関係           |
+| -------------------- | --------- | -------------------------- | --------- | ------------------------------------------- | ----------------- |
+| ApplicationAccepted  | S01 → S02 | 買主の申込意思が業務上正式に受理された事実      | 買主（業務担当者） | 申請内容が所定の受付要件を満たし、受付完了が業務担当者により確定したこと        | ERP未連携（業務システム内完結） |
+| ContractConcluded    | S02 → S03 | 売主・買主双方の合意により契約が有効に成立した事実  | 売主・買主     | 締結記録が確定し、ERP（販売管理）にて契約完了が確認できること            | ERP（販売管理）参照       |
+| PaymentCompleted     | S03 → S04 | 契約に基づく金銭授受が業務上完了した事実       | 売主（経理担当者） | 入金確認および決済完了が経理担当者により承認され、ERP にて決済完了が確認できること | ERP（販売管理）参照       |
+| TransactionCompleted | S04 → S05 | 当該売買契約に関する業務上の取引がすべて完了した事実 | 売主・買主     | 商品引渡・在庫処理等が完了し、ERP（在庫／引渡管理）にて完了確認ができること     | ERP（在庫／引渡管理）参照    |
+
+推荐最终版 Schema
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ApplicationAccepted",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventTimestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "applicationId": {
+      "type": "string"
+    },
+    "judgementSubject": {
+      "type": "string"
+    },
+    "acceptedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "eventId",
+    "eventTimestamp",
+    "applicationId",
+    "judgementSubject",
+    "acceptedAt"
+  ]
+}
+
+__________________________________________________________________________________________
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ContractConcluded",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventTimestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "contractId": {
+      "type": "string"
+    },
+    "applicationId": {
+      "type": "string"
+    },
+    "judgementSubject": {
+      "type": "string"
+    },
+    "concludedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "erpConfirmation": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system",
+        "referenceId"
+      ]
+    }
+  },
+  "required": [
+    "eventId",
+    "eventTimestamp",
+    "contractId",
+    "applicationId",
+    "judgementSubject",
+    "concludedAt",
+    "erpConfirmation"
+  ]
+}
+__________________________________________________________________________________________
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PaymentCompleted",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventTimestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "paymentId": {
+      "type": "string"
+    },
+    "contractId": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "number"
+    },
+    "currency": {
+      "type": "string"
+    },
+    "judgementSubject": {
+      "type": "string"
+    },
+    "approvedBy": {
+      "type": "string"
+    },
+    "erpConfirmation": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system",
+        "referenceId"
+      ]
+    }
+  },
+  "required": [
+    "eventId",
+    "eventTimestamp",
+    "paymentId",
+    "contractId",
+    "amount",
+    "currency",
+    "judgementSubject",
+    "approvedBy",
+    "erpConfirmation"
+  ]
+}
+__________________________________________________________________________________________
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TransactionCompleted",
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "eventTimestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "transactionId": {
+      "type": "string"
+    },
+    "contractId": {
+      "type": "string"
+    },
+    "judgementSubject": {
+      "type": "string"
+    },
+    "erpConfirmation": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "string"
+        },
+        "referenceId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "system",
+        "referenceId"
+      ]
+    }
+  },
+  "required": [
+    "eventId",
+    "eventTimestamp",
+    "transactionId",
+    "contractId",
+    "judgementSubject",
+    "erpConfirmation"
+  ]
+}
+__________________________________________________________________________________________
+1️⃣ Kafka Event 一览（确定、不再发散）
+Event	From → To	Judgement Subject	ERP Evidence
+ApplicationAccepted	S01 → S02	受付判断	❌
+ContractConcluded	S02 → S03	契约成立判断	✅
+PaymentCompleted	S03 → S04	决済完了承认	✅
+TransactionCompleted	S04 → S05	取引完了判断	✅
+
+✔ 判断主体 = Event
+✔ ERP = 证据
+✔ State = Event 的累积结果
+
+2️⃣ 状态机（最终版）
+S01 Applied
+  └─ ApplicationAccepted
+S02 ApplicationAccepted
+  └─ ContractConcluded
+S03 ContractConcluded
+  └─ PaymentCompleted
+S04 PaymentCompleted
+  └─ TransactionCompleted
+S05 TransactionCompleted (END)
+
+export enum TransactionState {
+  Applied = "S01",
+  ApplicationAccepted = "S02",
+  ContractConcluded = "S03",
+  PaymentCompleted = "S04",
+  TransactionCompleted = "S05"
+}
+__________________________________________________________________________________________
+3️⃣ State Machine Code（最终）
+export function transition(
+  current: TransactionState,
+  eventTitle: string
+): TransactionState {
+
+  const table: Record<TransactionState, Record<string, TransactionState>> = {
+    S01: { ApplicationAccepted: TransactionState.ApplicationAccepted },
+    S02: { ContractConcluded: TransactionState.ContractConcluded },
+    S03: { PaymentCompleted: TransactionState.PaymentCompleted },
+    S04: { TransactionCompleted: TransactionState.TransactionCompleted },
+    S05: {}
+  };
+
+  const next = table[current]?.[eventTitle];
+  if (!next) {
+    throw new Error(`Invalid transition: ${current} → ${eventTitle}`);
+  }
+  return next;
+}
+__________________________________________________________________________________________
+
+4️⃣ Kafka Consumer（统一模板）
+4.1 共通 Consumer 模板（不会失控）
+async function handleEvent(
+  aggregateId: string,
+  event: { eventId: string; title: string }
+) {
+  const current = await stateRepo.get(aggregateId);
+
+  const next = transition(current.state, event.title);
+
+  await stateRepo.save({
+    id: aggregateId,
+    state: next,
+    lastEventId: event.eventId
+  });
+}
+
+4.2 TransactionCompleted Consumer
+kafkaConsumer.on("TransactionCompleted", async (event) => {
+  await handleEvent(event.transactionId, {
+    eventId: event.eventId,
+    title: "TransactionCompleted"
+  });
+});
+
+__________________________________________________________________________________________
+5️⃣ 已经完成的「设计闭环」
+状态迁移表
+   ↓
+Kafka Event 定义
+   ↓
+JSON Schema（你已完成）
+   ↓
+State Machine
+   ↓
+Consumer
+
+__________________________________________________________________________________________
+「不会发散的终极 Prompt」
+
+Prompt：
+以下是已确定的 Kafka 业务事件 JSON Schema。
+请严格遵守：
+
+不新增事件
+
+不新增字段
+
+不引入新判断逻辑
+
+状态只能由 Event 推进
+
+请生成：
+
+状态机
+
+Consumer 模板
+
+Projection 表设计
+
+__________________________________________________________________________________________
+
+

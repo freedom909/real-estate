@@ -1,0 +1,23 @@
+// future: riskPolicy.service.ts
+class RiskPolicyService {
+    async evaluateRisk(events) {
+        // Check for refresh token reuse in last 24 hours
+        const refreshTokenReuseEvents = events.filter(event => event.type === 'REFRESH_TOKEN_REUSE' &&
+            new Date().getTime() - event.timestamp.getTime() < 24 * 60 * 60 * 1000);
+        if (refreshTokenReuseEvents.length >= 1) {
+            return {
+                shouldBlock: false,
+                shouldFreeze: true, // Directly freeze account
+                shouldForceReauth: false,
+                message: "Account frozen due to refresh token reuse"
+            };
+        }
+        return {
+            shouldBlock: false,
+            shouldFreeze: false,
+            shouldForceReauth: false,
+            message: "No policy violations detected"
+        };
+    }
+}
+export default RiskPolicyService;

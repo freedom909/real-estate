@@ -1,7 +1,8 @@
 schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.11"
-    import: ["@key"]
+    import: ["@key", "@shareable"]
+  
   ) {
   query: Query
   mutation: Mutation
@@ -14,19 +15,19 @@ User subgraph 是 User 的唯一 owner
 """
 type User @key(fields: "id") {
   id: ID!
-  email: String
-  role: UserRole!
-  profile: UserProfile
+  email: String! @shareable
+  role: Role! @shareable
+  profile: Profile
   status: UserStatus!
   createdAt: DateTime!
 }
 
-type UserProfile {
+type Profile {
   name: String
   avatar: String
 }
 
-enum UserRole {
+enum Role {
   ADMIN
   AGENT
   OWNER
@@ -51,10 +52,10 @@ type Mutation {
 
 input CreateOAuthUserInput {
   email: String!
-  profile: UserProfileInput
+  profile: ProfileInput
 }
 
-input UserProfileInput {
+input ProfileInput {
   name: String
   avatar: String
 }

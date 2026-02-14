@@ -4,13 +4,16 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start:auth": "nodemon src/subgraphs/auth/index.js",
-    "start:user": "nodemon src/subgraphs/user/index.js",
-    "start:property": "nodemon src/subgraphs/property/index.js",
-    "start:all": "npm-run-all --parallel start:*",
-    "start:gateway": "nodemon --exec \"node src/gateway/index.js\"",
-    "start:debug": "DEBUG_AUTH=true DEBUG_USER=true npm run start:all",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "build": "tsc",
+    "start:auth": "node dist/subgraphs/auth/index.js",
+    "start:user": "node dist/subgraphs/user/index.js",
+    "start:property": "node dist/subgraphs/property/index.js",
+    "start:gateway": "node dist/gateway/index.js",
+    "start:all": "npm-run-all --parallel start:auth start:user start:property",
+    "dev:auth": "tsx watch src/subgraphs/auth/index.ts",
+    "dev:user": "nodemon --watch src --exec tsx --loader ts-node/esm src/subgraphs/user/index.ts",
+    "dev:gateway": "tsx watch src/gateway/index.ts",
+    "dev:property": "nodemon --watch src --exec tsx --loader ts-node/esm src/subgraphs/property/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +21,6 @@
   "description": "",
   "dependencies": {
     "@apollo/client": "^4.0.13",
-    "@apollo/gateway": "^2.12.2",
     "@apollo/server": "^5.2.0",
     "@apollo/subgraph": "^2.12.2",
     "@as-integrations/express4": "^1.1.2",
@@ -44,11 +46,16 @@
     "lodash": "^4.17.21",
     "mongoose": "^9.0.2",
     "nodemon": "^3.1.11",
+    "redis": "^5.10.0",
     "supertest": "^7.2.2",
+    "ts-node": "^10.9.2",
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
+    "@apollo/gateway": "^2.13.0",
     "@jest/globals": "^30.2.0",
-    "jest": "^30.2.0"
+    "@types/node": "^25.2.3",
+    "jest": "^30.2.0",
+    "typescript": "^5.9.3"
   }
 }
