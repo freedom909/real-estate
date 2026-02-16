@@ -1,5 +1,7 @@
 // src/subgraphs/user/services/user.service.ts
-import { Role } from "../models/user.model.js";
+import * as EmailValidator from 'email-validator';
+import { Role } from "../models/user.model";
+import { UserInputError } from "../../../infrastructure/utils/errors";
 export default class UserService {
     constructor(userRepo) {
         if (!userRepo) {
@@ -8,13 +10,15 @@ export default class UserService {
         this.userRepo = userRepo;
     }
     async findByEmail(email) {
-        if (!this)
-            throw new Error("this is undefined");
-        if (!this.userRepo)
-            throw new Error("userRepo not injected");
-        if (!this.userRepo.findByEmail)
-            throw new Error("findByEmail missing");
-        return this.userRepo.findByEmail(email);
+        if (!EmailValidator.validate(email)) {
+            throw new UserInputError("Invalid email");
+        }
+        try {
+            return await this.userRepo.findByEmail(email);
+        }
+        catch (err) {
+            throw new UserInputError("Failed to fetch user");
+        }
     }
     async findById(id) {
         return this.userRepo.findById(id); // is not a function

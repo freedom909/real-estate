@@ -44,6 +44,7 @@ const server = new ApolloServer({
   schema: buildSubgraphSchema([
     { typeDefs, resolvers },
   ]),
+  csrfPrevention: false,
 });
 
 await server.start();
@@ -62,6 +63,7 @@ app.use(
 
       return {
         user: userHeader ? JSON.parse(userHeader) : null,
+        container: userContainer,
       };
     },
 

@@ -2,7 +2,6 @@ schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.11"
     import: ["@key", "@shareable"]
-  
   ) {
   query: Query
   mutation: Mutation
@@ -14,15 +13,18 @@ scalar DateTime
 User subgraph 是 User 的唯一 owner
 """
 type User @key(fields: "id") {
-  id: ID!
-  email: String! @shareable
-  role: Role! @shareable
-  profile: Profile
-  status: UserStatus!
-  createdAt: DateTime!
+  id: ID! 
+  profile: Profile! 
+  email: String!
+  role: Role! 
+  accountStatus: AccountStatus! 
+  approvalStatus: ApprovalStatus! 
+  tokenVersion: Int!
+  createdAt: DateTime! 
 }
 
-type Profile {
+
+type Profile @shareable {
   name: String
   avatar: String
 }
@@ -32,12 +34,20 @@ enum Role {
   AGENT
   OWNER
   CUSTOMER
-  PENDING_AGENT
 }
 
-enum UserStatus {
+enum AccountStatus {
   ACTIVE
-  DEACTIVATED
+  BANNED
+  SUSPENDED
+  DELETED
+}
+
+enum ApprovalStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 type Query {

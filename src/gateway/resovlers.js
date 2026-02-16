@@ -5,9 +5,6 @@ export default {
   Mutation: {
   oauthLogin: async (_, args, { res, authClient }) => {
     const result = await authClient.oauthLogin(args);
-
-    
-
     return  {
     accessToken,
     refreshToken, // 👈 明确返回

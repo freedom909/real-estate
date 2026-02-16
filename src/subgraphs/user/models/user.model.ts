@@ -1,5 +1,5 @@
 // user.model.ts
-import mongoose from "mongoose";
+import mongoose, { HydratedDocument, Types } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
 
 export enum Role { 
@@ -15,9 +15,10 @@ export  interface IProfile {
   name: string;
   avatar: string;
 }
-
+export type UserDocument = HydratedDocument<IUser>;
 export interface IUser {
-
+  _id: Types.ObjectId;  
+  __v: number;
   profile: IProfile;
   role: Role;
   status: "ACTIVE" | "INACTIVE" | "BANNED";
@@ -27,19 +28,27 @@ export interface IUser {
 }
 
 const userSchema = new mongoose.Schema({
-  userId: { type: String, required: true, unique: true, immutable: true },
-  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  profile: {
+    UserId: { type: String, required: true, unique: true, immutable: true },
+    email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+    name: { type: String },
+    avatar: { type: String },
+  },
   role: { type: String, enum: Object.values(Role), default: Role.USER, required: true },
   status: { type: String, enum: ["ACTIVE", "INACTIVE", "BANNED"], default: "ACTIVE" },
   tokenVersion: {
     type: Number,
+    required: true,
     default: 0,
   },
-},
-
-  { timestamps: true });
-
-userSchema.pre("validate", function () { if (!this.userId) this.userId = uuidv4(); });
+}, { timestamps: true });
+// ユーザーIDを生成する前に、profile.UserId が存在するか確認
+userSchema.pre("validate", function (next) {
+  if (!this.profile.UserId) {
+    this.profile.UserId = uuidv4();
+  }
+  if (typeof next === 'function') next();
+});
 
 const UserModel = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 export default UserModel;  // ✅ 确保默认导出

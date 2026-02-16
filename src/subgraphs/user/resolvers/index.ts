@@ -30,13 +30,10 @@ export default {
   },
 
   User: {
-    // __resolveReference: async (ref: UserReference, { container }: ResolverContext) => {
-    //   const userRepo = container.resolve(TOKENS.user.userRepo);
-    //   return userRepo.findById(ref.id);
-    // },
+ 
     async __resolveReference(ref: UserReference, { container }: ResolverContext) {
-      const userRepo = container.resolve(TOKENS.user.userRepo);
-      return userRepo.findById(ref.id);
+      const userService = container.resolve(TOKENS.user.userService);
+      return userService.findById(ref.id);
     }
   },
 

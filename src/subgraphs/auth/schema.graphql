@@ -1,8 +1,11 @@
-extend schema
+schema
   @link(
     url: "https://specs.apollo.dev/federation/v2.11"
-    import: ["@key"]
-  )
+    import: ["@key","@external","@shareable"]
+  ) {
+  query: Query
+  mutation: Mutation
+}
 
 scalar DateTime
 
@@ -12,21 +15,22 @@ directive @public on FIELD_DEFINITION
 # =====================
 # User (REFERENCE ONLY)
 # =====================
-type User @key(fields: "id") {
-  id: ID!
+extend type User @key(fields: "id") {
+  id: ID! @external
+}
+
+enum Role {
+  ADMIN
+  AGENT
+  OWNER
+  CUSTOMER
 }
 
 # =====================
 # Auth-only Role
 # (used ONLY for authorization, NOT user data)
 # =====================
-enum Role {
-  ADMIN
-  AGENT
-  OWNER
-  CUSTOMER
-  PENDING_AGENT
-}
+
 
 # =====================
 # OAuth Provider
@@ -36,14 +40,15 @@ enum OAuthProvider {
   FACEBOOK
   GITHUB
   APPLE
-  LINE
+  
 }
 
 # =====================
 # Query
 # =====================
 type Query {
-  me: User @auth
+  me: User @shareable
+  user(id: ID!): User @shareable
   mySessions: [Session!]!
   OnlineSessions: [Session!]!
 
@@ -92,8 +97,7 @@ type AuthPayload {
 }
 
 type AuthTokens {
-  accessToken: String!
-  
+  accessToken: String!  
 }
 
 # =====================
@@ -130,7 +134,7 @@ type AdminMergePreview {
 type MergeUserSnapshot {
   userId: ID!
   email: String
-  role: Role!
+  role: Role! 
   createdAt: DateTime
   credentialCount: Int!
   providers: [OAuthProvider!]!

@@ -1,7 +1,12 @@
 // src/subgraphs/user/services/user.service.ts
+import * as EmailValidator from 'email-validator';
+import UserRepo from "../repos/user.repo";
+import  { IUser, Role, UserDocument } from "../models/user.model";
+import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
 
-import UserRepo from "../repos/user.repo.js";
-import { IUser, Role } from "../models/user.model.js";
+export interface IContext {
+  user?: IUser;
+}
 
 export default class UserService {
   private userRepo: UserRepo;
@@ -14,16 +19,58 @@ export default class UserService {
     this.userRepo = userRepo
   }
 
-  async findByEmail(email: string): Promise<IUser | null> {
-    if (!this) throw new Error("this is undefined")
-    if (!this.userRepo) throw new Error("userRepo not injected")
-    if (!this.userRepo.findByEmail) throw new Error("findByEmail missing")
-    return this.userRepo.findByEmail(email)
+async findByEmail(email: string): Promise<IUser | null> {
+  if (!EmailValidator.validate(email)) {
+    throw new UserInputError("Invalid email")
   }
 
-  async findById(id: string): Promise<IUser | null> {
-    return this.userRepo.findById(id);// is not a function
+  try {
+    return await this.userRepo.findByEmail(email)
+  } catch (err) {
+    throw new UserInputError("Failed to fetch user")
   }
+}
+
+async findById(id: string, context: IContext) {
+  try {
+    if (!id || typeof id !== 'string' || id.trim() === '') {
+      throw new UserInputError('Invalid ID');
+    }
+
+    if (!context?.user) {
+      throw new AuthenticationError('Authentication required');
+    }
+
+    const user = await this.userRepo.findById(id);
+
+    if (!user) return null;
+
+    // 权限检查
+    const isAdmin = context.user.role === Role.ADMIN;
+    const isSelf = context.user.profile.UserId === id;
+
+    if (!isAdmin && !isSelf) {
+      throw new ForbiddenError(
+        'Access denied: Cannot access other users'
+      );
+    }
+
+    return user;
+
+  } catch (error) {
+    if (
+      error instanceof UserInputError ||
+      error instanceof AuthenticationError ||
+      error instanceof ForbiddenError
+    ) {
+      throw error;
+    }
+
+    // 统一转换数据库错误
+    throw new UserInputError('Failed to fetch user');
+  }
+}
+
 
   async createOAuthUser({ email, profile }: { email: string; profile: any }): Promise<IUser> {
     // 1️⃣ Fast path
@@ -33,7 +80,7 @@ export default class UserService {
     // 2️⃣ Try create
     try {
       return await this.userRepo.create({
-        
+
         role: Role.USER,
         status: "ACTIVE",
         profile: {
@@ -53,7 +100,7 @@ export default class UserService {
   }
 
   async deactivate(userId: string): Promise<boolean> {
-    await this.userRepo.deactivate(userId);// 
+    await this.userRepo.deactivate(userId);//
     return true;
   }
 }

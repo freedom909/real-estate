@@ -19,11 +19,13 @@ const listOnlineSessions = (redis) => {
 };
 export default {
     Query: {
-        me: async (_, __, { user, container }) => {
+        me: async (_, __, { user }) => {
             if (!user)
                 return null;
-            const userClient = container.resolve(TOKENS.auth.userClient);
-            return userClient.findById(user.userId);
+            return {
+                __typename: "User",
+                id: user.userId,
+            };
         },
         mySessions: async (_, __, ctx) => {
             return requireScope(["session:read"])(ctx, () => sessionRepo.listByUser(ctx.user.sub));

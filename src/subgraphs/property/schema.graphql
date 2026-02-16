@@ -1,7 +1,9 @@
-schema @link(url: "https://specs.apollo.dev/federation/v2.8", import: ["@key","@shareable"]) {
+schema @link(url: "https://specs.apollo.dev/federation/v2.11", import: ["@key","@external"]) {
   query: Query
   mutation: Mutation
 }
+
+scalar DateTime
 directive @auth(
   requires: [Role!] = []
 ) on FIELD_DEFINITION | OBJECT
@@ -12,7 +14,6 @@ directive @requiresRole(
 
 type Query {
   properties: [Property]
- 
 }
 
 type Mutation {
@@ -26,16 +27,36 @@ type Property @key(fields: "id") {
   title: String!
   price: Int!
   createdBy: User!
+  ownerId: ID!
+  agentId: ID
+  status: PropertyStatus!
+  approvalStatus: ApprovalStatus!
+  createdAt: DateTime!
 }
 
-type User @key(fields: "id") {
-  id: ID!
-  email: String!@shareable
-  role: Role! @shareable
+enum ApprovalStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
 }
+
+enum PropertyStatus { 
+  DRAFT
+  PUBLISHED
+  SOLD
+  RENTED
+  ARCHIVED
+}
+
+extend type User @key(fields: "id") {
+  id: ID! @external
+}
+
 
 enum Role {
   ADMIN
   AGENT
-  USER
+  OWNER
+  CUSTOMER
 }

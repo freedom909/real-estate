@@ -4,16 +4,20 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "start:auth": "node dist/subgraphs/auth/index.js",
-    "start:user": "node dist/subgraphs/user/index.js",
-    "start:property": "node dist/subgraphs/property/index.js",
-    "start:gateway": "node dist/gateway/index.js",
-    "start:all": "npm-run-all --parallel start:auth start:user start:property",
+    "build": "tsc --project tsconfig.build.json",
+    "start:auth": "nodemon src/subgraphs/auth/index.js",
+    "start:user": "nodemon src/subgraphs/user/index.js",
+    "start:property": "nodemon src/subgraphs/property/index.js",
+    "start:all": "npm-run-all --parallel start:*",
+    "start:gateway": "nodemon --exec \"node src/gateway/index.js\"",
+    "start:debug": "DEBUG_AUTH=true DEBUG_USER=true npm run start:all",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "compose": "rover supergraph compose --config supergraph.yaml > supergraph.graphql",
     "dev:auth": "tsx watch src/subgraphs/auth/index.ts",
     "dev:user": "nodemon --watch src --exec tsx --loader ts-node/esm src/subgraphs/user/index.ts",
     "dev:gateway": "tsx watch src/gateway/index.ts",
-    "dev:property": "nodemon --watch src --exec tsx --loader ts-node/esm src/subgraphs/property/index.ts"
+    "dev:property": "nodemon --watch src --exec tsx --loader ts-node/esm src/subgraphs/property/index.ts",
+    "test:watch": "jest --watch"
   },
   "keywords": [],
   "author": "",
@@ -21,7 +25,8 @@
   "description": "",
   "dependencies": {
     "@apollo/client": "^4.0.13",
-    "@apollo/server": "^5.2.0",
+    "@apollo/gateway": "^2.8.5",
+    "@apollo/server": "^4.9.5",
     "@apollo/subgraph": "^2.12.2",
     "@as-integrations/express4": "^1.1.2",
     "@graphql-tools/load-files": "^7.0.1",
@@ -34,6 +39,7 @@
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.3",
+    "email-validator": "^2.0.4",
     "express": "^4.22.1",
     "geoip-lite": "^1.4.10",
     "google-auth-library": "^10.5.0",
@@ -46,16 +52,21 @@
     "lodash": "^4.17.21",
     "mongoose": "^9.0.2",
     "nodemon": "^3.1.11",
+    "path": "^0.12.7",
     "redis": "^5.10.0",
     "supertest": "^7.2.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "tsyringe": "^4.10.0"
   },
   "devDependencies": {
-    "@apollo/gateway": "^2.13.0",
     "@jest/globals": "^30.2.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.2.3",
     "jest": "^30.2.0",
-    "typescript": "^5.9.3"
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
   }
 }

@@ -48,12 +48,16 @@ const listOnlineSessions = (redis: any) => {
 
 export default {
   Query: {
-    me: async (_, __, { user, container }: Context) => {
+    me: async (_:unknown, __:unknown, { user }: Context) => {
       if (!user) return null;
 
-      const userClient = container.resolve(TOKENS.auth.userClient);
-      return userClient.findById(user.userId);
+      return {
+        __typename: "User",
+        id: user.userId,
+      };
     },
+
+
     mySessions: async (_, __, ctx: Context) => {
       return requireScope(["session:read"])(
         ctx,

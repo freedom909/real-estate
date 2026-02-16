@@ -12,6 +12,7 @@ export default {
       const userClient = container.resolve(TOKENS.auth.userClient);
       return userClient.findById(user.userId);
     },
+  
     mySessions: async (_, __, ctx) => {
     return requireScope(["session:read"])(
       ctx,
