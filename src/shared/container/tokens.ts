@@ -1,4 +1,4 @@
-import UserModel from "../../subgraphs/user/models/user.model.js";
+
 
 export const TOKENS = {
   infra: {

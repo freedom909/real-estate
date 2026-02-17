@@ -3,21 +3,18 @@ import * as EmailValidator from 'email-validator';
 import UserRepo from "../repos/user.repo";
 import  { IUser, Role, UserDocument } from "../models/user.model";
 import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
+import IPermissionService from "../../../security/permission.service";
 
 export interface IContext {
   user?: IUser;
 }
 
 export default class UserService {
-  private userRepo: UserRepo;
-
-  constructor(userRepo: UserRepo) {
-    if (!userRepo) {
-      throw new Error("UserService: userRepo is required")
-    }
-
-    this.userRepo = userRepo
-  }
+constructor(
+  private readonly userRepo: UserRepo,
+  private readonly permissionService: IPermissionService,
+) 
+{}
 
 async findByEmail(email: string): Promise<IUser | null> {
   if (!EmailValidator.validate(email)) {
@@ -31,46 +28,44 @@ async findByEmail(email: string): Promise<IUser | null> {
   }
 }
 
-async findById(id: string, context: IContext) {
-  try {
-    if (!id || typeof id !== 'string' || id.trim() === '') {
+ async findById(id: string, context?: IContext): Promise<IUser | null> {
+    if (!context?.user) {
+    throw new AuthenticationError('Authentication required');
+  }
+    // 参数验证
+    if (!id || typeof id !== 'string' || !id.trim()) {
       throw new UserInputError('Invalid ID');
     }
 
-    if (!context?.user) {
-      throw new AuthenticationError('Authentication required');
+    try {
+      const user = await this.userRepo.findById(id);
+
+      if (!user) return null;
+
+      // 权限检查
+      if (!context?.user) {
+        throw new AuthenticationError('Authentication required');
+      }
+
+      if (context.user.role !== Role.ADMIN && context.user.profile.UserId !== user.profile.UserId) {
+        throw new ForbiddenError('Access denied: Cannot access other users');
+      }
+
+      return user;
+    } catch (error) {
+      // 只封装未知异常，已知异常透传
+      if (
+        error instanceof UserInputError ||
+        error instanceof AuthenticationError ||
+        error instanceof ForbiddenError
+      ) {
+        throw error; // 透传
+      }
+
+      // 未知错误（例如 Repo 抛错）
+      throw new UserInputError('Failed to fetch user');
     }
-
-    const user = await this.userRepo.findById(id);
-
-    if (!user) return null;
-
-    // 权限检查
-    const isAdmin = context.user.role === Role.ADMIN;
-    const isSelf = context.user.profile.UserId === id;
-
-    if (!isAdmin && !isSelf) {
-      throw new ForbiddenError(
-        'Access denied: Cannot access other users'
-      );
-    }
-
-    return user;
-
-  } catch (error) {
-    if (
-      error instanceof UserInputError ||
-      error instanceof AuthenticationError ||
-      error instanceof ForbiddenError
-    ) {
-      throw error;
-    }
-
-    // 统一转换数据库错误
-    throw new UserInputError('Failed to fetch user');
   }
-}
-
 
   async createOAuthUser({ email, profile }: { email: string; profile: any }): Promise<IUser> {
     // 1️⃣ Fast path

@@ -1,7 +1,6 @@
 // src/subgraphs/user/resolvers/index.ts
-import { GraphQLError } from "graphql";
-import { ERROR_CODES } from "../../../shared/errors/errorCodes.js";
-import { TOKENS } from "../../../shared/container/tokens.js";
+
+import { TOKENS } from "../../../shared/container/tokens";
 import { IUser } from "../models/user.model.js";
 
 interface ResolverContext {
@@ -18,12 +17,12 @@ interface UserReference {
 export default {
 
   Query: {
-    userById: (_, { id }: { id: string }, { container }: ResolverContext) =>
+    userById: (_:unknown, { id }: { id: string }, { container }: ResolverContext) =>
       container
         .resolve(TOKENS.user.userService)
         .findById(id),
 
-    userByEmail: (_, { email }: { email: string }, { container }: ResolverContext) =>
+    userByEmail: (_:unknown, { email }: { email: string }, { container }: ResolverContext) =>
       container
         .resolve(TOKENS.user.userService)
         .findByEmail(email),
@@ -38,14 +37,14 @@ export default {
   },
 
   Mutation: {
-    createOAuthUser: (_, { input }: { input: { email: string; profile: any } }, { container }: ResolverContext) => {
+    createOAuthUser: (_:unknown, { input }: { input: { email: string; profile: any } }, { container }: ResolverContext) => {
       console.log("🔥 USER SUBGRAPH RESOLVER HIT");
       console.log("resolver hit");
       const userService = container
         .resolve(TOKENS.user.userService);
       return userService.createOAuthUser(input);
     },
-    deactivateUser: (_, { userId }: { userId: string }, { services }: ResolverContext) =>
+    deactivateUser: (_:unknown, { userId }: { userId: string }, { services }: ResolverContext) =>
       services.userService.deactivate(userId),
   },
 }

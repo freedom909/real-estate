@@ -1,6 +1,6 @@
 // src/shared/container/root.container.js
-import createContainer from "./createContainer.js";
-import { TOKENS } from "./tokens.js";
+import createContainer from "./createContainer";
+import { TOKENS } from "./tokens";
 import Redis from "ioredis";
 
 export const container = createContainer();
