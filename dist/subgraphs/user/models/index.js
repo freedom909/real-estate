@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { container } from "tsyringe";
-import UserModel from "../models/user.model.js";
+import UserModel from "./user.model.js";
 import CredentialModel from "../models/credential.js";
 import UserRepo from "../repos/user.repo.js";
 import UserService from "../services/user.service.js";

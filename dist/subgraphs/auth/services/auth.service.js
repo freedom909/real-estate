@@ -25,6 +25,7 @@ export default class AuthService {
      * =====================================================
      */
     async oauthLoginWithIdToken(provider, idToken, ctx = {}) {
+        console.log("App token:", idToken);
         const familyId = randomUUID();
         const oauthUser = await this.oauthService.verifyIdToken(provider, idToken);
         const { sub: providerUserId, email, emailVerified, name, picture, } = oauthUser;
@@ -174,6 +175,7 @@ export default class AuthService {
      * =====================================================
      */
     async bindOAuthAccount(provider, idToken, ctx) {
+        console.log("App token:", idToken);
         const { userId, ip, deviceId } = ctx;
         if (!userId) {
             throw new Error("UNAUTHORIZED");

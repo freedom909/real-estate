@@ -33,7 +33,7 @@ constructor(deps) {
 
     const oauthUser =
       await this.oauthService.verifyIdToken(provider, idToken);
-
+      
     const {
       sub: providerUserId,
       email,

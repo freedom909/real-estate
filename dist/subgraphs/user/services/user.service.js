@@ -1,13 +1,11 @@
 // src/subgraphs/user/services/user.service.ts
 import * as EmailValidator from 'email-validator';
-import { Role } from "../models/user.model";
-import { UserInputError } from "../../../infrastructure/utils/errors";
+import { Role } from "../../../shared/types/role";
+import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
 export default class UserService {
-    constructor(userRepo) {
-        if (!userRepo) {
-            throw new Error("UserService: userRepo is required");
-        }
+    constructor(userRepo, permissionService) {
         this.userRepo = userRepo;
+        this.permissionService = permissionService;
     }
     async findByEmail(email) {
         if (!EmailValidator.validate(email)) {
@@ -20,8 +18,37 @@ export default class UserService {
             throw new UserInputError("Failed to fetch user");
         }
     }
-    async findById(id) {
-        return this.userRepo.findById(id); // is not a function
+    async findById(id, context) {
+        if (!context?.user) {
+            throw new AuthenticationError('Authentication required');
+        }
+        // 参数验证
+        if (!id || typeof id !== 'string' || !id.trim()) {
+            throw new UserInputError('Invalid ID');
+        }
+        try {
+            const user = await this.userRepo.findById(id);
+            if (!user)
+                return null;
+            // 权限检查
+            if (!context?.user) {
+                throw new AuthenticationError('Authentication required');
+            }
+            if (context.user.role !== Role.ADMIN && context.user.profile.UserId !== user.profile.UserId) {
+                throw new ForbiddenError('Access denied: Cannot access other users');
+            }
+            return user;
+        }
+        catch (error) {
+            // 只封装未知异常，已知异常透传
+            if (error instanceof UserInputError ||
+                error instanceof AuthenticationError ||
+                error instanceof ForbiddenError) {
+                throw error; // 透传
+            }
+            // 未知错误（例如 Repo 抛错）
+            throw new UserInputError('Failed to fetch user');
+        }
     }
     async createOAuthUser({ email, profile }) {
         // 1️⃣ Fast path
@@ -31,7 +58,7 @@ export default class UserService {
         // 2️⃣ Try create
         try {
             return await this.userRepo.create({
-                role: Role.USER,
+                role: Role.CUSTOMER,
                 status: "ACTIVE",
                 profile: {
                     UserId: profile.id,
@@ -50,7 +77,7 @@ export default class UserService {
         }
     }
     async deactivate(userId) {
-        await this.userRepo.deactivate(userId); // 
+        await this.userRepo.deactivate(userId); //
         return true;
     }
 }

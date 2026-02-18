@@ -1,3 +1,4 @@
+import PolicyEngine from "@/security/policy.engine";
 
 
 export const TOKENS = {
@@ -47,6 +48,10 @@ export const TOKENS = {
     userModel: Symbol("user.userModel"),
     profileModel: Symbol("user.profileModel"),
   },
+  security:{
+  policyEngine: Symbol("security.policyEngine"),
+}
 } as const;
+
 
 export type TOKENS_TYPE = typeof TOKENS;

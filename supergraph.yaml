@@ -1,17 +1,17 @@
 federation_version: 2
 
 subgraphs:
-  # auth:
-  #   routing_url: http://localhost:4010/graphql
-  #   schema:
-  #     subgraph_url: http://localhost:4010/graphql
+  auth:
+    routing_url: http://localhost:4010/graphql
+    schema:
+      subgraph_url: http://localhost:4010/graphql
 
   user:
     routing_url: http://localhost:4020/graphql
     schema:
       subgraph_url: http://localhost:4020/graphql
 
-  # property:
-  #   routing_url: http://localhost:4030/graphql
-  #   schema:
-  #     subgraph_url: http://localhost:4030/graphql
+  property:
+    routing_url: http://localhost:4030/graphql
+    schema:
+      subgraph_url: http://localhost:4030/graphql

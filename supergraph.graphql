@@ -31,13 +31,46 @@ enum AccountStatus
   DELETED @join__enumValue(graph: USER)
 }
 
+type AdminMergePreview
+  @join__type(graph: AUTH)
+{
+  fromUser: MergeUserSnapshot!
+  toUser: MergeUserSnapshot!
+  credentialsToMove: [CredentialPreview!]!
+  refreshTokensToMove: Int!
+  warnings: [String!]!
+  mergeAllowed: Boolean!
+}
+
+type AdminMergeResult
+  @join__type(graph: AUTH)
+{
+  success: Boolean!
+  mergedFrom: ID!
+  mergedInto: ID!
+}
+
 enum ApprovalStatus
+  @join__type(graph: PROPERTY)
   @join__type(graph: USER)
 {
-  NONE @join__enumValue(graph: USER)
-  PENDING @join__enumValue(graph: USER)
-  APPROVED @join__enumValue(graph: USER)
-  REJECTED @join__enumValue(graph: USER)
+  NONE @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  PENDING @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  APPROVED @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  REJECTED @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+}
+
+type AuthPayload
+  @join__type(graph: AUTH)
+{
+  user: User!
+  accessToken: String!
+}
+
+type AuthTokens
+  @join__type(graph: AUTH)
+{
+  accessToken: String!
 }
 
 input CreateOAuthUserInput
@@ -47,7 +80,18 @@ input CreateOAuthUserInput
   profile: ProfileInput
 }
 
+type CredentialPreview
+  @join__type(graph: AUTH)
+{
+  id: ID!
+  provider: OAuthProvider!
+  email: String
+  lastLoginAt: DateTime
+}
+
 scalar DateTime
+  @join__type(graph: AUTH)
+  @join__type(graph: PROPERTY)
   @join__type(graph: USER)
 
 input join__ContextArgument {
@@ -64,6 +108,8 @@ scalar join__FieldSet
 scalar join__FieldValue
 
 enum join__Graph {
+  AUTH @join__graph(name: "auth", url: "http://localhost:4010/graphql")
+  PROPERTY @join__graph(name: "property", url: "http://localhost:4030/graphql")
   USER @join__graph(name: "user", url: "http://localhost:4020/graphql")
 }
 
@@ -81,11 +127,42 @@ enum link__Purpose {
   EXECUTION
 }
 
+type MergeUserSnapshot
+  @join__type(graph: AUTH)
+{
+  userId: ID!
+  email: String
+  role: Role!
+  createdAt: DateTime
+  credentialCount: Int!
+  providers: [OAuthProvider!]!
+}
+
 type Mutation
+  @join__type(graph: AUTH)
+  @join__type(graph: PROPERTY)
   @join__type(graph: USER)
 {
-  createOAuthUser(input: CreateOAuthUserInput!): User!
-  deactivateUser(userId: ID!): Boolean!
+  oauthLogin(provider: OAuthProvider!, idToken: String!): AuthPayload! @join__field(graph: AUTH)
+  refreshToken: AuthTokens! @join__field(graph: AUTH)
+  logout: Boolean! @join__field(graph: AUTH)
+  revokeToken: Boolean! @join__field(graph: AUTH)
+  bindOAuth(provider: OAuthProvider!, idToken: String!): User! @join__field(graph: AUTH)
+  unbindOAuth(provider: OAuthProvider!): User! @join__field(graph: AUTH)
+  revokeSession(sessionId: String!): Boolean! @join__field(graph: AUTH)
+  createProperty(title: String!, price: Int!): Property @join__field(graph: PROPERTY)
+  deleteProperty(id: ID!): Boolean @join__field(graph: PROPERTY)
+  createOAuthUser(input: CreateOAuthUserInput!): User! @join__field(graph: USER)
+  deactivateUser(userId: ID!): Boolean! @join__field(graph: USER)
+}
+
+enum OAuthProvider
+  @join__type(graph: AUTH)
+{
+  GOOGLE @join__enumValue(graph: AUTH)
+  FACEBOOK @join__enumValue(graph: AUTH)
+  GITHUB @join__enumValue(graph: AUTH)
+  APPLE @join__enumValue(graph: AUTH)
 }
 
 type Profile
@@ -102,32 +179,89 @@ input ProfileInput
   avatar: String
 }
 
+type Property
+  @join__type(graph: PROPERTY, key: "id")
+{
+  id: ID!
+  title: String!
+  price: Int!
+  createdBy: User!
+  ownerId: ID!
+  agentId: ID
+  status: PropertyStatus!
+  approvalStatus: ApprovalStatus!
+  createdAt: DateTime!
+}
+
+enum PropertyStatus
+  @join__type(graph: PROPERTY)
+{
+  DRAFT @join__enumValue(graph: PROPERTY)
+  PUBLISHED @join__enumValue(graph: PROPERTY)
+  SOLD @join__enumValue(graph: PROPERTY)
+  RENTED @join__enumValue(graph: PROPERTY)
+  ARCHIVED @join__enumValue(graph: PROPERTY)
+}
+
 type Query
+  @join__type(graph: AUTH)
+  @join__type(graph: PROPERTY)
   @join__type(graph: USER)
 {
-  userByEmail(email: String!): User
-  userById(id: ID!): User
+  me: User @join__field(graph: AUTH)
+  user(id: ID!): User @join__field(graph: AUTH)
+  mySessions: [Session!]! @join__field(graph: AUTH)
+  OnlineSessions: [Session!]! @join__field(graph: AUTH)
+  properties: [Property] @join__field(graph: PROPERTY)
+  userByEmail(email: String!): User @join__field(graph: USER)
+  userById(id: ID!): User @join__field(graph: USER)
+}
+
+type RiskEvent
+  @join__type(graph: AUTH)
+{
+  userId: ID!
+  type: String
+  provider: OAuthProvider
+  ip: String
+  userAgent: String
+  createdAt: DateTime
+  deviceId: String
 }
 
 enum Role
+  @join__type(graph: AUTH)
+  @join__type(graph: PROPERTY)
   @join__type(graph: USER)
 {
-  ADMIN @join__enumValue(graph: USER)
-  AGENT @join__enumValue(graph: USER)
-  OWNER @join__enumValue(graph: USER)
-  CUSTOMER @join__enumValue(graph: USER)
+  ADMIN @join__enumValue(graph: AUTH) @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  AGENT @join__enumValue(graph: AUTH) @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  OWNER @join__enumValue(graph: AUTH) @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+  CUSTOMER @join__enumValue(graph: AUTH) @join__enumValue(graph: PROPERTY) @join__enumValue(graph: USER)
+}
+
+type Session
+  @join__type(graph: AUTH)
+{
+  id: ID!
+  deviceId: String
+  userAgent: String
+  ip: String
+  lastSeenAt: DateTime
 }
 
 """User subgraph µÿ» User þÜäÕö»õ©Ç owner"""
 type User
+  @join__type(graph: AUTH, key: "id", extension: true)
+  @join__type(graph: PROPERTY, key: "id", extension: true)
   @join__type(graph: USER, key: "id")
 {
   id: ID!
-  profile: Profile!
-  email: String!
-  role: Role!
-  accountStatus: AccountStatus!
-  approvalStatus: ApprovalStatus!
-  tokenVersion: Int!
-  createdAt: DateTime!
+  profile: Profile! @join__field(graph: USER)
+  email: String! @join__field(graph: USER)
+  role: Role! @join__field(graph: USER)
+  accountStatus: AccountStatus! @join__field(graph: USER)
+  approvalStatus: ApprovalStatus! @join__field(graph: USER)
+  tokenVersion: Int! @join__field(graph: USER)
+  createdAt: DateTime! @join__field(graph: USER)
 }

@@ -1,15 +1,16 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import UserService, { IContext } from '@subgraphs/user/services/user.service';
-import UserRepo  from '@subgraphs/user/repos/user.repo';//
-import { IUser, Role } from '@subgraphs/user/models/user.model';
+import UserRepo from '@subgraphs/user/repos/user.repo';//
+import { IUserDB } from '@/subgraphs/user/models/user.model';
+import { Role } from '@/shared/types/role';
 import { AuthenticationError, ForbiddenError, UserInputError } from '@infrastructure/utils/errors';
-import PermissionService,{ IPermissionService } from '../../../../src/security/permission.service';
+import PermissionService, { IPermissionService } from '../../../security/permission.service';
 
 let mockPermissionService: jest.Mocked<IPermissionService>;
 describe('UserService', () => {
   let userService: UserService;
   let mockUserRepo: jest.Mocked<UserRepo>;
-  let mockUser: IUser;
+  let mockUser: IUserDB;
 
   beforeEach(() => {
     mockUserRepo = { //
@@ -22,8 +23,8 @@ describe('UserService', () => {
     mockPermissionService = {
       canAccessUser: jest.fn(),
     } as unknown as jest.Mocked<IPermissionService>;
-    
-    userService = new UserService(mockUserRepo,mockPermissionService);
+
+    userService = new UserService(mockUserRepo, mockPermissionService);
 
     // ✅ 不要 const
     mockUser = { //
@@ -35,7 +36,7 @@ describe('UserService', () => {
         name: 'Test User',
         avatar: 'avatar-url'
       },
-      role: Role.USER,
+      role: Role.CUSTOMER,
       status: 'ACTIVE',
       tokenVersion: 0,
       createdAt: new Date(),
@@ -50,7 +51,16 @@ describe('UserService', () => {
 
       const result = await userService.findByEmail(email);
 
-      expect(result).toEqual(mockUser);
+      expect(result).toEqual({
+        id: "mock-id",
+        profile: mockUser.profile,
+        role: mockUser.role,
+        status: mockUser.status,
+        tokenVersion: mockUser.tokenVersion,
+        createdAt: mockUser.createdAt,
+        updatedAt: mockUser.updatedAt,
+      });
+
       expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(email);
     });
 
@@ -128,7 +138,7 @@ describe('UserService', () => {
     it('should allow admin to access another user', async () => {
       mockUserRepo.findById.mockResolvedValue(mockUser);
 
-      const admin: IUser = {
+      const admin: IUserDB = {
         ...mockUser,
         role: Role.ADMIN
       };
@@ -192,7 +202,7 @@ describe('UserService', () => {
       expect(result).toEqual(mockUser);
       expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(oauthInput.email);
       expect(mockUserRepo.create).toHaveBeenCalledWith({
-        role: Role.USER,
+        role: Role.CUSTOMER,
         status: 'ACTIVE',
         profile: {
           UserId: oauthInput.profile.id,
@@ -206,7 +216,7 @@ describe('UserService', () => {
     it('should handle race condition (Duplicate Key 11000) by fetching user again', async () => {
       // 1. First find returns null (user doesn't exist yet)
       mockUserRepo.findByEmail.mockResolvedValueOnce(null);
-      
+
       // 2. Create throws Duplicate Key error (simulating race condition)
       const duplicateError: any = new Error('Duplicate key');
       duplicateError.code = 11000;
@@ -232,7 +242,7 @@ describe('UserService', () => {
 
     it('should throw error if initial findByEmail fails', async () => {
       mockUserRepo.findByEmail.mockRejectedValue(new Error('Network error'));
-      
+
       await expect(userService.createOAuthUser(oauthInput)).rejects.toThrow('Network error');
     });
   });
@@ -264,5 +274,5 @@ describe('PermissionService', () => {
     expect(() =>
       permissionService.canAccessUser(baseUser, 'another')
     ).toThrow(ForbiddenError);
-  }); 
+  });
 });

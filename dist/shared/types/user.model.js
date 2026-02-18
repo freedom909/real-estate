@@ -1,7 +1,7 @@
 // user.model.ts
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
-import { Role } from "../../../shared/types/role";
+import { Role } from "./role";
 const userSchema = new mongoose.Schema({
     profile: {
         UserId: { type: String, required: true, unique: true, immutable: true },

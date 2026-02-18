@@ -116,6 +116,7 @@ export default class AuthService {
    * =====================================================
    */
   async oauthLoginWithIdToken(provider: string, idToken: string, ctx: LoginContext = {}): Promise<any> {
+    console.log("App token:", idToken);
     const familyId = randomUUID();
 
     const oauthUser: OAuthUser = await this.oauthService.verifyIdToken(provider, idToken);
@@ -317,6 +318,7 @@ export default class AuthService {
    * =====================================================
    */
   async bindOAuthAccount(provider: string, idToken: string, ctx: OAuthLoginContext): Promise<boolean> {
+  console.log("App token:", idToken);
     const { userId, ip, deviceId } = ctx;
 
     if (!userId) {
@@ -324,6 +326,7 @@ export default class AuthService {
     }
 
     const oauth: OAuthUser = await this.oauthService.verifyIdToken(provider, idToken);
+
 
     const {
       sub: providerUserId,

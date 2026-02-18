@@ -1,9 +1,7 @@
 // user.model.js
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
-
-export const Role = { USER: "USER", AGENT: "AGENT", ADMIN: "ADMIN", GUEST: "GUEST", PENDING_AGENT: "PENDING_AGENT" };
-
+import Role from "../../../shared/types/role.js"
 const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true, immutable: true },
   email: { type: String, required: true, unique: true, trim: true, lowercase: true },

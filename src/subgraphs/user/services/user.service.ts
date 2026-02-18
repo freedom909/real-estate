@@ -1,37 +1,41 @@
 // src/subgraphs/user/services/user.service.ts
 import * as EmailValidator from 'email-validator';
 import UserRepo from "../repos/user.repo";
-import  { IUser, Role, UserDocument } from "../models/user.model";
+import { IUserDB, UserDocument } from "../models/user.model";
+import { Role } from "../../../shared/types/role";
 import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
 import IPermissionService from "../../../security/permission.service";
+import { IUser } from "../../../shared/types/user";
 
+import { mapToDomain } from '../models/mapToDomain';
 export interface IContext {
-  user?: IUser;
+  user?: IUserDB;
 }
 
 export default class UserService {
-constructor(
-  private readonly userRepo: UserRepo,
-  private readonly permissionService: IPermissionService,
-) 
-{}
+  constructor(
+    private readonly userRepo: UserRepo,
+    private readonly permissionService: IPermissionService,
+  ) { }
 
-async findByEmail(email: string): Promise<IUser | null> {
-  if (!EmailValidator.validate(email)) {
-    throw new UserInputError("Invalid email")
+  async findByEmail(email: string): Promise<IUser | null> {
+    if (!EmailValidator.validate(email)) {
+      throw new UserInputError("Invalid email");
+    }
+    try {
+      const userDB = await this.userRepo.findByEmail(email)
+      if (!userDB) return null;
+      return mapToDomain(userDB);
+    }
+    catch (error) {
+      throw new UserInputError("Failed to fetch user");
+    }
   }
 
-  try {
-    return await this.userRepo.findByEmail(email)
-  } catch (err) {
-    throw new UserInputError("Failed to fetch user")
-  }
-}
-
- async findById(id: string, context?: IContext): Promise<IUser | null> {
+  async findById(id: string, context?: IContext): Promise<IUserDB | null> {
     if (!context?.user) {
-    throw new AuthenticationError('Authentication required');
-  }
+      throw new AuthenticationError('Authentication required');
+    }
     // 参数验证
     if (!id || typeof id !== 'string' || !id.trim()) {
       throw new UserInputError('Invalid ID');
@@ -67,7 +71,7 @@ async findByEmail(email: string): Promise<IUser | null> {
     }
   }
 
-  async createOAuthUser({ email, profile }: { email: string; profile: any }): Promise<IUser> {
+  async createOAuthUser({ email, profile }: { email: string; profile: any }): Promise<IUserDB> {
     // 1️⃣ Fast path
     const existing = await this.userRepo.findByEmail(email);
     if (existing) return existing;
@@ -76,7 +80,7 @@ async findByEmail(email: string): Promise<IUser | null> {
     try {
       return await this.userRepo.create({
 
-        role: Role.USER,
+        role: Role.CUSTOMER,
         status: "ACTIVE",
         profile: {
           UserId: profile.id,

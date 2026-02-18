@@ -39,4 +39,7 @@ export const TOKENS = {
         userModel: Symbol("user.userModel"),
         profileModel: Symbol("user.profileModel"),
     },
+    security: {
+        policyEngine: Symbol("security.policyEngine"),
+    }
 };
