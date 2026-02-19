@@ -23,6 +23,7 @@ export const TOKENS = {
     credentialModel: Symbol("auth.credentialModel"),
     refreshTokenModel: Symbol("auth.refreshTokenModel"),
     oauthAccountModel: Symbol('oauthAccountModel'),
+    sessionModel: Symbol('sessionModel'),
 
     // repos
     credentialRepo: Symbol("auth.credentialRepo"),

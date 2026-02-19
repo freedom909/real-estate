@@ -28,7 +28,7 @@ constructor(deps) {
    * 🔐 OAuth Login with ID Token (Google / Apple / etc.)
    * =====================================================
    */
-  async oauthLoginWithIdToken(provider, idToken, ctx = {}) {
+  async oauthLogin(provider, idToken, ctx = {}) {
     const familyId = randomUUID();
 
     const oauthUser =

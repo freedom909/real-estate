@@ -1,12 +1,16 @@
-function mapToDomain(doc) {
+export function mapToDomain(user) {
     return {
-        id: doc._id.toString(),
-        profile: doc.profile,
-        role: doc.role,
-        status: doc.status,
-        tokenVersion: doc.tokenVersion,
-        createdAt: doc.createdAt,
-        updatedAt: doc.updatedAt,
+        id: user._id.toString(),
+        profile: {
+            UserId: user.profile.UserId,
+            email: user.profile.email,
+            name: user.profile.name,
+            avatar: user.profile.avatar,
+        },
+        role: user.role,
+        status: user.status,
+        tokenVersion: user.tokenVersion,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
     };
 }
-export {};

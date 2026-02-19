@@ -34,8 +34,7 @@ export function authenticate({ redis }: AuthenticateOptions) {
         process.env.ACCESS_TOKEN_SECRET!
       ) as UserPayload;
 
-      (req as any).user = payload;//プロパティ 'user' は型 'Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>' に存在しません。
-
+      (req as any).user = payload;
       // ✅ Heartbeat
       if (payload.sessionId) {
         await touchSession(

@@ -1,4 +1,4 @@
-import "reflect-metadata";
+// import "reflect-metadata";
 import { container } from "tsyringe";
 import UserModel from "./user.model.js";
 import CredentialModel from "../models/credential.js";

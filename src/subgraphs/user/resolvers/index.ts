@@ -1,6 +1,6 @@
 // src/subgraphs/user/resolvers/index.ts
 
-import { Action, Resource } from "@/shared/types/types";
+import { Action, Resource } from "../../../shared/types/types";
 import { TOKENS } from "../../../shared/container/tokens";
 import { IUserDB } from "../models/user.model.js";
 import { ForbiddenError } from "@/infrastructure/utils/errors";

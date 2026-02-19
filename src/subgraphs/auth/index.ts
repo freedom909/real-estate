@@ -1,3 +1,4 @@
+//src/subgraphs/auth/index.ts
 import "dotenv/config";
 import express from 'express'
 import http from 'http'
@@ -8,15 +9,19 @@ import { readFileSync } from 'fs';
 import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@as-integrations/express4'
 import { buildSubgraphSchema } from '@apollo/subgraph'
-import redis from "../../infrastructure/redis/redis.js";
+import { createRedis } from "../../infrastructure/redis/redis.js";
 import { createAuthContainer } from './container/auth.container.js'
 import resolvers from './resolvers/resolver.js'
 import mongoose from 'mongoose'
 import { userApolloClient } from "../../infrastructure/userApolloClient.js";
+import { GraphQLError } from "graphql";
+
+const redis = createRedis();
 
 await mongoose.connect(
   process.env.MONGO_URI || "mongodb://localhost:27017/water_auth"
 );
+console.log("Redis instance =", redis);
 
 console.log(
   "BOOT (AUTH) USER_SUBGRAPH_URL =",
@@ -39,7 +44,6 @@ try {
   console.error('❌ Fatal error building subgraph schema:', schemaError);
   // Log the full error details, which are often very helpful for federation issues.
   console.error(JSON.stringify(schemaError, null, 2));
-  process.exit(1); // Exit if schema is invalid, as the server cannot run.
 }
 
 const server = new ApolloServer({
@@ -50,21 +54,6 @@ await server.start();
 const app = express();
 const httpServer = http.createServer(app);
 
-app.use(
-  "/graphql",
-  cors({ origin: "http://localhost:3000", credentials: true }),
-  express.json(),
-  cookieParser(),
-  expressMiddleware(server, {
-    context: async ({ req, res }) => ({
-      req,
-      res,
-      container,
-      user: req.user ?? null,
-    }),
-  })
-);
-
 app.use(cookieParser());
 
 interface CustomRequest extends express.Request {
@@ -72,17 +61,46 @@ interface CustomRequest extends express.Request {
 }
 
 app.use((req: CustomRequest, res, next) => {
-  if (req.method === "POST") {
-    const csrfHeader = req.headers["x-csrf-token"];
-    const csrfCookie = req.cookies?.csrf_token;
-    console.log("🔐 Auth req.cookies:", req.cookies);
+  if (req.method === "POST" && req.path === "/graphql") {
+    const query = req.body?.query ?? "";
 
-    if (!csrfHeader || csrfHeader !== csrfCookie) {
-      return res.status(403).json({ error: "CSRF validation failed" });
+    const isMutation = query.trim().startsWith("mutation");
+    const isLogin = query.includes("oauthLogin");
+
+    if (isMutation && !isLogin) {
+      const csrfHeader = req.headers["x-csrf-token"];
+      const csrfCookie = req.cookies?.csrf_token;
+
+      if (!csrfHeader || csrfHeader !== csrfCookie) {
+        return next(
+          new GraphQLError("CSRF validation failed", {
+            extensions: { code: "FORBIDDEN" },
+          })
+        );
+      }
+
     }
   }
+
   next();
 });
+
+
+app.use(
+  "/graphql",
+  cors({ origin: "http://localhost:3000", credentials: true }),
+  express.json(),
+  expressMiddleware(server, {
+    context: async ({ req, res }) => ({
+      req,
+      res,
+      container,
+      redis,
+      user: req.user ?? null,
+    }),
+  })
+);
+console.log("Redis instance =", redis);
 
 httpServer.listen(4010, () => {
   console.log("🔐 Auth subgraph running at http://localhost:4010/graphql");

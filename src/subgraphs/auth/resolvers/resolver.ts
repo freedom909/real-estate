@@ -48,7 +48,7 @@ const listOnlineSessions = (redis: any) => {
 
 export default {
   Query: {
-    me: async (_:unknown, __:unknown, { user }: Context) => {
+    me: async (_: unknown, __: unknown, { user }: Context) => {
       if (!user) return null;
 
       return {
@@ -62,7 +62,7 @@ export default {
       return requireScope(["session:read"])(
         ctx,
         () =>
-          sessionRepo.listByUser(ctx.user!.sub)
+          sessionRepo.listByUser(ctx.user!.userId)
       );
     },
     OnlineSessions: async (_, __, ctx: Context) => {
@@ -71,7 +71,7 @@ export default {
         () =>
           listOnlineSessions(ctx.redis!)
             .filter(
-              (s: any) => s.userId === ctx.user!.sub
+              (s: any) => s.userId === ctx.user!.userId
             )
       );
     },
@@ -145,10 +145,11 @@ export default {
     },
 
     oauthLogin: async (
-      _:unknown,
+      _: unknown,
       { provider, idToken }: { provider: string; idToken: string },
-      { container, req, res }: Context 
+      { container, req, res }: Context
     ) => {
+      console.log("LOGIN resolver triggered");
       const oauthAdapter = container.resolve(TOKENS.auth.oauthAdapter);
 
       // 1️⃣ 验证第三方 token
@@ -163,9 +164,9 @@ export default {
           deviceId: req.headers["x-device-id"],
           userAgent: req.headers["user-agent"],
         });
-       
-      setAuthCookies(res, result);
-      console.log("🍪 setting refresh_token cookie");
+      console.log("res is:", res);
+      console.log("result is:", result);
+
       return result;
     },
 

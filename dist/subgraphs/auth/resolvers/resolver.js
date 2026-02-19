@@ -1,6 +1,5 @@
 // src/subgraphs/auth/resolver.ts
 import { TOKENS } from "../../../shared/container/tokens.js";
-import { setAuthCookies } from "../../../infrastructure/auth/setAuthCookies.js";
 const requireScope = (scopes) => (ctx, fn) => {
     // スコープチェックのロジックをここに実装
     // 便宜上、常にfnを実行するようにしています
@@ -28,11 +27,11 @@ export default {
             };
         },
         mySessions: async (_, __, ctx) => {
-            return requireScope(["session:read"])(ctx, () => sessionRepo.listByUser(ctx.user.sub));
+            return requireScope(["session:read"])(ctx, () => sessionRepo.listByUser(ctx.user.userId));
         },
         OnlineSessions: async (_, __, ctx) => {
             return requireScope(["session:read"])(ctx, () => listOnlineSessions(ctx.redis)
-                .filter((s) => s.userId === ctx.user.sub));
+                .filter((s) => s.userId === ctx.user.userId));
         },
     },
     Mutation: {
@@ -88,6 +87,7 @@ export default {
             return true;
         },
         oauthLogin: async (_, { provider, idToken }, { container, req, res }) => {
+            console.log("LOGIN resolver triggered");
             const oauthAdapter = container.resolve(TOKENS.auth.oauthAdapter);
             // 1️⃣ 验证第三方 token
             const profile = await oauthAdapter.parse(provider, idToken);
@@ -98,8 +98,8 @@ export default {
                 deviceId: req.headers["x-device-id"],
                 userAgent: req.headers["user-agent"],
             });
-            setAuthCookies(res, result);
-            console.log("🍪 setting refresh_token cookie");
+            console.log("res is:", res);
+            console.log("result is:", result);
             return result;
         },
         revokeSession: async (_, { sessionId }, ctx) => requireScope(["session:revoke"])(ctx, async () => {

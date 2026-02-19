@@ -1,17 +1,16 @@
 // src/subgraphs/auth/services/token/token.service.ts
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import path from "path";
 import { randomUUID } from "crypto";
-const PRIVATE_KEY_PATH = path.join(process.cwd(), "src/keys/private.pem");
-const PUBLIC_KEY_PATH = path.join(process.cwd(), "src/keys/public.pem");
+const PRIVATE_KEY_PATH = process.env.JWT_PRIVATE_KEY_PATH;
+const PUBLIC_KEY_PATH = process.env.JWT_PUBLIC_KEY_PATH;
 let PRIVATE_KEY;
 let PUBLIC_KEY;
 try {
     PRIVATE_KEY = fs.readFileSync(PRIVATE_KEY_PATH, "utf8");
     PUBLIC_KEY = fs.readFileSync(PUBLIC_KEY_PATH, "utf8");
-    console.log("CWD:", process.cwd());
-    console.log("Private key path:", PRIVATE_KEY_PATH);
+    console.log("AUTH using private key:", PRIVATE_KEY_PATH);
+    console.log("AUTH using public key:", PUBLIC_KEY_PATH);
 }
 catch (error) {
     console.error("Failed to load JWT keys:", error.message);
@@ -53,16 +52,17 @@ export default class TokenService {
     }
     // Alias for compatibility with RefreshTokenService
     signRefreshToken(payload) {
-        const options = {
+        const jti = randomUUID();
+        const token = jwt.sign({
+            ...payload,
+            type: "refresh",
+        }, PRIVATE_KEY, {
             algorithm: this.algorithm,
             issuer: this.issuer,
             expiresIn: this.refreshExpiresIn,
-            jwtid: randomUUID(), // ✅ 关键：jti
-        };
-        return jwt.sign({
-            ...payload,
-            type: "refresh",
-        }, PRIVATE_KEY, options);
+            jwtid: jti,
+        });
+        return { token, jti };
     }
     get accessTokenTTL() {
         return process.env.ACCESS_TOKEN_TTL || "15m";
@@ -86,6 +86,7 @@ export default class TokenService {
                 algorithms: [this.algorithm],
                 issuer: this.issuer,
             };
+            console.log("issuer", this.issuer);
             payload = jwt.verify(token, PUBLIC_KEY, options);
         }
         catch (error) {
@@ -107,6 +108,7 @@ export default class TokenService {
                 algorithms: [this.algorithm],
                 issuer: this.issuer,
             };
+            console.log("SIGNING issuer:", this.issuer);
             const decoded = jwt.verify(token, PUBLIC_KEY, options);
             return decoded;
         }
@@ -143,7 +145,7 @@ export default class TokenService {
             sub: userId,
             tokenVersion,
         });
-        const refreshToken = this.signRefreshToken({
+        const { token: refreshToken, jti } = this.signRefreshToken({
             sub: userId,
             tokenVersion,
             familyId,
@@ -152,6 +154,7 @@ export default class TokenService {
         return {
             accessToken,
             refreshToken,
+            refreshJti: jti,
         };
     }
 }

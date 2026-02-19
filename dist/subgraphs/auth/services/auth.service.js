@@ -21,60 +21,6 @@ export default class AuthService {
     }
     /**
      * =====================================================
-     * 🔐 OAuth Login with ID Token (Google / Apple / etc.)
-     * =====================================================
-     */
-    async oauthLoginWithIdToken(provider, idToken, ctx = {}) {
-        console.log("App token:", idToken);
-        const familyId = randomUUID();
-        const oauthUser = await this.oauthService.verifyIdToken(provider, idToken);
-        const { sub: providerUserId, email, emailVerified, name, picture, } = oauthUser;
-        if (!providerUserId) {
-            throw new Error("INVALID_OAUTH_TOKEN");
-        }
-        // 1️⃣ Existing OAuth credential
-        const existing = await this.credentialRepo.findByProviderSub({
-            provider,
-            providerSub: providerUserId,
-        });
-        if (existing) {
-            return this._login(existing.userId, {
-                ...ctx,
-                familyId,
-            });
-        }
-        // 2️⃣ Try link by verified email
-        let user = null;
-        if (email && emailVerified) {
-            user = await this.userClient.findByEmail(email);
-        }
-        // 3️⃣ Create user if needed
-        if (!user) {
-            user = await this.userClient.createOAuthUser({
-                email,
-                familyId,
-                profile: {
-                    name,
-                    avatar: picture,
-                },
-            });
-        }
-        // 4️⃣ Bind credential
-        await this.credentialRepo.create({
-            userId: user.id,
-            provider,
-            providerSub: providerUserId,
-            email,
-            source: "OAUTH_LOGIN",
-            familyId,
-        });
-        return this._login(user.id, {
-            ...ctx,
-            familyId,
-        });
-    }
-    /**
-     * =====================================================
      * 🔐 OAuth Login (Profile-based, legacy / frontend)
      * =====================================================
      */

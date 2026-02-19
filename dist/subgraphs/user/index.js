@@ -1,4 +1,8 @@
+//src/subgraphs/user/index.ts
+console.log("🔥🔥🔥 USER ENTRY STARTED 🔥🔥🔥");
 import "dotenv/config";
+import "reflect-metadata";
+console.log("reflect loaded");
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -29,6 +33,7 @@ const server = new ApolloServer({
 await server.start();
 app.use("/graphql", cors(), express.json(), expressMiddleware(server, {
     context: async ({ req }) => {
+        console.log("User received headers:", req.headers);
         const userHeader = req.headers["x-user"];
         if (userHeader) {
             console.log("🟢 x-user:", userHeader);
@@ -40,5 +45,5 @@ app.use("/graphql", cors(), express.json(), expressMiddleware(server, {
     },
 }));
 httpServer.listen(4020, () => {
-    console.log("👤 User subgraph running at http://localhost:4020/graphql");
+    console.log("👤 User 🔥🔥🔥 WHICH FILE IS THIS 🔥🔥🔥at http://localhost:4020/graphql");
 });

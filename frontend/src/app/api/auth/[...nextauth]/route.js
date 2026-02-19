@@ -76,7 +76,7 @@ await fetch("http://auth-subgraph/graphql", {
     body: JSON.stringify({
       query: `
         mutation ($provider: String!, $idToken: String!) {
-          oauthLoginWithIdToken( provider: $provider, idToken: $idToken) {
+          oauthLogin( provider: $provider, idToken: $idToken) {
             accessToken
           }
         }

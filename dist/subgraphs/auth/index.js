@@ -1,3 +1,4 @@
+//src/subgraphs/auth/index.ts
 import "dotenv/config";
 import express from 'express';
 import http from 'http';
@@ -42,6 +43,7 @@ app.use("/graphql", cors({ origin: "http://localhost:3000", credentials: true })
         req,
         res,
         container,
+        redis,
         user: req.user ?? null,
     }),
 }));

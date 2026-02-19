@@ -2,6 +2,7 @@
 import * as EmailValidator from 'email-validator';
 import { Role } from "../../../shared/types/role";
 import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
+import { mapToDomain } from '../models/mapToDomain';
 export default class UserService {
     constructor(userRepo, permissionService) {
         this.userRepo = userRepo;
@@ -12,9 +13,12 @@ export default class UserService {
             throw new UserInputError("Invalid email");
         }
         try {
-            return await this.userRepo.findByEmail(email);
+            const userDB = await this.userRepo.findByEmail(email);
+            if (!userDB)
+                return null;
+            return mapToDomain(userDB);
         }
-        catch (err) {
+        catch (error) {
             throw new UserInputError("Failed to fetch user");
         }
     }

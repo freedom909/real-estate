@@ -5,17 +5,23 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const PRIVATE_KEY_PATH = path.join(process.cwd(), "src/keys/private.pem");
-const PUBLIC_KEY_PATH = path.join(process.cwd(), "src/keys/public.pem");
+const PRIVATE_KEY_PATH = process.env.JWT_PRIVATE_KEY_PATH!;
+const PUBLIC_KEY_PATH = process.env.JWT_PUBLIC_KEY_PATH!;
+
 
 let PRIVATE_KEY: string;
 let PUBLIC_KEY: string;
 
 try {
-  PRIVATE_KEY = fs.readFileSync(PRIVATE_KEY_PATH, "utf8");
-  PUBLIC_KEY = fs.readFileSync(PUBLIC_KEY_PATH, "utf8");
-  console.log("CWD:", process.cwd());
-console.log("Private key path:", PRIVATE_KEY_PATH);
+ PRIVATE_KEY = fs.readFileSync(
+  path.resolve(process.env.JWT_PRIVATE_KEY_PATH!),
+  "utf8"
+);
+PUBLIC_KEY = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH, "utf8");
+
+console.log("AUTH using private key:", PRIVATE_KEY_PATH);
+console.log("AUTH using public key:", PUBLIC_KEY_PATH);
+
 
 } catch (error) {
   console.error("Failed to load JWT keys:", error.message);
@@ -44,6 +50,12 @@ interface RefreshTokenVerificationResult {
   userId: string;
   type: string;
   [key: string]: any;
+}
+
+export interface TokenPair {
+  accessToken: string
+  refreshToken: string
+  refreshJti: string
 }
 
 export default class TokenService {
@@ -86,7 +98,8 @@ export default class TokenService {
       issuer: this.issuer,
       expiresIn: (this.accessExpiresIn || "15m") as SignOptions["expiresIn"],
     };
-    
+    console.log("PRIVATE_KEY:", PRIVATE_KEY);
+    console.log("PUBLIC_KEY:", PUBLIC_KEY);
     return jwt.sign(
       {
         ...payload,
@@ -98,23 +111,29 @@ export default class TokenService {
   }
 
   // Alias for compatibility with RefreshTokenService
-  signRefreshToken(payload: TokenPayload): string {
-    const options: SignOptions = {
+signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
+  const jti = randomUUID();
+
+  const token = jwt.sign(
+   
+    {
+      ...payload,
+      type: "refresh",
+    },
+    PRIVATE_KEY,
+    {
       algorithm: this.algorithm,
       issuer: this.issuer,
       expiresIn: this.refreshExpiresIn,
-      jwtid: randomUUID(), // ✅ 关键：jti
-    };
+      jwtid: jti,
+    }
     
-    return jwt.sign(
-      {
-        ...payload,
-        type: "refresh",
-      },
-      PRIVATE_KEY,
-      options
-    );
-  }
+  );
+ console.log("PRIVATE_KEY:", PRIVATE_KEY),
+ console.log("PUBLIC_KEY:", PUBLIC_KEY)
+  return { token, jti };
+}
+
 
   get accessTokenTTL(): string {
     return process.env.ACCESS_TOKEN_TTL || "15m";
@@ -145,7 +164,7 @@ export default class TokenService {
         algorithms: [this.algorithm],
         issuer: this.issuer,
       };
-      
+      console.log("issuer", this.issuer)
       payload = jwt.verify(token, PUBLIC_KEY, options) as jwt.JwtPayload;
     } catch (error) {
       throw new Error(`Refresh token verification failed: ${error.message}`);
@@ -169,7 +188,7 @@ export default class TokenService {
         algorithms: [this.algorithm],
         issuer: this.issuer,
       };
-      
+       console.log("SIGNING issuer:", this.issuer);
       const decoded = jwt.verify(token, PUBLIC_KEY, options) as jwt.JwtPayload;
       return decoded as TokenPayload;
     } catch (error) {
@@ -199,13 +218,13 @@ export default class TokenService {
     return process.env.ACCESS_TOKEN_TTL || "15m";
   }
 
-  issueTokens({ userId, tokenVersion = 0, familyId, deviceId }: { userId: string; tokenVersion?: number; familyId?: string; deviceId?: string }): { accessToken: string; refreshToken: string } {
+  issueTokens({ userId, tokenVersion = 0, familyId, deviceId }): TokenPair {
     const accessToken: string = this.signAccessToken({
       sub: userId,
       tokenVersion,
     });
 
-    const refreshToken: string = this.signRefreshToken({
+    const { token: refreshToken, jti } = this.signRefreshToken({
       sub: userId,
       tokenVersion,
       familyId,
@@ -215,6 +234,9 @@ export default class TokenService {
     return {
       accessToken,
       refreshToken,
+      refreshJti: jti,
     };
+     
   }
+  
 }

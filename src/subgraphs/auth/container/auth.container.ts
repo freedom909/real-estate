@@ -4,6 +4,7 @@ import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
 
 // ===== models =====
 import CredentialModel from "../models/credential.model.js";
+import SessionModel from "../models/session.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
 import OAuthAccountModel from "../models/oauthAccounts.model.js";
 import UserModel from "../../user/models/user.model.js";
@@ -13,6 +14,8 @@ import RefreshTokenRepo from "../repos/refresh-token.repo.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
 import OAuthAccountRepo from "../repos/oauthAccount.repo.js";
 import UserRepo from "../repos/user.repo.js";
+import SessionRepo from "../repos/session.repo.js";
+
 // ===== services =====
 import LoginRiskService from "../services/risk/loginRisk.service.js";
 import TokenService from "../services/token/token.service.js";
@@ -29,6 +32,7 @@ import GoogleOAuthAdapter from "../adapters/oauth/google.adapter.js";
 import GitHubOAuthAdapter from "../adapters/oauth/github.adapter.js";
 import { RedisAdapter } from "./RedisAdapter.js";
 import MergeAccountService from "../../admin/Services/mergeAccount.service.js";
+import { createRedis } from "@/infrastructure/redis/redis.js";
 
 interface ContainerParams {
   redis: Redis;
@@ -52,6 +56,7 @@ export function createAuthContainer({ redis, userApi, refreshTokenRepo }: Contai
   if (refreshTokenRepo) {
     container.register(TOKENS.auth.refreshTokenRepo, () => refreshTokenRepo);
   }
+
   container.register(
   TOKENS.auth.userRepo,
   () =>
@@ -105,6 +110,15 @@ export function createAuthContainer({ redis, userApi, refreshTokenRepo }: Contai
       })
   );
 
+container.register(
+  TOKENS.auth.sessionRepo,
+  () =>
+    new SessionRepo({
+      SessionModel: container.resolve(TOKENS.auth.sessionModel),
+    })
+);
+
+
   container.register(
     TOKENS.auth.refreshTokenRepo,
     () =>
@@ -114,6 +128,11 @@ export function createAuthContainer({ redis, userApi, refreshTokenRepo }: Contai
         ),
       })
   );
+
+  container.register(
+  TOKENS.auth.sessionModel,
+  () => SessionModel
+);
 
 
 container.register(
@@ -216,7 +235,7 @@ container.register(
         ),
        
         refreshTokenRepo: container.resolve(
-          TOKENS.auth.refreshTokenService
+          TOKENS.auth.refreshTokenRepo
         ),
         loginRiskService: container.resolve(
           TOKENS.auth.loginRiskService
@@ -225,7 +244,7 @@ container.register(
           TOKENS.auth.credentialRepo
         ),
         sessionRepo: container.resolve(
-          TOKENS.auth.refreshTokenRepo
+          TOKENS.auth.sessionRepo
         ),
 
       })

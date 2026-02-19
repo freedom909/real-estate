@@ -34,12 +34,12 @@ export default function Auth() {
         console.log('🔑 Received Google credential token:', token);
         try {
             console.log('📡 Sending Google token to backend...');// I did not find output in the terminal
-            const result = await OAuthService.oauthLoginWithIdToken({ provider: "google", idToken: token });
+            const result = await OAuthService.oauthLogin({ provider: "google", idToken: token });
             console.log('📬 Backend response:', result);
 
             if (result.accessToken) {
-                localStorage.setItem("username", result.user.name);
-                console.log("🌐 Frontend session:", session);
+localStorage.setItem("accessToken", result.accessToken);
+  localStorage.setItem("username", result.userId);
                 window.location.href = "/dashboard";
             } else {
                 console.warn("OAuthService login failed, falling back to NextAuth.");
