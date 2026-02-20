@@ -2,6 +2,7 @@
 import { TOKENS } from "../../../shared/container/tokens.js";
 import { setAuthCookies } from "../../../infrastructure/auth/setAuthCookies.js";
 import type { Request, Response } from "express";
+import authService from "../services/auth.service.js";
 
 interface User {
   userId: string;
@@ -78,24 +79,10 @@ export default {
   },
 
   Mutation: {
-    refreshToken: async (_, __, { container, req }: Context) => {
-      const token = req.cookies?.refresh_token;
-
-      console.log("🍪 auth refresh_token cookie =", token);
-
-      if (!token) {
-        throw new Error("No refresh token");
-      }
-
-      const service = container.resolve(
-        TOKENS.auth.refreshTokenService
-      );
-
-      return service.refreshAccessToken(token, {
-        ip: req.ip,
-        userAgent: req.headers["user-agent"],
-        deviceId: req.headers["x-device-id"],
-      });
+    refreshToken: async (_:unknown, { refreshToken }: { refreshToken: string }, { container }: Context) => {
+      const authService = container.resolve(TOKENS.auth.authService);
+          return authService.refresh(refreshToken);
+     
     },
 
     revokeToken: async (_, __, { container, user }: Context) => {
@@ -164,8 +151,7 @@ export default {
           deviceId: req.headers["x-device-id"],
           userAgent: req.headers["user-agent"],
         });
-      console.log("res is:", res);
-      console.log("result is:", result);
+
 
       return result;
     },

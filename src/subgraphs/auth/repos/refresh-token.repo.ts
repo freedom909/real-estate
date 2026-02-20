@@ -1,3 +1,4 @@
+// src/subgraphs/auth/repos/refreshToken.repo.ts
 import { createRedis } from "../../../infrastructure/redis/redis.js";
 import jwt from "jsonwebtoken";
 import { hashToken } from "../../../shared/security/hash.js";
@@ -74,6 +75,14 @@ export default class RefreshTokenRepo {
       issuedAt: new Date(),
     });
   }
+  
+  async findByJti(jti: string): Promise<RefreshTokenDocument | null> {
+    return this.model.findOne({ tokenId: jti });
+  }
+
+async deleteByJti(jti: string): Promise<void> {
+  await this.model.deleteOne({ tokenId: jti });
+}
 
 
   /**

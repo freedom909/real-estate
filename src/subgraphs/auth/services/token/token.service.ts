@@ -1,27 +1,30 @@
 // src/subgraphs/auth/services/token/token.service.ts
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import jwt, { SignOptions, VerifyOptions, Algorithm } from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const PRIVATE_KEY_PATH = process.env.JWT_PRIVATE_KEY_PATH!;
-const PUBLIC_KEY_PATH = process.env.JWT_PUBLIC_KEY_PATH!;
+  const privatePath = process.env.JWT_PRIVATE_KEY_PATH;
+  const publicPath = process.env.JWT_PUBLIC_KEY_PATH;
 
+ if (!privatePath || !publicPath) {
+    throw new Error("JWT key paths not configured");
+  }
 
 let PRIVATE_KEY: string;
 let PUBLIC_KEY: string;
 
 try {
  PRIVATE_KEY = fs.readFileSync(
-  path.resolve(process.env.JWT_PRIVATE_KEY_PATH!),
+  path.resolve(process.env.JWT_PRIVATE_KEY_PATH!),//
   "utf8"
 );
+console.log("PRIVATE_KEY:", PRIVATE_KEY);
 PUBLIC_KEY = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH, "utf8");
-
-console.log("AUTH using private key:", PRIVATE_KEY_PATH);
-console.log("AUTH using public key:", PUBLIC_KEY_PATH);
-
 
 } catch (error) {
   console.error("Failed to load JWT keys:", error.message);
@@ -59,6 +62,8 @@ export interface TokenPair {
 }
 
 export default class TokenService {
+  private refreshPrivateKey: string;
+  private refreshPublicKey: string;
   private issuer: string;
   private algorithm: Algorithm;
   private accessExpiresIn: string;
@@ -70,6 +75,8 @@ export default class TokenService {
       process.env.JWT_ACCESS_EXPIRES_IN || "15m";
     this.refreshExpiresIn  =
       (process.env.JWT_REFRESH_EXPIRES_IN || "30d") as SignOptions["expiresIn"];
+    this.refreshPrivateKey = fs.readFileSync(path.resolve(privatePath), "utf8");
+  this.refreshPublicKey = fs.readFileSync(path.resolve(publicPath), "utf8");
   }
 
   generateAccessToken({ userId, role, email }: { userId: string; role?: string; email?: string }): string {

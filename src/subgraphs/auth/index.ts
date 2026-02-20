@@ -21,7 +21,6 @@ const redis = createRedis();
 await mongoose.connect(
   process.env.MONGO_URI || "mongodb://localhost:27017/water_auth"
 );
-console.log("Redis instance =", redis);
 
 console.log(
   "BOOT (AUTH) USER_SUBGRAPH_URL =",
@@ -100,7 +99,7 @@ app.use(
     }),
   })
 );
-console.log("Redis instance =", redis);
+
 
 httpServer.listen(4010, () => {
   console.log("🔐 Auth subgraph running at http://localhost:4010/graphql");

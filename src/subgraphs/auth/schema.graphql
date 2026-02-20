@@ -70,7 +70,8 @@ type Mutation {
     idToken: String!
   ): AuthPayload! @public
 
-  refreshToken: AuthTokens!
+  refreshToken(refreshToken: String!): AuthTokens!
+
 
   logout: Boolean!
   revokeToken: Boolean!
@@ -94,6 +95,7 @@ type Mutation {
 type AuthPayload {
   user: User!
   accessToken: String!
+  refreshToken: String!
 }
 
 type AuthTokens {

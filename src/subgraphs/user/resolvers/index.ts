@@ -39,7 +39,7 @@ export default {
         resourceOwnerId: targetUser.id
       })
       if (!allowed) {
-         throw new ForbiddenError("Access denied");
+        throw new ForbiddenError("Access denied");
       }
       return targetUser;
     },
@@ -67,7 +67,22 @@ export default {
         .resolve(TOKENS.user.userService);
       return userService.createOAuthUser(input);
     },
-    deactivateUser: (_: unknown, { userId }: { userId: string }, { services }: ResolverContext) =>
-      services.userService.deactivate(userId),
+    deactivateUser: async (
+      _: unknown,
+      { userId }: { userId: string },
+      context: ResolverContext
+    ) => {
+      const userService = context?.services?.userService;
+
+      if (!userService) {
+        throw new TypeError("Services not found in context");
+      }
+
+      if (typeof userService.deactivate !== "function") {
+        throw new TypeError("deactivate is not a function");
+      }
+
+      return userService.deactivate(userId);
+    },
   },
 }

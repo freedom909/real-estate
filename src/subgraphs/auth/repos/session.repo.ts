@@ -1,3 +1,4 @@
+// src/subgraphs/auth/repos/session.repo.ts
 import { Model } from "mongoose";
 import { Session, SessionDocument } from "../models/session.model.js";
 

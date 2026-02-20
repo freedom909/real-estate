@@ -1,6 +1,8 @@
 // src/subgraphs/auth/services/auth.service.ts
 import { randomUUID } from "crypto";
-
+import jwt from "jsonwebtoken";
+import fs from "fs";
+import path from "path";
 interface OAuthUser {
   sub: string;
   email?: string;
@@ -48,6 +50,10 @@ interface User {
   [key: string]: any;
 }
 
+interface AuthTokens {
+  accessToken: string;
+}
+
 interface AuthCredential {
   id: string;
   userId: string;
@@ -88,6 +94,8 @@ export default class AuthService {
   private refreshTokenRepo: any;
   private oauthAccountRepo: any;
   private sessionRepo: any;
+  private refreshPublicKey: string;
+
 
   constructor(deps: AuthServiceDependencies) {
     const required: (keyof AuthServiceDependencies)[] = [
@@ -168,6 +176,7 @@ export default class AuthService {
 
     return this._login(
       userId,
+
       { ...ctx, familyId },
       isNewUser
     );
@@ -200,7 +209,15 @@ export default class AuthService {
       familyId,
       severity: "LOW",
     });
-
+   const session=await this.sessionRepo.create({
+    userId,
+    familyId,
+    deviceId,
+    userAgent,
+    ip,
+    lastSeenAt: new Date(),
+   })
+   const sessionId=session._id.toString()
     // 2️⃣ Issue tokens
     const tokens: TokensResponse = await this.tokenService.issueTokens({
       userId,
@@ -208,6 +225,7 @@ export default class AuthService {
       ip,
       deviceId,
       userAgent,
+      sessionId,
     });
 
     // 3️⃣ Persist refresh token
@@ -220,9 +238,11 @@ export default class AuthService {
         deviceId,
         userAgent,
         issuedAt: new Date(),
+        sessionId,
+        jti: tokens.refreshJti,
       }
     );
-    
+
     // auth.service.js (_login)
     await this.sessionRepo.create({
       userId,
@@ -231,6 +251,7 @@ export default class AuthService {
       userAgent,
       ip,
       refreshTokenId: tokens.refreshJti,
+      sessionId,
       lastSeenAt: new Date(),
     });
 
@@ -240,6 +261,7 @@ export default class AuthService {
       refreshToken: tokens.refreshToken,
       familyId,
       isNewUser,
+      sessionId,
     };
   }
 
@@ -249,7 +271,7 @@ export default class AuthService {
    * =====================================================
    */
   async bindOAuthAccount(provider: string, idToken: string, ctx: OAuthLoginContext): Promise<boolean> {
-  console.log("App token:", idToken);
+    console.log("App token:", idToken);
     const { userId, ip, deviceId } = ctx;
 
     if (!userId) {
@@ -275,9 +297,9 @@ export default class AuthService {
 
     const existing: AuthCredential | null =
       await this.credentialRepo.findByProviderSub({
-      provider,
-      providerSub: providerUserId,
-    });
+        provider,
+        providerSub: providerUserId,
+      });
 
     if (existing && existing.userId !== userId) {
       throw new Error("OAUTH_ALREADY_BOUND");
@@ -342,4 +364,47 @@ export default class AuthService {
 
     return true;
   }
+
+  async refresh(refreshToken: string): Promise<AuthTokens> {
+    if (!refreshToken) {
+      throw new Error("NO_REFRESH_TOKEN")
+    }
+    // 1️⃣ Verify JWT signature + expiration
+    const payload = await this.tokenService.verifyRefreshToken(refreshToken);
+    const { sub: userId, familyId, jti ,sessionId} = payload;
+    if (!userId || !familyId || !jti||!sessionId) {
+      throw new Error("INVALID_REFRESH_PAYLOAD");
+    }
+    const session=await this.sessionRepo.findById(sessionId)
+    if(!session || session.revoked){
+      throw new Error("SESSION_NOT_FOUND")
+    }
+   console.log("sessionId:",sessionId)// it can retrieve the sessionId, why, the output is:auth-service
+    // 2️⃣ Check if token exists in DB
+    const existingToken = await this.refreshTokenRepo.findByJti(jti);
+    if (!existingToken) {
+      throw new Error("REFRESH_TOKEN_NOT_FOUND");
+    }
+    //// 3️⃣ Delete old token (rotation)
+    await this.refreshTokenRepo.deleteByJti(jti);
+
+    // 4️⃣ Issue new tokens
+    const tokens = await this.tokenService.issueTokens({
+      userId,
+      familyId,
+      sessionId
+    });
+    // 5️⃣ Save new refresh token
+    await this.refreshTokenRepo.save(tokens.refreshToken, {
+      userId,
+      familyId,
+      sessionId,
+      jti: tokens.refreshJti,
+      issuedAt: new Date(),
+    });
+    return {
+      accessToken: tokens.accessToken,
+    };
+  }
+
 }
