@@ -7,10 +7,15 @@ import { IProfile } from "@/shared/types/user";
 export type UserDocument = HydratedDocument<IUserDB>;
 
 export interface IUserDB {
+
+  _id: Types.ObjectId;
+  __v: number;
   profile: IProfile;
   role: Role;
   status: "ACTIVE" | "INACTIVE" | "BANNED";
   tokenVersion: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 
