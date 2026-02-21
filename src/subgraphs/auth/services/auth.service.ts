@@ -144,6 +144,10 @@ export default class AuthService {
     let isNewUser = false;
 
     if (oauthAccount) {
+      if (!oauthAccount.userId) {
+        throw new Error("OAUTH_ACCOUNT_MISSING_USER_ID");
+      }
+
       userId = oauthAccount.userId;
     } else {
       let user: User | null = null;
@@ -406,5 +410,4 @@ export default class AuthService {
       accessToken: tokens.accessToken,
     };
   }
-
 }
