@@ -3,9 +3,9 @@ import { Model } from "mongoose";
 import { Session, SessionDocument } from "../models/session.model.js";
 
 export default class SessionRepo {
-  private SessionModel: Model<SessionDocument>;
+  private SessionModel: Model<Session>;
 
-  constructor({ SessionModel }: { SessionModel: Model<SessionDocument> }) {
+  constructor({ SessionModel }: { SessionModel: Model<Session> }) {
     this.SessionModel = SessionModel;
   }
 
@@ -32,5 +32,9 @@ export default class SessionRepo {
       { userId },
       { $set: { revoked: true } }
     );
+  }
+
+  async updateById(id: string, data: Partial<Session>) {
+    return this.SessionModel.findByIdAndUpdate(id, data, { new: true });
   }
 }

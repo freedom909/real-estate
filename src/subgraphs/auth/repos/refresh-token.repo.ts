@@ -16,9 +16,9 @@ interface RefreshTokenMeta {
 }
 
 export default class RefreshTokenRepo {
-  private model: Model<RefreshTokenDocument>;
+  private model: Model<RefreshToken>;
 
-  constructor({ RefreshTokenModel }: { RefreshTokenModel: Model<RefreshTokenDocument> }) {
+  constructor({ RefreshTokenModel }: { RefreshTokenModel: Model<RefreshToken> }) {
     if (!RefreshTokenModel) {
       throw new Error("RefreshTokenModel not injected");
     }

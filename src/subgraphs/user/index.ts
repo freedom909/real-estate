@@ -3,7 +3,7 @@ console.log("🔥🔥🔥 USER ENTRY STARTED 🔥🔥🔥");
 
 import "dotenv/config";
 import "reflect-metadata";
-console.log("reflect loaded");
+
 import express from "express";
 import http from "http";
 import cors from "cors";

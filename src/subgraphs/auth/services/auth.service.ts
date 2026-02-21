@@ -248,16 +248,10 @@ export default class AuthService {
     );
 
     // auth.service.js (_login)
-    await this.sessionRepo.create({
-      userId,
-      familyId,
-      deviceId,
-      userAgent,
-      ip,
-      refreshTokenId: tokens.refreshJti,
-      sessionId,
-      lastSeenAt: new Date(),
-    });
+ await this.sessionRepo.updateById(sessionId, {
+  refreshTokenId: tokens.refreshJti,
+});
+
 
     return {
       userId,

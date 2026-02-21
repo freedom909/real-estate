@@ -23,7 +23,7 @@ try {
   path.resolve(process.env.JWT_PRIVATE_KEY_PATH!),//
   "utf8"
 );
-console.log("PRIVATE_KEY:", PRIVATE_KEY);
+
 PUBLIC_KEY = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH, "utf8");
 
 } catch (error) {
@@ -105,8 +105,7 @@ export default class TokenService {
       issuer: this.issuer,
       expiresIn: (this.accessExpiresIn || "15m") as SignOptions["expiresIn"],
     };
-    console.log("PRIVATE_KEY:", PRIVATE_KEY);
-    console.log("PUBLIC_KEY:", PUBLIC_KEY);
+
     return jwt.sign(
       {
         ...payload,
@@ -136,8 +135,7 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
     }
     
   );
- console.log("PRIVATE_KEY:", PRIVATE_KEY),
- console.log("PUBLIC_KEY:", PUBLIC_KEY)
+
   return { token, jti };
 }
 

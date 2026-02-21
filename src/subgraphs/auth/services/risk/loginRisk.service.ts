@@ -1,6 +1,6 @@
 import geoip, { Location } from "geoip-lite";
-import redis from "../../../../infrastructure/redis/redis.js";
-import { debugRisk } from "../../../../shared/debug.js";
+import redis from "../../../../infrastructure/redis/redis";
+import { debugRisk } from "../../../../shared/debug";
 
 interface RiskEvent {
   type: string;
@@ -50,6 +50,7 @@ interface RiskEventRepo {
 
 export default class LoginRiskService {
   private riskEventRepo: RiskEventRepo;
+  private redisClient:any
 
   constructor({ riskEventRepo }: { riskEventRepo: RiskEventRepo }) {
     this.riskEventRepo = riskEventRepo;
