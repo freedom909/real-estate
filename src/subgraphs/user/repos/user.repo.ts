@@ -1,12 +1,6 @@
 // src/subgraphs/user/repos/user.repo.ts
-import { Document, HydratedDocument, Model } from "mongoose";
+import { Document, HydratedDocument, Model, Types } from "mongoose";
 import UserModel, { IUserDB } from "../models/user.model.js";
-import Redis from "ioredis";
-
-interface UserRepoDeps { // 'UserRepoDeps' は宣言されましたが使用されませんでした。
-  UserModel: Model<IUserDB>;
-  redis: Redis;
-}
 
 export interface IUserRepo {
   findById(id: string): Promise<IUserDB | null>;
@@ -30,7 +24,7 @@ export default class UserRepo implements IUserRepo {
     throw new Error("Method not implemented.");
   }
 
-  findByEmail(email: string) {
+  findByEmail(email: string) : Promise<(IUserDB & { _id: Types.ObjectId }) | null>{
     return this.UserModel.findOne({ email }).lean();
   }
 

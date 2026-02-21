@@ -13,8 +13,8 @@ describe("UserService.findByEmail", () => {
   let mockUserRepo: jest.Mocked<UserRepo>;
   let mockPermissionService: any;
 
-  const createMockUserDB = (): IUserDB => ({
-    _id: new Types.ObjectId(),
+  const createMockUserDB = (): IUserDB & { _id: Types.ObjectId,__v:number }  => ({
+    _id: new Types.ObjectId(),// オブジェクト リテラルは既知のプロパティのみ指定できます。'_id' は型 'IUserDB' に存在しません。
     __v: 0,
     profile: {
       UserId: "profile-id",

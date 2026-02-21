@@ -1,7 +1,8 @@
-import { IUser } from "../../../shared/types/user";
-import { IUserDB } from "./user.model";
-
-export function mapToDomain(user: IUserDB): IUser {
+import { IUser } from "@/shared/types/user";
+import { IUserDB, UserDocument } from "./user.model";
+import { Types } from "mongoose";
+type IUserDBObject = IUserDB & { _id: Types.ObjectId };
+export function mapToDomain(user: IUserDBObject): IUser {
   return {
     id: user._id.toString(),
     profile: {
