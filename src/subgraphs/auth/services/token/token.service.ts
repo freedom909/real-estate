@@ -8,28 +8,13 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-  const privatePath = process.env.JWT_PRIVATE_KEY_PATH;
-  const publicPath = process.env.JWT_PUBLIC_KEY_PATH;
+const PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
+const PUBLIC_KEY = process.env.JWT_PUBLIC_KEY;
 
- if (!privatePath || !publicPath) {
-    throw new Error("JWT key paths not configured");
-  }
-
-let PRIVATE_KEY: string;
-let PUBLIC_KEY: string;
-
-try {
- PRIVATE_KEY = fs.readFileSync(
-  path.resolve(process.env.JWT_PRIVATE_KEY_PATH!),//
-  "utf8"
-);
-
-PUBLIC_KEY = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH, "utf8");
-
-} catch (error) {
-  console.error("Failed to load JWT keys:", error.message);
-  throw new Error("JWT key files are required but could not be loaded");
+if (!PRIVATE_KEY || !PUBLIC_KEY) {
+  throw new Error("JWT keys not configured");
 }
+
 
 interface TokenPayload {
   sub: string;
@@ -68,16 +53,16 @@ export default class TokenService {
   private algorithm: Algorithm;
   private accessExpiresIn: string;
   private refreshExpiresIn: SignOptions["expiresIn"] = "7d";
-  constructor() {
-    this.issuer = process.env.JWT_ISSUER || "auth-service";
-    this.algorithm = "RS256";
-    this.accessExpiresIn =
-      process.env.JWT_ACCESS_EXPIRES_IN || "15m";
-    this.refreshExpiresIn  =
-      (process.env.JWT_REFRESH_EXPIRES_IN || "30d") as SignOptions["expiresIn"];
-    this.refreshPrivateKey = fs.readFileSync(path.resolve(privatePath), "utf8");
-  this.refreshPublicKey = fs.readFileSync(path.resolve(publicPath), "utf8");
-  }
+constructor() {
+  this.issuer = process.env.JWT_ISSUER || "auth-service";
+  this.algorithm = "RS256";
+  this.accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "15m";
+  this.refreshExpiresIn =
+    (process.env.JWT_REFRESH_EXPIRES_IN || "30d") as SignOptions["expiresIn"];
+
+  this.refreshPrivateKey = PRIVATE_KEY!;
+  this.refreshPublicKey = PUBLIC_KEY!;
+}
 
   generateAccessToken({ userId, role, email }: { userId: string; role?: string; email?: string }): string {
     
@@ -93,7 +78,7 @@ export default class TokenService {
         role,
         email,
       },
-      PRIVATE_KEY,
+      this.refreshPrivateKey,
       options
     );
   }
@@ -111,7 +96,7 @@ export default class TokenService {
         ...payload,
         type: "access",
       },
-      PRIVATE_KEY,
+      this.refreshPrivateKey,
       options
     );
   }
@@ -126,7 +111,7 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
       ...payload,
       type: "refresh",
     },
-    PRIVATE_KEY,
+    this.refreshPrivateKey,
     {
       algorithm: this.algorithm,
       issuer: this.issuer,
@@ -138,7 +123,6 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
 
   return { token, jti };
 }
-
 
   get accessTokenTTL(): string {
     return process.env.ACCESS_TOKEN_TTL || "15m";
@@ -156,7 +140,7 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
         sub: userId,
         type: "refresh",
       },
-      PRIVATE_KEY,
+      this.refreshPrivateKey,
       options
     );
   }

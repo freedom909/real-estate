@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+env:
+  NODE_ENV: test
+  JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
+  JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
 
 jobs:
   ci:
