@@ -107,7 +107,6 @@ it('should persist session and refresh token in db', async () => {
     .collection('sessions')
     .find()
     .toArray();
-console.log("sessions:", sessions);
 
   const tokens = await mongoose.connection.db
     .collection('refreshtokens')

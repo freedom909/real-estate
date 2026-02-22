@@ -1,3 +1,5 @@
+![CI](https://github.com/freedom909/real-estate/actions/workflows/ci.yml/badge.svg)
+
 # real-estate
 
 an app for agent and guest to interact with each other

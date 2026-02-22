@@ -7,7 +7,6 @@ import type { User } from "../models/user.model.js";
 
 type UserDocument = HydratedDocument<User>;
 
-
 interface UserRepoOptions {
   UserModel: Model<UserDocument>;
   redis?: Redis;
@@ -69,8 +68,6 @@ async getTokenVersion(userId: string): Promise<number> {
 
   return version;
 }
-
-
   /**
    * Increment token version (invalidate all existing refresh tokens)
    */

@@ -2,42 +2,45 @@
 import { Document, HydratedDocument, Model, Types } from "mongoose";
 import UserModel, { IUserDB } from "../models/user.model.js";
 
+export type IUserDBObject = IUserDB & {
+  _id: Types.ObjectId;
+};
+
 export interface IUserRepo {
-  findById(id: string): Promise<IUserDB | null>;
-  findByEmail(email: string): Promise<IUserDB | null>;
-  create(user: IUserDB): Promise<IUserDB>;
-  update(id: string, user: IUserDB): Promise<IUserDB | null>;
+  findById(id: string): Promise<IUserDBObject | null>;
+  findByEmail(email: string): Promise<IUserDBObject | null>;
+  create(user: Partial<IUserDB>): Promise<IUserDBObject>;
+  update(id: string, user: Partial<IUserDB>): Promise<IUserDBObject | null>;
   deactivate(id: string): Promise<void>;
 }
-type UserDocument = HydratedDocument<IUserDB>;
 
 export default class UserRepo implements IUserRepo {
 
   private UserModel: Model<IUserDB>;
 
-  constructor({ UserModel }: { UserModel: Model<UserDocument> }) {
-    console.log("UserRepo ctor UserModel =", UserModel)
-    if (!UserModel) throw new Error("UserRepo: UserModel is required");// "message": "UserService: userRepo is required",
+  constructor({ UserModel }: { UserModel: Model<IUserDB> }) {
+    if (!UserModel) throw new Error("UserRepo: UserModel is required");
     this.UserModel = UserModel;
   }
-  update(id: string, user: IUserDB): Promise<IUserDB | null> {
-    throw new Error("Method not implemented.");
-  }
 
-  findByEmail(email: string) : Promise<(IUserDB & { _id: Types.ObjectId }) | null>{
-    return this.UserModel.findOne({ email }).lean();
-  }
+findByEmail(email: string) {
+  return this.UserModel.findOne({ email }).lean<IUserDBObject>();
+}
 
-  findById(id: string) {
-    return this.UserModel.findById(id).lean();
-  }
+findById(id: string) {
+  return this.UserModel.findById(id).lean<IUserDBObject>();
+}
+
+async create(data: Partial<IUserDB>) {
+  const created = await this.UserModel.create(data);
+  return created.toObject() as IUserDBObject;
+}
 
   async deactivate(id: string): Promise<void> {
     return await this.UserModel.findByIdAndUpdate(id, { status: "INACTIVE" });
   }
 
-  async create(data: Partial<IUserDB>) {
-    const created = await this.UserModel.create(data);
-    return created.toObject();
-  }
+async update(id: string, user: Partial<IUserDB>): Promise<IUserDBObject | null> {
+  return this.UserModel.findByIdAndUpdate(id, user, { new: true }).lean<IUserDBObject>();
+}
 }

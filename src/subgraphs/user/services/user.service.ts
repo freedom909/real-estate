@@ -8,6 +8,7 @@ import IPermissionService from "../../../security/permission.service";
 import { IUser } from "../../../shared/types/user";
 
 import { mapToDomain } from '../models/mapToDomain';
+
 export interface IContext {
   user?: IUserDB;
 }
@@ -18,12 +19,12 @@ export default class UserService {
     private readonly permissionService: IPermissionService,
   ) { }
 
-  async findByEmail(email: string): Promise<IUser | null> {
+  async findByEmail(email: string): Promise<IUser| null> {
     if (!EmailValidator.validate(email)) {
       throw new UserInputError("Invalid email");
     }
     try {
-      const userDB = await this.userRepo.findByEmail(email)
+      const userDB = await this.userRepo.findByEmail(email);
       if (!userDB) return null;
       return mapToDomain(userDB);
     }
