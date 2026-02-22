@@ -156,7 +156,7 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
         issuer: this.issuer,
       };
       console.log("issuer", this.issuer)
-      payload = jwt.verify(token, PUBLIC_KEY, options) as jwt.JwtPayload;
+      payload = jwt.verify(token, this.refreshPublicKey, options) as jwt.JwtPayload;// replace with this.refreshPrivateKey ?
     } catch (error) {
       throw new Error(`Refresh token verification failed: ${error.message}`);
     }
@@ -180,7 +180,7 @@ signRefreshToken(payload: TokenPayload): { token: string; jti: string } {
         issuer: this.issuer,
       };
        console.log("SIGNING issuer:", this.issuer);
-      const decoded = jwt.verify(token, PUBLIC_KEY, options) as jwt.JwtPayload;
+      const decoded = jwt.verify(token, this.refreshPublicKey, options) as jwt.JwtPayload;//replace with this.refreshPrivateKey ?
       return decoded as TokenPayload;
     } catch (error) {
       throw new Error(`Access token verification failed: ${error.message}`);
