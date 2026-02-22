@@ -8,12 +8,7 @@ import fs from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
 
-const PRIVATE_KEY = process.env.JWT_PRIVATE_KEY;
-const PUBLIC_KEY = process.env.JWT_PUBLIC_KEY;
 
-if (!PRIVATE_KEY || !PUBLIC_KEY) {
-  throw new Error("JWT keys not configured");
-}
 
 
 interface TokenPayload {
@@ -54,14 +49,21 @@ export default class TokenService {
   private accessExpiresIn: string;
   private refreshExpiresIn: SignOptions["expiresIn"] = "7d";
 constructor() {
+  const privateKey = process.env.JWT_PRIVATE_KEY;
+  const publicKey = process.env.JWT_PUBLIC_KEY;
+
+  if (!privateKey || !publicKey) {
+    throw new Error("JWT keys not configured");
+  }
+
+  this.refreshPrivateKey = privateKey;
+  this.refreshPublicKey = publicKey;
+
   this.issuer = process.env.JWT_ISSUER || "auth-service";
   this.algorithm = "RS256";
   this.accessExpiresIn = process.env.JWT_ACCESS_EXPIRES_IN || "15m";
   this.refreshExpiresIn =
     (process.env.JWT_REFRESH_EXPIRES_IN || "30d") as SignOptions["expiresIn"];
-
-  this.refreshPrivateKey = PRIVATE_KEY!;
-  this.refreshPublicKey = PUBLIC_KEY!;
 }
 
   generateAccessToken({ userId, role, email }: { userId: string; role?: string; email?: string }): string {
