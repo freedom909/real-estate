@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'minshuku_jwt_secret_key_2024_secure_random_string'; // Use a strong secret in production
+const JWT_SECRET = process.env.JWT_SECRET || "minshuku_jwt_secret_key_2024_secure_random_string"; // Use a strong secret in production
 export const config = {
     matcher: ["/dashboard", "/account", "/settings"], // Adjust to your protected routes
   };

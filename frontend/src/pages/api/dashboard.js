@@ -11,16 +11,9 @@ export default function Dashboard() {
     window.location.href = '/login';
     return null;
   }
-const handleLogout = async () => {
-  // 清除 localStorage 中的自定义 token 或用户信息
-  localStorage.removeItem("token");
-  localStorage.removeItem("userId");
-  // 或者更彻底地清除所有本地存储
-  // localStorage.clear();
-
-  // 调用 next-auth 的 signOut，它会清除相关的 cookie 和会话
-  await signOut({ redirect: true, callbackUrl: '/' }); 
-};
+ const handleLogout = () => {
+    signOut(); // This function is provided by next-auth/react
+  };
   const user = session.user;
 
   return (

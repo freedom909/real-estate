@@ -1,4 +1,4 @@
-
+//SRC: frontend/src/config/config.js
 const config = {
     google: {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
@@ -17,7 +17,7 @@ const config = {
     }
 };
 
-const SUBGRAPH_AUTH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_AUTH_URL || 'http://localhost:4010/graphql';
-console.log('SUBGRAPH_AUTH_URL:', SUBGRAPH_AUTH_URL);
+const SUBGRAPH_USER_URL = process.env.NEXT_PUBLIC_ || 'http://localhost:4020/graphql';
+console.log('SUBGRAPH_USER_URL:', SUBGRAPH_USER_URL);
 
 export default config;

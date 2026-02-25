@@ -11,6 +11,7 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express4";
 import { ApolloGateway } from "@apollo/gateway";
 import AuthenticatedDataSource from "@/infrastructure/auth/authenticatedDataSource";
+import { classifyToken } from "@/gateway/helpers/classifyToken";
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -110,45 +111,70 @@ async function startGateway() {
     expressMiddleware<MyContext>(server, {
       context: async ({ req, res }): Promise<MyContext> => {
         console.log("🔍 Incoming Authorization:", req.headers.authorization);
+        const operationName = req.body?.operationName;
         const authHeader = req.headers.authorization;
-
-        if (!authHeader) {
+        if (operationName === "oauthLogin") {
           return { req, res };
         }
 
+        if (!authHeader) {
+          throw new Error("Not authenticated");
+        }
+
         const token = authHeader.replace("Bearer ", "");
-const decoded = jwt.decode(token);
-// ==============================
-// PROD MODE: Verify JWT
-// ==============================
+        const tokenType = classifyToken(token);
 
-console.log(
-  "PUBLIC KEY HASH:",
-  crypto.createHash("sha256").update(PUBLIC_KEY!).digest("hex")
-);
+        if (tokenType === "external") {
+          // 🔥 外部 token 不在 gateway 验证
+          return { req, res };
+        }
 
-try {
-  const verified = jwt.verify(token, PUBLIC_KEY!, {
-    algorithms: ["RS256"],
-    issuer: process.env.JWT_ISSUER || "auth-service",
-  }) as JwtPayload;
+        if (tokenType === "invalid") {
+          throw new Error("Invalid token");
+        }
 
-  console.log("✅ JWT Verified:", verified);
+        // internal 才验证
+        const verified = jwt.verify(token, PUBLIC_KEY!, {
+          algorithms: ["RS256"],
+        }) as JwtPayload;
 
-  return {
-    req,
-    res,
-    user: verified,
-    authorization: `Bearer ${token}`,
-  };
-} catch (err: any) {
-  console.error("❌ Token verification failed:", err.message);
-  return { req, res };
-}
+        console.log("✅ JWT Verified:", verified);
+        const decoded = jwt.decode(token, { json: true });
+        if (decoded?.iss === "https://accounts.google.com" || decoded?.iss === "accounts.google.com") {
+          return { req, res };
+        }
+
+        if (!PUBLIC_KEY) {
+          // DEV MODE: If no key, skip verification or fail gracefully
+          return { req, res };
+        }
+
+        console.log(
+          "PUBLIC KEY HASH:",
+          crypto.createHash("sha256").update(PUBLIC_KEY!).digest("hex")
+        );
+
+        try {
+          const verified = jwt.verify(token, PUBLIC_KEY!, {
+            algorithms: ["RS256"],
+            issuer: process.env.JWT_ISSUER || "auth-service",
+          }) as JwtPayload;
+
+          console.log("✅ JWT Verified:", verified);
+
+          return {
+            req,
+            res,
+            user: verified,
+            authorization: `Bearer ${token}`,
+          };
+        } catch (err: any) {
+          console.error("❌ Token verification failed:", err.message);
+          return { req, res };
+        }
       },
     })
   );
-
 
   // ==============================
   // 5️⃣ Start Server

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './LoginForm.module.css';
 
 export default function LoginForm() {
@@ -18,32 +18,35 @@ export default function LoginForm() {
       const email = formData.get('email');
       const password = formData.get('password');
 
+      // 基本验证
       if (!email || !password) {
-        setError('Please fill in all required fields');
+        setError('请填写所有必填字段');
         setIsSubmitting(false);
         return;
       }
 
+      // 邮箱格式验证
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        setError('Please enter a valid email address');
+        setError('请输入有效的邮箱地址');
         setIsSubmitting(false);
         return;
       }
 
+      // 密码长度验证
       if (password.length < 8) {
-        setError('Password must be at least 8 characters');
+        setError('密码长度不能少于8个字符');
         setIsSubmitting(false);
         return;
       }
 
       const result = await login(email, password);
       if (!result.success) {
-        setError(result.message || 'Incorrect email or password');
+        setError(result.message || '邮箱或密码错误');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed, please try again later');
+      setError(err.message || '登录失败，请稍后重试');
     } finally {
       setIsSubmitting(false);
     }
@@ -54,7 +57,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className={styles.loginForm}>
-      <h2>Sign In</h2>
+      <h2>登录</h2>
       
       {displayError && (
         <div className={styles.errorMessage}>
@@ -63,12 +66,12 @@ export default function LoginForm() {
       )}
       
       <div className={styles.formGroup}>
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email">邮箱</label>
         <input
           type="email"
           id="email"
           name="email"
-          placeholder="Enter your email"
+          placeholder="请输入邮箱地址"
           required
           className={displayError ? styles.inputError : ''}
           disabled={loading || isSubmitting}
@@ -76,12 +79,12 @@ export default function LoginForm() {
       </div>
 
       <div className={styles.formGroup}>
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">密码</label>
         <input
           type="password"
           id="password"
           name="password"
-          placeholder="Enter your password"
+          placeholder="请输入密码"
           required
           className={displayError ? styles.inputError : ''}
           disabled={loading || isSubmitting}
@@ -94,15 +97,15 @@ export default function LoginForm() {
         className={styles.submitButton}
         disabled={loading || isSubmitting}
       >
-        {loading || isSubmitting ? 'Signing in...' : 'Sign In'}
+        {loading || isSubmitting ? '登录中...' : '登录'}
       </button>
 
       <div className={styles.formLinks}>
         <a href="/forgot-password" className={styles.forgotPassword}>
-          Forgot password?
+          忘记密码？
         </a>
         <p className={styles.registerLink}>
-          Don’t have an account? <a href="/register">Register</a>
+          还没有账号？ <a href="/register">注册</a>
         </p>
       </div>
     </form>

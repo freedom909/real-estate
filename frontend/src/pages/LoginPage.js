@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import { useAuth } from '../contexts/AuthContext';
 import { GoogleLoginButton } from '../components/auth';
 
 /**
@@ -34,8 +34,8 @@ const LoginPage = () => {
   return (
     <div style={styles.container}>
       <div style={styles.loginBox}>
-        <h1 style={styles.title}>Welcome</h1>
-        <p style={styles.subtitle}>Please choose a sign-in method:</p>
+        <h1 style={styles.title}>欢迎登录</h1>
+        <p style={styles.subtitle}>请选择以下方式登录：</p>
         
         {error && <div style={styles.error}>{error}</div>}
         
