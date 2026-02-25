@@ -2,7 +2,7 @@ import React from 'react';
 import { useMutation } from '@apollo/client';
 import { GoogleLogin } from '@react-oauth/google';
 import { OAUTH_LOGIN_MUTATION } from '../../graphql/auth';
-import { useAuth } from '../../contexts/AuthContext';
+
 import { GOOGLE_SIGN_IN } from '../graphql/mutations';
 
 export default function GoogleSignIn({ buttonText = "Continue with Google" }) {//how to write this?It should have function OAuthLoginMutation?

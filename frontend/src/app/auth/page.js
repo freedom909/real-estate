@@ -17,9 +17,6 @@ export default function Auth() {
     const fallbackGoogleLogin = async () => {
         try {
             const res = await signIn("google", { callbackUrl: "/dashboard" });
-            console.log("🔍 account =", account);
-            console.log("🔍 id_token =", account?.id_token);
-            console.log("🔍 profile =", profile);
             if (!res?.ok) {
                 setError("Google fallback login failed.");
             }
@@ -33,13 +30,14 @@ export default function Auth() {
         const token = response.credential;
         console.log('🔑 Received Google credential token:', token);
         try {
+            const oauthService = new OAuthService();
             console.log('📡 Sending Google token to backend...');// I did not find output in the terminal
-            const result = await OAuthService.oauthLogin({ provider: "google", idToken: token });
+            const result = await oauthService.loginWithProvider("google", token);
             console.log('📬 Backend response:', result);
 
-            if (result.accessToken) {
-localStorage.setItem("accessToken", result.accessToken);
-  localStorage.setItem("username", result.userId);
+            if (result.success) {
+                localStorage.setItem("username", result.user.name);
+                console.log("🌐 Frontend session:", session);
                 window.location.href = "/dashboard";
             } else {
                 console.warn("OAuthService login failed, falling back to NextAuth.");

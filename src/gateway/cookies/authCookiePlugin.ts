@@ -54,7 +54,7 @@ export function authCookiePlugin(): ApolloServerPlugin {
             const { accessToken, refreshToken } = responseData.oauthLogin;
 
             if (accessToken) {
-              res.cookie("access_token", accessToken, {
+              res.cookie("accessToken", accessToken, {
                 httpOnly: true,
                 sameSite: "lax" as const,
                 path: "/",
@@ -62,7 +62,7 @@ export function authCookiePlugin(): ApolloServerPlugin {
             }
 
             if (refreshToken) {
-              res.cookie("refresh_token", refreshToken, {
+              res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 sameSite: "strict" as const,
                 path: "/",
@@ -75,7 +75,7 @@ export function authCookiePlugin(): ApolloServerPlugin {
             const { accessToken } = responseData.refreshToken;
 
             if (accessToken) {
-              res.cookie("access_token", accessToken, {
+              res.cookie("accessToken", accessToken, {
                 httpOnly: true,
                 sameSite: "lax" as const,
                 path: "/",
@@ -85,8 +85,8 @@ export function authCookiePlugin(): ApolloServerPlugin {
 
           /** ===== LOGOUT ===== */
           if (responseData.logout === true || responseData.revokeToken === true) {
-            res.clearCookie("access_token");
-            res.clearCookie("refresh_token");
+            res.clearCookie("accessToken");
+            res.clearCookie("refreshToken");
             res.clearCookie("csrf_token");
           }
         },

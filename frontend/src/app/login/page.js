@@ -35,7 +35,7 @@ export default function Login() {
         router.push(result.url);
       }
     } catch (err) {
-      setError(err.message || "登录失败，请重试。");
+      setError(err.message || "Login failed, please try again.");
     } finally {
       setLoading(false);
     }
@@ -45,12 +45,12 @@ export default function Login() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900">
       <div className="w-full max-w-xs bg-blue-600 rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-4 text-white text-center">
-          登录您的账户
+          Sign in to your account
         </h1>
         <p className="text-center text-sm text-blue-200 mb-4">
-          或{' '}
+          or{' '}
           <Link href="/auth/register" className="text-white hover:text-blue-200 transition-colors">
-            注册新账户
+            Register a new account
           </Link>
         </p>
 
@@ -62,7 +62,7 @@ export default function Login() {
               type="email"
               required
               className="w-full py-1.5 px-2 border rounded bg-blue-700 text-white placeholder-blue-300 border-blue-500 focus:border-blue-400 focus:ring-blue-400"
-              placeholder="电子邮箱"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -74,7 +74,7 @@ export default function Login() {
               type="password"
               required
               className="w-full py-1.5 px-2 border rounded bg-blue-700 text-white placeholder-blue-300 border-blue-500 focus:border-blue-400 focus:ring-blue-400"
-              placeholder="密码"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -93,7 +93,7 @@ export default function Login() {
               loading ? 'bg-blue-400' : 'bg-blue-800 hover:bg-blue-900'
             } transition-colors`}
           >
-            {loading ? '登录中...' : '登录'}
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
@@ -102,7 +102,7 @@ export default function Login() {
             <div className="w-full border-t border-blue-500"></div>
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-blue-600 text-blue-200">或使用以下方式登录</span>
+            <span className="px-2 bg-blue-600 text-blue-200">Or sign in with</span>
           </div>
         </div>
 

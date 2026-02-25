@@ -11,23 +11,23 @@ const UnauthorizedPage = () => {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <h1 style={styles.title}>访问被拒绝</h1>
+        <h1 style={styles.title}>Access Denied</h1>
         <div style={styles.icon}>🔒</div>
         <p style={styles.message}>
-          抱歉，您没有权限访问此页面。
+          Sorry, you do not have permission to access this page.
         </p>
         <div style={styles.buttonGroup}>
           <button
             onClick={() => navigate(-1)}
             style={styles.button}
           >
-            返回上一页
+            Go Back
           </button>
           <button
             onClick={() => navigate('/')}
             style={{...styles.button, ...styles.homeButton}}
           >
-            返回首页
+            Go Home
           </button>
         </div>
       </div>

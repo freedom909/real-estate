@@ -1,7 +1,7 @@
 import { Response } from 'express';
 
 export function setRefreshTokenCookie(res: Response, refreshToken: string) {
-  res.cookie("refresh_token", refreshToken, {
+  res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",

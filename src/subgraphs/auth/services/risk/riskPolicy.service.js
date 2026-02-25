@@ -1,7 +1,7 @@
 // future: riskPolicy.service.js
 if (
   count(
-    REFRESH_TOKEN_REUSE,
+    refreshToken_REUSE,
     last24h
   ) >= 1
 ) {

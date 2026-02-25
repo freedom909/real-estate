@@ -7,7 +7,7 @@ interface GitHubProfile {
 }
 
 interface GitHubTokenResponse {
-  access_token?: string;
+  accessToken?: string;
 }
 
 interface OAuthProfile {
@@ -20,7 +20,7 @@ interface OAuthProfile {
 
 async function verifyGithubCode(code: string): Promise<OAuthProfile> {
   const tokenRes = await fetch(
-    "https://github.com/login/oauth/access_token",
+    "https://github.com/login/oauth/accessToken",
     {
       method: "POST",
       headers: {
@@ -36,13 +36,13 @@ async function verifyGithubCode(code: string): Promise<OAuthProfile> {
 
   const tokenData: GitHubTokenResponse = await tokenRes.json();
 
-  if (!tokenData.access_token) {
+  if (!tokenData.accessToken) {
     throw new Error("Failed to obtain GitHub access token");
   }
 
   const userRes = await fetch("https://api.github.com/user", {
     headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
+      Authorization: `Bearer ${tokenData.accessToken}`,
     },
   });
 

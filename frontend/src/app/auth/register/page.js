@@ -27,32 +27,32 @@ export default function RegisterPage() {
 
   const validateForm = () => {
     if (!formData.email || !formData.password || !formData.name) {
-      setError('请填写所有必填字段');
+      setError('Please fill in all required fields');
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('两次输入的密码不匹配');
+      setError('Passwords do not match');
       return false;
     }
 
     if (formData.password.length < 8) {
-      setError('密码长度至少为8个字符');
+      setError('Password must be at least 8 characters');
       return false;
     }
 
     if (!/[A-Z]/.test(formData.password)) {
-      setError('密码必须包含至少一个大写字母');
+      setError('Password must include at least one uppercase letter');
       return false;
     }
 
     if (!/[0-9]/.test(formData.password)) {
-      setError('密码必须包含至少一个数字');
+      setError('Password must include at least one number');
       return false;
     }
 
     if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-      setError('密码必须包含至少一个特殊字符');
+      setError('Password must include at least one special character');
       return false;
     }
 
@@ -88,13 +88,13 @@ export default function RegisterPage() {
 
       const data = await res.json();
       if (!data.success) {
-        setError(data.message || '注册失败');
+        setError(data.message || 'Registration failed');
         return;
       }
 
       router.push('/dashboard');
     } catch (err) {
-      setError(err.message || '注册失败');
+      setError(err.message || 'Registration failed');
     }
   };
 
@@ -104,7 +104,7 @@ export default function RegisterPage() {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-900">
       <div className="w-full max-w-xs bg-blue-600 rounded-lg shadow-lg p-6">
         <h1 className="text-2xl font-bold mb-4 text-white text-center">
-          创建新账户
+          Create a new account
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -112,7 +112,7 @@ export default function RegisterPage() {
             <input
               type="email"
               name="email"
-              placeholder="电子邮箱"
+              placeholder="Email"
               value={formData.email}
               onChange={handleChange}
               required
@@ -123,7 +123,7 @@ export default function RegisterPage() {
             <input
               type="text"
               name="name"
-              placeholder="姓名"
+              placeholder="Name"
               value={formData.name}
               onChange={handleChange}
               required
@@ -134,7 +134,7 @@ export default function RegisterPage() {
             <input
               type="text"
               name="nickname"
-              placeholder="昵称（可选）"
+              placeholder="Nickname (optional)"
               value={formData.nickname}
               onChange={handleChange}
               className="w-full p-2 border rounded bg-blue-700 text-white placeholder-blue-300 border-blue-500 focus:border-blue-400 focus:ring-blue-400"
@@ -144,7 +144,7 @@ export default function RegisterPage() {
             <input
               type="text"
               name="picture"
-              placeholder="头像"
+              placeholder="Avatar"
               value={formData.picture}
               onChange={handleChange}
               required
@@ -166,7 +166,7 @@ export default function RegisterPage() {
             <input
               type="password"
               name="password"
-              placeholder="密码"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
               required
@@ -177,7 +177,7 @@ export default function RegisterPage() {
             <input
               type="password"
               name="confirmPassword"
-              placeholder="确认密码"
+              placeholder="Confirm Password"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -198,7 +198,7 @@ export default function RegisterPage() {
               loading ? 'bg-blue-400' : 'bg-blue-800 hover:bg-blue-900'
             } transition-colors`}
           >
-            {loading ? '注册中...' : '注册'}
+            {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
 
@@ -207,7 +207,7 @@ export default function RegisterPage() {
             href="/login" 
             className="text-blue-200 hover:text-white text-sm transition-colors"
           >
-            已有账号？立即登录
+            Already have an account? Sign in
           </Link>
         </div>
       </div>

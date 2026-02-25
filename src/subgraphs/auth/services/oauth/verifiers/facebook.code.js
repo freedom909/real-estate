@@ -3,9 +3,9 @@
         if (!code) {
             throw new Error("Missing OAuth code");
         }
-        // 1️⃣ 用 code 换 access_token
+        // 1️⃣ 用 code 换 accessToken
         const tokenRes = await fetch(
-            `https://graph.facebook.com/v18.0/oauth/access_token?` +
+            `https://graph.facebook.com/v18.0/oauth/accessToken?` +
             new URLSearchParams({
                 client_id: process.env.FACEBOOK_CLIENT_ID,
                 client_secret: process.env.FACEBOOK_CLIENT_SECRET,
@@ -14,13 +14,13 @@
             })
         );
         const tokenData = await tokenRes.json();
-        if (!tokenData.access_token) {
+        if (!tokenData.accessToken) {
             throw new Error("Failed to exchange Facebook access token");
         }
-        const accessToken = tokenData.access_token;
+        const accessToken = tokenData.accessToken;
         // 2️⃣ 获取用户信息
         const userRes = await fetch(
-            `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`
+            `https://graph.facebook.com/me?fields=id,name,email,picture&accessToken=${accessToken}`
         );
         const user = await userRes.json();
         if (!user || user.error) {

@@ -29,7 +29,7 @@ const useKeyboardShortcuts = () => {
    */
   const handleAcceptRecommendContext = () => {
     // 这里实现接受推荐上下文的具体逻辑
-    console.log('接受推荐上下文');
+    console.log('Accepted recommended context');
     // 你可以在这里调用相关的函数或触发状态更新
   };
 

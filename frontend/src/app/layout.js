@@ -1,20 +1,15 @@
-// app/layout.js
-'use client';
-
-// import { GeistSans, GeistMono } from 'geist/font';
-import { GeistSans } from 'geist/font/sans';
-
-import './globals.css';
-import { SessionProvider } from 'next-auth/react';
-import Image from 'next/image';
+import Script from "next/script";
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistSans.css}`}>
-      <body >
-        <SessionProvider>
-          {children}
-        </SessionProvider>
+    <html lang="en">
+      <body>
+        {/* ✅ Google Identity Services */}
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="beforeInteractive"
+        />
+        {children}
       </body>
     </html>
   );

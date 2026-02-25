@@ -1,9 +1,13 @@
+//frontend/src/userService/localAuthService.js
+
 import axios from "axios";
 
-const SUBGRAPH_USERS_URL = "http://localhost:4010/graphql"; // ✅ point directly to /graphql
+const SUBGRAPH_AUTH_URL =
+  process.env.NEXT_PUBLIC_SUBGRAPH_AUTH_URL ||
+  "http://localhost:4010/graphql";
 
 const loginRequestToSubgraph = `
- mutation SignIn($input: SignInInput!) {
+mutation SignIn($input: SignInInput!) {
   signIn(input: $input) {
     auth {
       role
@@ -16,144 +20,105 @@ const loginRequestToSubgraph = `
     message
   }
 }
-
 `;
 
 const registerRequestToSubgraph = `
-  mutation Register($input: SignUpInput!) {
-    signUp(input: $input) {
-      role
-      userId
-      code
-      message
-      refreshToken
-      success
-      auth {
-        token
-      }
+mutation Register($input: SignUpInput!) {
+  signUp(input: $input) {
+    role
+    userId
+    code
+    message
+    refreshToken
+    success
+    auth {
+      token
     }
   }
+}
 `;
 
 const localAuthService = {
+  /**
+   * Used by NextAuth Credentials authorize()
+   * ❗ MUST be server-safe (no alert / no localStorage)
+   */
   async authenticate(email, password) {
+    // 1️⃣ basic validation
+    if (!email || !password) {
+      throw new Error("Email and password are required");
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error("Invalid email format");
+    }
+
     try {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error("Please enter a valid email address");
-      }
-
-      if (!password || password.trim() === "") {
-        throw new Error("Password is required");
-      }
-
-      const response = await axios.post(SUBGRAPH_USERS_URL, {
+      // 2️⃣ call subgraph
+      const response = await axios.post(SUBGRAPH_AUTH_URL, {
         query: loginRequestToSubgraph,
         variables: { input: { email, password } },
       });
 
-      const result = response.data;
-      if (!result.success) {
-        alert(result.error || "Login failed");
-        return; // stop navigation
-      }
-      // 1. If GraphQL has errors
-      if (result.errors) {
-        throw new Error(result.errors[0].message || "Authentication failed");
+      // 3️⃣ GraphQL errors
+      if (response.data.errors?.length) {
+        throw new Error(response.data.errors[0].message);
       }
 
-      if (!result.data || !result.data.signIn) {
-        throw new Error("Invalid credentials");
-      }
-      const { user, token, success } = result.data.signIn;
-      if (!success || !user || !token?.accessToken?.token) {
-        throw new Error("Invalid email or password");
+      const signIn = response.data?.data?.signIn;
+      if (!signIn || !signIn.success) {
+        throw new Error(signIn?.message || "Invalid credentials");
       }
 
-      // Save token
-      localStorage.setItem("jwt_token", token.accessToken.token);
-
-      if (token?.accessToken?.token) {
-        localStorage.setItem("jwt_token", token.accessToken.token);
+      const { auth } = signIn;
+      if (!auth?.token || !auth?.userId) {
+        throw new Error("Invalid auth payload");
       }
 
+      // 4️⃣ return user object for NextAuth
       return {
-        success: true,
-        user,
-        token: token.accessToken.token,
-        message: "Authentication successful",
+        id: auth.userId,
+        email,
+        role: auth.role,
+        accessToken: auth.token,
       };
-    } catch (error) {
-      console.error("Authentication error:", error);
-      return {
-        success: false,
-        error: error.message || "Authentication failed",
-        message: "Authentication failed",
-      };
+    } catch (err) {
+      console.error("Authentication error:", err.message);
+      throw err; // ✅ let NextAuth handle failure
     }
   },
 
   async register(data) {
-    console.log("➡️ calling register()");
-    return await this.sendRegisterToSubgraph(data);
+    return this.sendRegisterToSubgraph(data);
   },
 
   async sendRegisterToSubgraph(data) {
     try {
-      const response = await fetch(SUBGRAPH_USERS_URL, {
+      const response = await fetch(SUBGRAPH_AUTH_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: registerRequestToSubgraph,
-          variables: {
-            input: {
-              email: data.email,
-              password: data.password,
-              name: data.name,
-              nickname: data.nickname,
-              role: data.role,
-              picture: data.picture,
-            },
-          },
+          variables: { input: data },
         }),
       });
 
-      const text = await response.text();
+      const result = await response.json();
 
-      let result;
-      try {
-        result = JSON.parse(text);
-      } catch (err) {
-        console.error("非JSON响应:", text);
-        return {
-          success: false,
-          error: "Server response is not valid JSON",
-        };
-      }
-
-      if (!response.ok || result.errors) {
-        const errorMessage = result?.errors?.[0]?.message || `HTTP Error ${response.status}`;
-        console.error("GraphQL error:", errorMessage);
-        return {
-          success: false,
-          error: errorMessage,
-        };
+      if (result.errors?.length) {
+        throw new Error(result.errors[0].message);
       }
 
       return {
         success: result.data.signUp.success,
         userId: result.data.signUp.userId,
-        message: result.data.signUp.message,
         token: result.data.signUp.auth?.token || null,
+        message: result.data.signUp.message,
       };
-    } catch (error) {
-      console.error("Registration failed:", error);
-      return {
-        success: false,
-        error: error.message || "Registration error",
-      };
+    } catch (err) {
+      console.error("Registration failed:", err.message);
+      return { success: false, error: err.message };
     }
   },
 };

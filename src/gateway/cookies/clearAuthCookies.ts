@@ -11,11 +11,11 @@ interface Response {
 
 export function clearAuthCookies(res: Response) {
   res.clearCookie(
-    "access_token",
+    "accessToken",
     accessCookieOptions
   );
   res.clearCookie(
-    "refresh_token",
+    "refreshToken",
     refreshCookieOptions
   );
 }

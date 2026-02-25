@@ -24,8 +24,8 @@ export function authCookiePlugin() {
 
           /** ===== LOGOUT / REVOKE ===== */
           if (payload === true) {
-            res.clearCookie("access_token", { path: "/" });
-            res.clearCookie("refresh_token", { path: "/" });
+            res.clearCookie("accessToken", { path: "/" });
+            res.clearCookie("refreshToken", { path: "/" });
             res.clearCookie("csrf_token", { path: "/" });
             return;
           }
@@ -34,7 +34,7 @@ export function authCookiePlugin() {
           const { accessToken, refreshToken } = payload;
 
           if (accessToken) {
-            res.cookie("access_token", accessToken, {
+            res.cookie("accessToken", accessToken, {
               httpOnly: true,
               sameSite: "none", // ✅ Required for Apollo Studio (Cross-Site)
               secure: true,     // ✅ Required when SameSite is none
@@ -44,7 +44,7 @@ export function authCookiePlugin() {
           }
 
           if (refreshToken) {
-            res.cookie("refresh_token", refreshToken, {
+            res.cookie("refreshToken", refreshToken, {
               httpOnly: true,
               sameSite: "none", // ✅ Required for Apollo Studio (Cross-Site)
               secure: true,     // ✅ Required when SameSite is none

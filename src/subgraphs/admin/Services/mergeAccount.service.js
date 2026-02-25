@@ -84,7 +84,7 @@ export default class MergeAccountService {
 
     if (refreshTokenCount > 0) {
       warnings.push(
-        "CANNOT_MERGE_ACCOUNT_WITH_REFRESH_TOKENS"
+        "CANNOT_MERGE_ACCOUNT_WITH_refreshTokenS"
       );
     }
 

@@ -150,7 +150,7 @@ constructor(deps) {
         isNewUser = true;
       }
     }
-
+    // is it time to create a session here?
     return this._login(
       userId,
       { ...ctx, familyId },
@@ -163,70 +163,48 @@ constructor(deps) {
    * 🔑 Core Login Logic (Single Source of Truth)
    * =====================================================
    */
-  async _login(userId, ctx, isNewUser = false) {
-    const {
-      ip,
-      deviceId,
-      userAgent,
-      familyId,
-    } = ctx;
+async _login(userId, ctx, isNewUser) {
+  const { familyId } = ctx;
 
-    if (!familyId) {
-      throw new Error("FAMILY_ID_REQUIRED");
-    }
+  // 1️⃣ Create session
+  const session = await this.sessionRepo.create({
+    userId,
+    familyId,
+    deviceInfo: ctx.deviceInfo || null,
+    revoked: false,
+    createdAt: new Date(),
+  });
 
-    // 1️⃣ Risk log
-    await this.loginRiskService.record({
-      type: "LOGIN",
-      userId,
-      ip,
-      deviceId,
-      userAgent,
-      familyId,
-      severity: "LOW",
-    });
+  // 2️⃣ Record login risk (after session created)
+  await this.loginRiskService.record({
+    userId,
+    sessionId: session.id,
+    ip: ctx.ip,
+    userAgent: ctx.userAgent,
+    isNewUser,
+  });
 
-    // 2️⃣ Issue tokens
-    const tokens =
-      await this.tokenService.issueTokens({
-        userId,
-        familyId,
-        ip,
-        deviceId,
-        userAgent,
-      });
+  // 3️⃣ Issue tokens (now includes sessionId)
+  const tokens = this.tokenService.issueTokens({
+    userId,
+    familyId,
+    sessionId: session.id,
+  });
 
-    // 3️⃣ Persist refresh token
-    await this.refreshTokenRepo.save(
-      tokens.refreshToken,
-      {
-        userId,
-        familyId,
-        ip,
-        deviceId,
-        userAgent,
-        issuedAt: new Date(),
-      }
-    );
-    // auth.service.js (_login)
-await this.sessionRepo.create({
-  userId,
-  familyId,
-  deviceId,
-  userAgent,
-  ip,
-  refreshTokenId: tokens.refreshJti,
-  lastSeenAt: new Date(),
-});
+  // 4️⃣ Store refresh token
+  await this.refreshTokenRepo.save(tokens.refreshToken, {
+    userId,
+    familyId,
+    sessionId: session.id,
+    jti: tokens.refreshJti,
+    issuedAt: new Date(),
+  });
 
-    return {
-      userId,
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      familyId,
-      isNewUser,
-    };
-  }
+  return {
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+  };
+}
 
   /**
    * =====================================================

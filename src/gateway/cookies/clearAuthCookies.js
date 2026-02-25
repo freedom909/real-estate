@@ -7,11 +7,11 @@ import {
 
 export function clearAuthCookies(res) {
   res.clearCookie(
-    "access_token",
+    "accessToken",
     accessCookieOptions
   );
   res.clearCookie(
-    "refresh_token",
+    "refreshToken",
     refreshCookieOptions
   );
 }

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { compilePath, escapeRegExp } from './helpers/tool.js';
+import { compilePath, escapeRegExp } from '../../helpers/tool.js';
 
 const POLICY_PATH: string = path.join(process.cwd(), 'rbac.policy.json');
 // escapeRegExp(str)

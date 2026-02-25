@@ -2,7 +2,7 @@
               
 async function verifyGithubIdToken(code) {
   const tokenRes = await fetch(
-    "https://github.com/login/oauth/access_token",
+    "https://github.com/login/oauth/accessToken",
     {
       method: "POST",
       headers: {
@@ -16,11 +16,11 @@ async function verifyGithubIdToken(code) {
     }
   );
 
-  const { access_token } = await tokenRes.json();
+  const { accessToken } = await tokenRes.json();
 
   const userRes = await fetch("https://api.github.com/user", {
     headers: {
-      Authorization: `Bearer ${access_token}`,
+      Authorization: `Bearer ${accessToken}`,
     },
   });
 

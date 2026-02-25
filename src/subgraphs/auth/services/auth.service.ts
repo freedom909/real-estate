@@ -365,7 +365,7 @@ export default class AuthService {
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
     if (!refreshToken) {
-      throw new Error("NO_REFRESH_TOKEN")
+      throw new Error("NO_refreshToken")
     }
     // 1️⃣ Verify JWT signature + expiration
     const payload = await this.tokenService.verifyRefreshToken(refreshToken);
@@ -381,7 +381,7 @@ export default class AuthService {
     // 2️⃣ Check if token exists in DB
     const existingToken = await this.refreshTokenRepo.findByJti(jti);
     if (!existingToken) {
-      throw new Error("REFRESH_TOKEN_NOT_FOUND");
+      throw new Error("refreshToken_NOT_FOUND");
     }
     //// 3️⃣ Delete old token (rotation)
     await this.refreshTokenRepo.deleteByJti(jti);

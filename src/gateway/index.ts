@@ -6,6 +6,7 @@ import http from "http";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import * as crypto from "crypto";
 import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@as-integrations/express4";
 import { ApolloGateway } from "@apollo/gateway";
@@ -57,7 +58,7 @@ async function startGateway() {
 
                 // ✅ Set refresh token cookie
                 if (data?.oauthLogin?.refreshToken) {
-                  res.cookie("refresh_token", data.oauthLogin.refreshToken, {
+                  res.cookie("refreshToken", data.oauthLogin.refreshToken, {
                     httpOnly: true,
                     secure: process.env.NODE_ENV === "production",
                     sameSite: "lax",
@@ -84,8 +85,9 @@ async function startGateway() {
   let PUBLIC_KEY: string | null = null;
 
   try {
+
     const keyPath =
-      process.env.JWT_PUBLIC_KEY_PATH || "./src/keys/public.pem";
+      process.env.JWT_PUBLIC_KEY_PATH || "keys/public.pem";
 
     PUBLIC_KEY = fs.readFileSync(path.resolve(keyPath), "utf8");
 
@@ -107,6 +109,7 @@ async function startGateway() {
     "/graphql",
     expressMiddleware<MyContext>(server, {
       context: async ({ req, res }): Promise<MyContext> => {
+        console.log("🔍 Incoming Authorization:", req.headers.authorization);
         const authHeader = req.headers.authorization;
 
         if (!authHeader) {
@@ -114,42 +117,38 @@ async function startGateway() {
         }
 
         const token = authHeader.replace("Bearer ", "");
+const decoded = jwt.decode(token);
+// ==============================
+// PROD MODE: Verify JWT
+// ==============================
 
-        // ==============================
-        // DEV MODE: Skip verification
-        // ==============================
-        if (!PUBLIC_KEY) {
-          console.warn("⚠️ DEV MODE: Skipping JWT verification");
-          return {
-            req,
-            res,
-            user: { sub: "dev-user" } as JwtPayload,
-            authorization: `Bearer ${token}`,
-          };
-        }
+console.log(
+  "PUBLIC KEY HASH:",
+  crypto.createHash("sha256").update(PUBLIC_KEY!).digest("hex")
+);
 
-        // ==============================
-        // PROD MODE: Verify JWT
-        // ==============================
-        try {
-          const verified = jwt.verify(token, PUBLIC_KEY, {
-            algorithms: ["RS256"],
-            issuer: "auth-service",
-          }) as JwtPayload;
+try {
+  const verified = jwt.verify(token, PUBLIC_KEY!, {
+    algorithms: ["RS256"],
+    issuer: process.env.JWT_ISSUER || "auth-service",
+  }) as JwtPayload;
 
-          return {
-            req,
-            res,
-            user: verified,
-            authorization: `Bearer ${token}`,
-          };
-        } catch (err: any) {
-          console.error("❌ Token verification failed:", err.message);
-          return { req, res };
-        }
+  console.log("✅ JWT Verified:", verified);
+
+  return {
+    req,
+    res,
+    user: verified,
+    authorization: `Bearer ${token}`,
+  };
+} catch (err: any) {
+  console.error("❌ Token verification failed:", err.message);
+  return { req, res };
+}
       },
     })
   );
+
 
   // ==============================
   // 5️⃣ Start Server

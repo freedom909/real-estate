@@ -11,7 +11,7 @@ interface FacebookUser {
 }
 
 interface FacebookTokenData {
-  access_token?: string;
+  accessToken?: string;
 }
 
 interface OAuthProfile {
@@ -27,9 +27,9 @@ async function verifyFacebookCode(code: string): Promise<OAuthProfile> {
     throw new Error("Missing OAuth code");
   }
 
-  // 1️⃣ Exchange code for access_token
+  // 1️⃣ Exchange code for accessToken
   const tokenRes = await fetch(
-    `https://graph.facebook.com/v18.0/oauth/access_token?` +
+    `https://graph.facebook.com/v18.0/oauth/accessToken?` +
     new URLSearchParams({
       client_id: process.env.FACEBOOK_CLIENT_ID!,
       client_secret: process.env.FACEBOOK_CLIENT_SECRET!,
@@ -40,15 +40,15 @@ async function verifyFacebookCode(code: string): Promise<OAuthProfile> {
   
   const tokenData: FacebookTokenData = await tokenRes.json();
   
-  if (!tokenData.access_token) {
+  if (!tokenData.accessToken) {
     throw new Error("Failed to exchange Facebook access token");
   }
   
-  const accessToken = tokenData.access_token;
+  const accessToken = tokenData.accessToken;
   
   // 2️⃣ Get user info
   const userRes = await fetch(
-    `https://graph.facebook.com/me?fields=id,name,email,picture&access_token=${accessToken}`
+    `https://graph.facebook.com/me?fields=id,name,email,picture&accessToken=${accessToken}`
   );
   
   const user: FacebookUser = await userRes.json();

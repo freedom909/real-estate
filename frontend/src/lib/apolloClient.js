@@ -1,10 +1,13 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { getSession } from 'next-auth/react';
-import config from '../config/config';
+
+// Prefer central env over hardcoded URLs
+// Gateway GraphQL endpoint
+const GATEWAY_URL = process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://localhost:4001/graphql';
 
 const httpLink = createHttpLink({
-  uri: `${config.API_URL}/graphql`,
+  uri: GATEWAY_URL,
 });
 
 const authLink = setContext(async (_, { headers }) => {
@@ -23,7 +26,6 @@ const authLink = setContext(async (_, { headers }) => {
 
 const client = new ApolloClient({
   link: authLink.concat(httpLink),
-   credentials: "include",
   cache: new InMemoryCache()
 });
 

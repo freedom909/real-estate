@@ -37,4 +37,8 @@ export default class SessionRepo {
   async updateById(id: string, data: Partial<Session>) {
     return this.SessionModel.findByIdAndUpdate(id, data, { new: true });
   }
+
+  async findById(id: string) {
+    return this.SessionModel.findById(id);
+  }
 }

@@ -20,13 +20,13 @@ export function setAuthCookies(
   }
 
   res.cookie(
-    "access_token",
+    "accessToken",
     accessToken,
     accessCookieOptions
   );
 
   if (refreshToken) {
-    res.cookie("refresh_token", refreshToken, {
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       sameSite: "lax",   // ⭐ 本地 & 同站点最稳
       secure: false,    // ⭐ localhost 必须 false

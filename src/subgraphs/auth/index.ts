@@ -80,7 +80,7 @@ app.use((req: CustomRequest, res, next) => {
 
     }
   }
-
+console.log("Subgraph Authorization:", req.headers.authorization);
   next();
 });
 
@@ -91,13 +91,16 @@ app.use(
   express.json(),
   expressMiddleware(server, {
     context: async ({ req, res }) => ({
+      
       req,
       res,
       container,
       redis,
       user: req.user ?? null,
     }),
+    
   })
+  
 );
 
 

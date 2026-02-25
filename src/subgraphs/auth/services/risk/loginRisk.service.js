@@ -33,7 +33,7 @@ export default class LoginRiskService {
       refreshTokenId,
     });
     await this.record({
-      type: "REFRESH_TOKEN_REUSE",
+      type: "refreshToken_REUSE",
       userId,
       ip,
       userAgent,
@@ -140,7 +140,7 @@ export default class LoginRiskService {
       `user:${userId}:security`,
       JSON.stringify({
         status: "FROZEN",
-        reason: "REFRESH_TOKEN_REUSE",
+        reason: "refreshToken_REUSE",
         at: Date.now(),
       })
     );

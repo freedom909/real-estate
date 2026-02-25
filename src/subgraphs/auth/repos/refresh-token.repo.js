@@ -47,7 +47,7 @@ export default class RefreshTokenRepo {
     const payload = jwt.decode(refreshToken);
 
     if (!payload?.jti) {
-      throw new Error("REFRESH_TOKEN_JTI_MISSING");// error "REFRESH_TOKEN_JTI_MISSING"
+      throw new Error("refreshToken_JTI_MISSING");// error "refreshToken_JTI_MISSING"
     }
 
     return this.model.create({

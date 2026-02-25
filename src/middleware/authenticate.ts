@@ -31,7 +31,11 @@ export function authenticate({ redis }: AuthenticateOptions) {
     try {
       const payload = jwt.verify(
         token,
-        process.env.ACCESS_TOKEN_SECRET!
+       process.env.JWT_PUBLIC_KEY!,
+    {
+      algorithms: ["RS256"],
+      issuer: process.env.JWT_ISSUER,
+    }
       ) as UserPayload;
 
       (req as any).user = payload;

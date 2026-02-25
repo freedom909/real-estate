@@ -15,7 +15,7 @@ export function authCookiePlugin() {
             const { accessToken, refreshToken } = data.oauthLogin;
 
             if (accessToken) {
-              res.cookie("access_token", accessToken, {
+              res.cookie("accessToken", accessToken, {
                 httpOnly: true,
                 sameSite: "lax",
                 path: "/",
@@ -23,7 +23,7 @@ export function authCookiePlugin() {
             }
 
             if (refreshToken) {
-              res.cookie("refresh_token", refreshToken, {
+              res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 sameSite: "strict",
                 path: "/",
@@ -36,7 +36,7 @@ export function authCookiePlugin() {
             const { accessToken } = data.refreshToken;
 
             if (accessToken) {
-              res.cookie("access_token", accessToken, {
+              res.cookie("accessToken", accessToken, {
                 httpOnly: true,
                 sameSite: "lax",
                 path: "/",
@@ -46,8 +46,8 @@ export function authCookiePlugin() {
 
           /** ===== LOGOUT ===== */
           if (data.logout === true || data.revokeToken === true) {
-            res.clearCookie("access_token");
-            res.clearCookie("refresh_token");
+            res.clearCookie("accessToken");
+            res.clearCookie("refreshToken");
             res.clearCookie("csrf_token");
           }
         },

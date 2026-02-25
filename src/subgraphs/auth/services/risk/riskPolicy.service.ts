@@ -17,7 +17,7 @@ class RiskPolicyService {
   async evaluateRisk(events: RiskEvent[]): Promise<RiskPolicyResult> {
     // Check for refresh token reuse in last 24 hours
     const refreshTokenReuseEvents = events.filter(
-      event => event.type === 'REFRESH_TOKEN_REUSE' && 
+      event => event.type === 'refreshToken_REUSE' && 
       new Date().getTime() - event.timestamp.getTime() < 24 * 60 * 60 * 1000
     );
 

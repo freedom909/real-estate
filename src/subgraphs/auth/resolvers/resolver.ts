@@ -48,6 +48,7 @@ const listOnlineSessions = (redis: any) => {
 };
 
 export default {
+  
   Query: {
     me: async (_: unknown, __: unknown, { user }: Context) => {
       if (!user) return null;
@@ -79,6 +80,7 @@ export default {
   },
 
   Mutation: {
+    
     refreshToken: async (_:unknown, { refreshToken }: { refreshToken: string }, { container }: Context) => {
       const authService = container.resolve(TOKENS.auth.authService);
           return authService.refresh(refreshToken);
@@ -122,7 +124,7 @@ export default {
     },
 
     logout: async (_, __, { container, req, user }: Context) => {
-      const refreshToken = req.cookies?.refresh_token;
+      const refreshToken = req.cookies?.refreshToken;
       if (!refreshToken) return true;
 
       const service = container.resolve(TOKENS.auth.refreshTokenService);
@@ -136,6 +138,7 @@ export default {
       { provider, idToken }: { provider: string; idToken: string },
       { container, req, res }: Context
     ) => {
+      console.log("🔥 oauthLogin resolver triggered");
       console.log("LOGIN resolver triggered");
       const oauthAdapter = container.resolve(TOKENS.auth.oauthAdapter);
 
@@ -152,7 +155,7 @@ export default {
           userAgent: req.headers["user-agent"],
         });
 
-
+console.log("🔐 oauthLogin result:", result);
       return result;
     },
 

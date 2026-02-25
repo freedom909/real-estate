@@ -8,16 +8,28 @@ interface Context {
       [key: string]: string;
     };
   };
+  authorization?: string;
 }
 
 export default class AuthenticatedDataSource extends RemoteGraphQLDataSource {
   override willSendRequest(
     { request, context }: GraphQLDataSourceProcessOptions<Context>
   ) {
-    const cookie = context.req?.headers?.cookie;
+    if (!request.http) return;
 
-    if (cookie && request.http) {
-      request.http.headers.set("cookie", cookie);
+    // ✅ Forward cookies
+    // const cookie = context.req?.headers?.cookie;
+    const authHeader=context.req?.headers?.authorization
+if (authHeader) {
+  request.http.headers.set("authorization", authHeader);
+}
+ 
+    // ✅ Forward Authorization header
+    if (context.authorization) {
+      request.http.headers.set(
+        "authorization",
+        context.authorization
+      );
     }
   }
 }

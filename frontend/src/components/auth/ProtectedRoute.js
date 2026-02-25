@@ -46,7 +46,7 @@ export default function ProtectedRoute({ children, requiredRoles = [] }) {
           animation: 'spin 1s linear infinite',
           marginBottom: '16px'
         }}></div>
-        <p>加载中...</p>
+        <p>Loading...</p>
       </div>
     );
   }

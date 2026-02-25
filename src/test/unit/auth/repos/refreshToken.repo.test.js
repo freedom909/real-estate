@@ -120,7 +120,7 @@ describe("RefreshTokenRepo", () => {
       const token = "token-without-jti";
       jwt.decode.mockReturnValue({ sub: "user-1" }); // No jti
 
-      await expect(repo.save(token, {})).rejects.toThrow("REFRESH_TOKEN_JTI_MISSING");
+      await expect(repo.save(token, {})).rejects.toThrow("refreshToken_JTI_MISSING");
       expect(MockModel.create).not.toHaveBeenCalled();
     });
   });

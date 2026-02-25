@@ -1,5 +1,5 @@
 export function setRefreshTokenCookie(res, refreshToken) {
-  res.cookie("refresh_token", refreshToken, {
+  res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: true,
     sameSite: "strict",

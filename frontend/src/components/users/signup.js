@@ -26,11 +26,11 @@ export default async function handler(req, res) {
         return res.status(200).json({ success: true });
       } catch (err) {
         console.error("Registration error:", err);
-        return res.status(500).json({ success: false, message: '服务器内部错误' });
+        return res.status(500).json({ success: false, message: 'Internal server error' });
       }
     } catch (error) {
       console.error("Error in signup handler:", error);
-      return res.status(500).json({ success: false, message: '服务器内部错误' });
+      return res.status(500).json({ success: false, message: 'Internal server error' });
     }
   }
   

@@ -18,7 +18,7 @@ describe("TokenService", () => {
     jest.clearAllMocks();
 
     process.env.ACCESS_TOKEN_SECRET = "access-secret";
-    process.env.REFRESH_TOKEN_SECRET = "refresh-secret";
+    process.env.refreshToken_SECRET = "refresh-secret";
 
     service = new TokenService();
   });
