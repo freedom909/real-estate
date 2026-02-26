@@ -1,20 +1,8 @@
-// src/subgraphs/auth/services/token/token.service.ts
+// token.service.ts
 
-import dotenv from "dotenv";
-dotenv.config();
-import * as crypto from "crypto";
-import jwt, {
-  SignOptions,
-  VerifyOptions,
-  Algorithm,
-  JwtPayload,
-} from "jsonwebtoken";
-import fs from "fs";
+import jwt, { Algorithm, SignOptions, JwtPayload } from "jsonwebtoken";
 import { randomUUID } from "crypto";
-
-/* ===============================
-   Types
-================================ */
+import { KeyProvider } from "./token.types";
 
 export interface TokenPayload extends JwtPayload {
   sub: string;
@@ -33,83 +21,62 @@ export interface TokenPair {
   refreshJti: string;
 }
 
-/* ===============================
-   Token Service
-================================ */
+export interface TokenConfig {
+  issuer: string;
+  algorithm: Algorithm;
+  accessExpiresIn: SignOptions["expiresIn"];
+  refreshExpiresIn: SignOptions["expiresIn"];
+}
 
 export default class TokenService {
   private privateKey: string;
   private publicKey: string;
-  private issuer: string;
-  private algorithm: Algorithm = "RS256";
-  private accessExpiresIn: SignOptions["expiresIn"];
-  private refreshExpiresIn: SignOptions["expiresIn"];
+  private config: TokenConfig;
 
-  constructor() {
-    const privateKeyPath = process.env.JWT_PRIVATE_KEY;
-    const publicKeyPath = process.env.JWT_PUBLIC_KEY;
+  constructor(
+    keyProvider: KeyProvider,
+    config?: Partial<TokenConfig>
+  ) {
+    const keys = keyProvider.getKeys();
 
-    if (!privateKeyPath || !publicKeyPath) {
-      throw new Error("JWT key paths not configured");
-    }
+    this.privateKey = keys.privateKey;
+    this.publicKey = keys.publicKey;
 
-    this.privateKey = fs.readFileSync(privateKeyPath, "utf8");
-    this.publicKey = fs.readFileSync(publicKeyPath, "utf8");
-
-    this.issuer = process.env.JWT_ISSUER || "auth-service";
-   this.accessExpiresIn =
-  (process.env.JWT_ACCESS_EXPIRES_IN as SignOptions["expiresIn"]) || "15m";
-
-this.refreshExpiresIn =
-  (process.env.JWT_REFRESH_EXPIRES_IN as SignOptions["expiresIn"]) || "30d";
+    this.config = {
+      issuer: config?.issuer ?? "auth-service",
+      algorithm: config?.algorithm ?? "RS256",
+      accessExpiresIn: config?.accessExpiresIn ?? "15m",
+      refreshExpiresIn: config?.refreshExpiresIn ?? "30d",
+    };
   }
 
   /* ===============================
      Access Token
   ============================== */
 
-
-
-signAccessToken(payload: Omit<TokenPayload, "type">): string {
-
-  console.log(
-    "PRIVATE KEY HASH:",
-    crypto
-      .createHash("sha256")
-      .update(this.privateKey)
-      .digest("hex")
-  );
-
-  const token = jwt.sign(
-    {
-      ...payload,
-      type: "access",
-    },
-    this.privateKey,
-    {
-      algorithm: "RS256",
-      expiresIn: "15m",
-    }
-  );
-
-  return token;
-}
+  signAccessToken(payload: Omit<TokenPayload, "type">): string {
+    return jwt.sign(
+      { ...payload, type: "access" },
+      this.privateKey,
+      {
+        algorithm: this.config.algorithm,
+        issuer: this.config.issuer,
+        expiresIn: this.config.accessExpiresIn,
+      }
+    );
+  }
 
   verifyAccessToken(token: string): TokenPayload {
-    try {
-      const decoded = jwt.verify(token, this.publicKey, {
-        algorithms: [this.algorithm],
-        issuer: this.issuer,
-      }) as TokenPayload;
+    const decoded = jwt.verify(token, this.publicKey, {
+      algorithms: [this.config.algorithm],
+      issuer: this.config.issuer,
+    }) as TokenPayload;
 
-      if (decoded.type !== "access") {
-        throw new Error("Invalid access token type");
-      }
-
-      return decoded;
-    } catch (error: any) {
-      throw new Error(`Access token verification failed: ${error.message}`);
+    if (decoded.type !== "access") {
+      throw new Error("Invalid access token type");
     }
+
+    return decoded;
   }
 
   /* ===============================
@@ -122,15 +89,12 @@ signAccessToken(payload: Omit<TokenPayload, "type">): string {
     const jti = randomUUID();
 
     const token = jwt.sign(
-      {
-        ...payload,
-        type: "refresh",
-      },
+      { ...payload, type: "refresh" },
       this.privateKey,
       {
-        algorithm: this.algorithm,
-        issuer: this.issuer,
-        expiresIn: this.refreshExpiresIn,
+        algorithm: this.config.algorithm,
+        issuer: this.config.issuer,
+        expiresIn: this.config.refreshExpiresIn,
         jwtid: jti,
       }
     );
@@ -139,100 +103,59 @@ signAccessToken(payload: Omit<TokenPayload, "type">): string {
   }
 
   verifyRefreshToken(token: string): TokenPayload {
-    try {
-      const decoded = jwt.verify(token, this.publicKey, {
-        algorithms: [this.algorithm],
-        issuer: this.issuer,
-      }) as TokenPayload;
+    const decoded = jwt.verify(token, this.publicKey, {
+      algorithms: [this.config.algorithm],
+      issuer: this.config.issuer,
+    }) as TokenPayload;
 
-      if (decoded.type !== "refresh") {
-        throw new Error("Invalid refresh token type");
-      }
-
-      return decoded;
-    } catch (error: any) {
-      throw new Error(`Refresh token verification failed: ${error.message}`);
+    if (decoded.type !== "refresh") {
+      throw new Error("Invalid refresh token type");
     }
+
+    return decoded;
   }
 
-  /* ===============================
-     Issue Both Tokens
-  ============================== */
-
   issueTokens({
-    userId,
+  userId,
+  role,
+  email,
+  tokenVersion = 0,
+  familyId,
+  deviceId,
+  sessionId,
+}: {
+  userId: string;
+  role?: string;
+  email?: string;
+  tokenVersion?: number;
+  familyId?: string;
+  deviceId?: string;
+  sessionId?: string;
+}) {
+  const accessToken = this.signAccessToken({
+    sub: userId,
     role,
     email,
-    tokenVersion = 0,
+    tokenVersion,
     familyId,
     deviceId,
     sessionId,
-  }: {
-    userId: string;
-    role?: string;
-    email?: string;
-    tokenVersion?: number;
-    familyId?: string;
-    deviceId?: string;
-    sessionId?: string;
-  }): TokenPair {
-    const accessToken = this.signAccessToken({
-      sub: userId,
-      role,
-      email,
-      tokenVersion,
-      familyId,
-      deviceId,
-      sessionId,
-    });
+  });
 
-    const { token: refreshToken, jti } = this.signRefreshToken({
-      sub: userId,
-      role,
-      email,
-      tokenVersion,
-      familyId,
-      deviceId,
-      sessionId,
-    });
+  const { token: refreshToken, jti } = this.signRefreshToken({
+    sub: userId,
+    role,
+    email,
+    tokenVersion,
+    familyId,
+    deviceId,
+    sessionId,
+  });
 
-    return {
-      accessToken,
-      refreshToken,
-      refreshJti: jti,
-    };
-  }
-
-  /* ===============================
-     TTL Helpers
-  ============================== */
-
-  getAccessTokenTTL(): SignOptions["expiresIn"] {
-    return this.accessExpiresIn;
-  }
-
-  getRefreshTokenTTL(): number {
-    const ttl = this.refreshExpiresIn;
-
-    if (typeof ttl === "number") return ttl;
-
-    const match = ttl.match(/^(\d+)([dhms])$/);
-    if (!match) return 30 * 24 * 60 * 60;
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-
-    switch (unit) {
-      case "d":
-        return value * 24 * 60 * 60;
-      case "h":
-        return value * 60 * 60;
-      case "m":
-        return value * 60;
-      case "s":
-        return value;
-      default:
-        return 30 * 24 * 60 * 60;
-    }
-  }
+  return {
+    accessToken,
+    refreshToken,
+    refreshJti: jti,
+  };
+}
 }

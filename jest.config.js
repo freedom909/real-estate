@@ -13,7 +13,7 @@ export default {
           module: "esnext",
           moduleResolution: "node",
         },
-        isolatedModules: true,
+        
         diagnostics: false, // Disable type checking
       },
     ],
