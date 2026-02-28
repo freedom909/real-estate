@@ -6,6 +6,7 @@ import type OAuthAdapter from "../adapters/oauth/index.js";
 import AuthService from "../services/auth.service.js";
 import { Container } from "@/shared/container/createContainer.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
+import { ForbiddenError } from "@/infrastructure/utils/errors.js";
 
 interface User {
   userId: string;
@@ -58,12 +59,12 @@ export default {
     },
 
 
-    mySessions: async (_, __, ctx: Context) => {
-      return requireScope(["session:read"])(
-        ctx,
-        () =>
-          sessionRepo.listByUser(ctx.user!.userId)
-      );
+    mySessions: async (_, __, { container, user }) => {
+      if (!user) throw new ForbiddenError("Unauthorized");
+
+      const authService = container.resolve(TOKENS.auth.authService);
+
+      return authService.getMySessions(user.userId);
     },
     OnlineSessions: async (_, __, ctx: Context) => {
       return requireScope(["session:read"])(
@@ -99,7 +100,7 @@ export default {
 
       const authService = container.resolve<AuthService>(TOKENS.auth.authService);
 
-      return authService.bindOAuthAccount( 
+      return authService.bindOAuthAccount(
         provider,
         idToken,
         { // 名前 'ctx' が見つかりません。
@@ -116,13 +117,13 @@ export default {
       const authService = container.resolve<AuthService>(TOKENS.auth.authService);
 
       return authService.unbindOAuthAccount(
-        
+
         provider,
-       {
+        {
           userId: user.userId,
           ip: req.ip,
           deviceId: req.headers["x-device-id"] as string,
-}
+        }
       );
     },
 
@@ -149,9 +150,9 @@ export default {
       const oauthAdapter = container.resolve<OAuthAdapter>(TOKENS.auth.oauthAdapter);
       // 1️⃣ 验证第三方 token
       const profile = await oauthAdapter.parse(provider, idToken);
-    
+
       const authService = container.resolve<AuthService>(TOKENS.auth.authService);
-    
+
       // 2️⃣ 领域登录
       let result;
 
@@ -166,26 +167,24 @@ export default {
         throw err;
       }
 
-      console.log("typeof",typeof result.refreshToken);
-      console.log("result",result.refreshToken);
+      console.log("typeof", typeof result.refreshToken);
+      console.log("result", result.refreshToken);
       return result;
     },
 
-    revokeSession: async (
-      _,
-      { sessionId },
-      ctx: Context
-    ) =>
-      requireScope(["session:revoke"])(
-        ctx,
-        async () => {
-          await sessionRepo.revoke(sessionId);
-          await refreshTokenRepo.revokeBySession(
-            sessionId
-          );
-          return true;
-        }
-      ),
+ revokeSession: async (_, { sessionId }, { user, req, container }) => {
+  const token = req.headers.authorization?.replace("Bearer ", "");
+
+  const authService = container.resolve<AuthService>(
+    TOKENS.auth.authService
+  );
+
+  return authService.revokeSession(
+    user.userId,
+    sessionId,
+    token
+  );
+}
   },
 
   // ✅ ✅ ✅ 类型 resolver 在这里

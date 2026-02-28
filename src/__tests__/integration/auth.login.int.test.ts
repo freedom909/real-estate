@@ -143,6 +143,7 @@ beforeEach(async () => {
     userClient: {} as any,
     credentialRepo: {} as any,
     oauthAccountRepo: {} as any,
+    accessTokenBlacklist: {} as any,
   });
   
 });

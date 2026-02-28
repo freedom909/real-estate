@@ -56,9 +56,10 @@ type Query {
 type Session {
   id: ID!
   deviceId: String
-  userAgent: String
   ip: String
-  lastSeenAt: DateTime
+  userAgent: String
+  lastSeenAt: String
+  createdAt: String
 }
 # =====================
 # Mutation
@@ -70,8 +71,6 @@ type Mutation {
   ): AuthPayload! @public
 
   refreshToken(refreshToken: String!): AuthTokens!
-
-
   logout: Boolean!
   revokeToken: Boolean!
 
@@ -86,7 +85,6 @@ type Mutation {
 
   revokeSession(sessionId: String!): Boolean!
 }
-
 
 # =====================
 # Payloads

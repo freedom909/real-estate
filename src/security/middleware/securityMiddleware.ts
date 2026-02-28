@@ -8,8 +8,6 @@ interface Context {
   userAgent?: string;
 }
 
-
-
 class SecurityChallengeError extends Error {
   constructor(message: string) {
     super(message);

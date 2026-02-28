@@ -1,7 +1,7 @@
 import createContainer from "../../../shared/container/createContainer.js";
 import { TOKENS } from "../../../shared/container/tokens.js";
 import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
-
+import AccessTokenBlacklist from "../../../shared/security/blacklist.js";
 // ===== models =====
 import CredentialModel from "../models/credential.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
@@ -20,7 +20,7 @@ import RefreshTokenService from "../services/refresh/refreshToken.service.js";
 import OAuthVerifier from "../services/oauth/oauthVerifier.js";
 
 import AuthService from "../services/auth.service.js";
-
+import { container, instanceCachingFactory } from "tsyringe";
 // ===== adapters =====
 import UserClient from "../adapters/user.client.js";
 import OAuthAdapter from "../adapters/oauth/index.js";
@@ -31,6 +31,8 @@ import { EnvKeyProvider } from "../services/token/env-key.provider.js";
 import SessionModel from "../models/session.model.js";
 import SessionRepo from "../repos/session.repo.js";
 import { GithubApi } from "../adapters/oauth/githubApi.js";
+
+import redis from "@/infrastructure/redis/redis.js";
 
  function createAuthContainer() {
   const container = createContainer();
@@ -196,24 +198,35 @@ container.register(
     });
   });
 
+  container.register(
+    TOKENS.infra.accessTokenBlacklist,
+    () => new AccessTokenBlacklist(redis)
+  )
   // =============================
   // Application - AuthService
   // =============================
 
-container.register(TOKENS.auth.authService, (c) => {
-  return new AuthService({
-    oauthService: c.resolve(TOKENS.auth.oauthAdapter),
-    oauthAccountRepo: c.resolve(TOKENS.auth.oauthAccountRepo),
-    userClient: c.resolve(TOKENS.auth.userClient),
-    tokenService: c.resolve(TOKENS.auth.tokenService),
-    refreshTokenRepo: c.resolve(TOKENS.auth.refreshTokenRepo),
-    loginRiskService: c.resolve(TOKENS.auth.loginRiskService),
-    credentialRepo: c.resolve(TOKENS.auth.credentialRepo),
-    sessionRepo: c.resolve(TOKENS.auth.sessionRepo),
-  });
-});
+
+container.register<AuthService>(
+  TOKENS.auth.authService,
+  
+    (c) => {
+      return new AuthService({
+        oauthService: c.resolve(TOKENS.auth.oauthService),
+        userClient: c.resolve(TOKENS.auth.userClient),
+        credentialRepo: c.resolve(TOKENS.auth.credentialRepo),
+        tokenService: c.resolve(TOKENS.auth.tokenService),
+        loginRiskService: c.resolve(TOKENS.auth.loginRiskService),
+        refreshTokenRepo: c.resolve(TOKENS.auth.refreshTokenRepo),
+        oauthAccountRepo: c.resolve(TOKENS.auth.oauthAccountRepo),
+        sessionRepo: c.resolve(TOKENS.auth.sessionRepo),
+        accessTokenBlacklist: c.resolve(
+          TOKENS.infra.accessTokenBlacklist
+        ),
+      });
+    })
 
   return container;
-}
+  }
 
 export default createAuthContainer;

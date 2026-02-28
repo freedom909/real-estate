@@ -71,6 +71,7 @@ export default class TokenService {
   ========================================================= */
 
   signAccessToken(payload: Omit<TokenPayload, "type">): string {
+    
     return jwt.sign(
       { ...payload, type: "access" },
       this.privateKey,
@@ -82,7 +83,7 @@ export default class TokenService {
     );
   }
 
-  verifyAccessToken(token: string): TokenPayload {
+  asyncverifyAccessToken(token: string): TokenPayload {
     const decoded = jwt.verify(token, this.publicKey, {
       algorithms: [this.config.algorithm],
       issuer: this.config.issuer,
@@ -91,7 +92,7 @@ export default class TokenService {
     if (decoded.type !== "access") {
       throw new Error("Invalid access token type");
     }
-
+  
     return decoded;
   }
 
@@ -143,7 +144,7 @@ export default class TokenService {
   ========================================================= */
 
   issueTokenPair(params: {
-    userId: string;
+    userId: string;  
     role?: string;
     email?: string;
     tokenVersion: number;
@@ -154,7 +155,7 @@ export default class TokenService {
     userAgent?: string;
   }): TokenPair {
     const {
-      userId,
+      userId,     
       role,
       email,
       tokenVersion,
@@ -164,7 +165,7 @@ export default class TokenService {
       ip,
       userAgent,
     } = params;
-
+   
     const basePayload = {
       sub: userId,
       role,

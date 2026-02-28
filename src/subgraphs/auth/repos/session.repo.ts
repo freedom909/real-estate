@@ -41,4 +41,23 @@ export default class SessionRepo {
   async findById(id: string) {
     return this.SessionModel.findById(id);
   }
+
+  async findActiveByUser(userId: string) {
+  return this.SessionModel.find({
+    userId,
+    revoked: { $ne: true },
+  });
+}
+
+async revokeById(sessionId: string) {
+  return this.SessionModel.updateOne(
+    { _id: sessionId },
+    {
+      $set: {
+        revoked: true,
+        revokedAt: new Date(),
+      },
+    }
+  );
+}
 }

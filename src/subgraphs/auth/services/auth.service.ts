@@ -3,6 +3,10 @@ import { randomUUID } from "crypto";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
+import hashToken from "../models/hashToken";
+import { ForbiddenError } from "@/infrastructure/utils/errors";
+import AccessTokenBlacklist from "@/shared/security/blacklist";
+
 interface OAuthUser {
   sub: string;
   email?: string;
@@ -83,6 +87,7 @@ interface AuthServiceDependencies {
   refreshTokenRepo: any;
   oauthAccountRepo: any;
   sessionRepo: any;
+  accessTokenBlacklist: AccessTokenBlacklist;
 }
 
 export default class AuthService {
@@ -95,6 +100,7 @@ export default class AuthService {
   private oauthAccountRepo: any;
   private sessionRepo: any;
   private refreshPublicKey: string;
+  private accessTokenBlacklist: AccessTokenBlacklist;
 
 
   constructor(deps: AuthServiceDependencies) {
@@ -107,6 +113,7 @@ export default class AuthService {
       "refreshTokenRepo",
       "oauthAccountRepo",
       "sessionRepo",
+      "accessTokenBlacklist"
     ];
 
     for (const key of required) {
@@ -169,7 +176,7 @@ export default class AuthService {
       } else {
         const created: User = await this.userClient.createOAuthUser({
           email,
-          profile: { name, avatar,email },
+          profile: { name, avatar, email },
         });
 
         userId = created.id;
@@ -212,15 +219,15 @@ export default class AuthService {
       familyId,
       severity: "LOW",
     });
-   const session=await this.sessionRepo.create({
-    userId,
-    familyId,
-    deviceId,
-    userAgent,
-    ip,
-    lastSeenAt: new Date(),
-   })
-   const sessionId=session._id.toString()
+    const session = await this.sessionRepo.create({
+      userId,
+      familyId,
+      deviceId,
+      userAgent,
+      ip,
+      lastSeenAt: new Date(),
+    })
+    const sessionId = session._id.toString()
     // 2️⃣ Issue tokens
     const tokens: TokensResponse = await this.tokenService.issueTokenPair({
       userId,
@@ -233,7 +240,7 @@ export default class AuthService {
 
     // 3️⃣ Persist refresh token
     await this.refreshTokenRepo.save(
-      
+
       tokens.refreshToken,
       {
         userId,
@@ -251,9 +258,9 @@ export default class AuthService {
     );
 
     // auth.service.js (_login)
- await this.sessionRepo.updateById(sessionId, {
-  refreshTokenId: tokens.refreshJti,
-});
+    await this.sessionRepo.updateById(sessionId, {
+      refreshTokenId: tokens.refreshJti,
+    });
 
 
     return {
@@ -368,46 +375,88 @@ export default class AuthService {
 
   async refresh(refreshToken: string): Promise<AuthTokens> {
     if (!refreshToken) {
-      throw new Error("NO_refreshToken")
+      throw new Error("NO_REFRESH_TOKEN");
     }
-    // 1️⃣ Verify JWT signature + expiration
+
+    // 1️⃣ 验证签名
     const payload = await this.tokenService.verifyRefreshToken(refreshToken);
-    const { sub: userId, familyId, jti ,sessionId} = payload;
-    if (!userId || !familyId || !jti||!sessionId) {
+    const { sub: userId, familyId, jti, sessionId } = payload;
+
+    if (!userId || !familyId || !jti || !sessionId) {
       throw new Error("INVALID_REFRESH_PAYLOAD");
     }
-    const session=await this.sessionRepo.findById(sessionId)
-    if(!session || session.revoked){
-      throw new Error("SESSION_NOT_FOUND")
-    }
-   console.log("sessionId:",sessionId)// it can retrieve the sessionId, why, the output is:auth-service
-    // 2️⃣ Check if token exists in DB
-    const existingToken = await this.refreshTokenRepo.findByJti(jti);
-    if (!existingToken) {
-      throw new Error("refreshToken_NOT_FOUND");
-    }
-    //// 3️⃣ Delete old token (rotation)
-    await this.refreshTokenRepo.deleteByJti(jti);
 
-    // 4️⃣ Issue new tokens
-    const tokens = await this.tokenService.issueTokens({
+    // 2️⃣ 原子 consume
+    const consumed = await this.refreshTokenRepo.consume(refreshToken);
+
+    // 🔥 Reuse Detection
+    if (!consumed) {
+      await this.refreshTokenRepo.revokeFamily(familyId);
+
+      await this.loginRiskService.record({
+        type: "REFRESH_REUSE_DETECTED",
+        userId,
+        familyId,
+        severity: "HIGH",
+      });
+
+      throw new ForbiddenError("REFRESH_REUSE_DETECTED");
+    }
+
+    // 3️⃣ 生成新 token
+    const tokens = await this.tokenService.issueTokenPair({
       userId,
       familyId,
-      sessionId
+      sessionId,
     });
-     console.log("tokens.refreshToken+++:",tokens),
-    // 5️⃣ Save new refresh token
+
+    // 4️⃣ 保存新 refresh token
     await this.refreshTokenRepo.save(tokens.refreshToken, {
-     
       userId,
       familyId,
       sessionId,
       jti: tokens.refreshJti,
       issuedAt: new Date(),
+      expiresAt: new Date(
+        Date.now() +
+        this.tokenService.parseExpires(
+          this.tokenService.config.refreshExpiresIn
+        )
+      ),
     });
-    console.log("tokens.accessToken:",tokens.accessToken)
+
     return {
       accessToken: tokens.accessToken,
     };
+  }
+
+  async getMySessions(userId: string) {
+    return this.sessionRepo.findActiveByUser(userId);
+  }
+
+  async revokeSession(userId: string, sessionId: string, accessToken: string) {
+    const session = await this.sessionRepo.findById(sessionId);
+
+    if (!session) {
+      throw new Error("SESSION_NOT_FOUND");
+    }
+
+    if (session.userId !== userId) {
+      throw new ForbiddenError("CANNOT_REVOKE_OTHER_SESSION");
+    }
+
+    // 1️⃣ revoke refresh tokens
+    await this.refreshTokenRepo.revokeBySession(sessionId);
+
+    // 2️⃣ revoke session
+    await this.sessionRepo.revokeById(sessionId);
+    // 3️⃣ blacklist current access token
+
+    if (accessToken) {
+      const decoded = this.tokenService.asyncverifyAccessToken(accessToken);
+
+      await this.accessTokenBlacklist.blacklist(decoded.jti, decoded.exp);
+    }
+    return true;
   }
 }

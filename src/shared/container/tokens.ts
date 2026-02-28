@@ -1,11 +1,13 @@
 import PolicyEngine from "@/security/policy.engine";
+import AccesstokenBlacklist from "@/shared/security/blacklist";
 
 
 export const TOKENS = {
   infra: {
-    redis: Symbol("infra.redis"),
     githubApi: Symbol("infra.githubApi"),
+    redis: Symbol("infra.redis"),
     cache: Symbol("infra.cache"),
+    accessTokenBlacklist: Symbol("infra.accessTokenBlacklist"),
   },
 
   auth: {
@@ -43,6 +45,8 @@ export const TOKENS = {
     loginRiskService: Symbol("auth.loginRiskService"),
     authService: Symbol("auth.authService"),
     mergeAccountService: Symbol("mergeAccountService"),
+    oauthService: Symbol("auth.oauthService"),
+    
   },
 
   user: {

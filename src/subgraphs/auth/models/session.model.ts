@@ -8,6 +8,7 @@ export interface Session {
   ip: string
   refreshTokenId: string
   revoked?: boolean
+  revokedAt?: Date
   lastSeenAt?: Date
 }
 
@@ -20,6 +21,7 @@ const sessionSchema = new Schema<Session>(
     ip: String,
     refreshTokenId: String,
     revoked: { type: Boolean, default: false },
+    revokedAt: Date,
     lastSeenAt: Date,
   },
   { timestamps: true }

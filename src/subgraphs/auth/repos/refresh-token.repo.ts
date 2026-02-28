@@ -81,7 +81,12 @@ async deleteByJti(jti: string): Promise<void> {
   await this.model.deleteOne({ tokenId: jti });
 }
 
-
+async markAsUsed(jti: string): Promise<void> {
+  await this.model.updateOne(
+    { tokenId: jti },
+    { $set: { status: "used", rotatedAt: new Date() } }
+  );
+}
   /**
    * 🚨 revoke 某个 token family（并发 / 攻击）
    */
