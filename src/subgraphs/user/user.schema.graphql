@@ -13,20 +13,19 @@ scalar DateTime
 User subgraph 是 User 的唯一 owner
 """
 type User @key(fields: "id") {
-  id: ID! 
-  profile: Profile! 
-  email: String!
-  role: Role! 
-  accountStatus: AccountStatus! 
-  approvalStatus: ApprovalStatus! 
+  id: ID!
+  profile: Profile!
+  role: Role!
+  status: AccountStatus!
   tokenVersion: Int!
-  createdAt: DateTime! 
+  createdAt: DateTime!
 }
 
 
 type Profile @shareable {
   name: String
   avatar: String
+  email: String
 }
 
 enum Role {
@@ -68,4 +67,7 @@ input CreateOAuthUserInput {
 input ProfileInput {
   name: String
   avatar: String
+  email: String
 }
+
+

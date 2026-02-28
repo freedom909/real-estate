@@ -58,24 +58,21 @@ export default class RefreshTokenRepo {
   /**
    * 💾 保存新 refresh token（只存 hash）
    */
-  async save(refreshToken: string, meta: RefreshTokenMeta) {
-    const payload: any = jwt.decode(refreshToken);
+async save(
+  refreshToken: string,
+  meta: RefreshTokenMeta & { jti: string; expiresAt: Date }
+) {
+  console.log("refreshToken:",refreshToken)// undefined
+  const tokenHash = hashToken(refreshToken);
+ console.log("tokenHash:",tokenHash)
+  return this.model.create({
+    tokenId: meta.jti,
+    tokenHash,
+    expiresAt: meta.expiresAt,
+    ...meta,
+  });
+}
 
-    if (!payload?.jti) {
-      throw new Error("refreshToken_JTI_MISSING");// error "refreshToken_JTI_MISSING"
-    }
-
-    return this.model.create({
-      tokenId: payload.jti, // ✅ 唯一
-      userId: meta.userId,
-      familyId: meta.familyId,
-      deviceId: meta.deviceId,
-      ip: meta.ip,
-      userAgent: meta.userAgent,
-      issuedAt: new Date(),
-    });
-  }
-  
   async findByJti(jti: string): Promise<RefreshTokenDocument | null> {
     return this.model.findOne({ tokenId: jti });
   }

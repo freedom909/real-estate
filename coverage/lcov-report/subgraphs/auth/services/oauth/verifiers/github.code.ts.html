@@ -181,7 +181,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">interface GitHubProfile {
+<span class="cline-any cline-no">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">interface GithubProfile {
   id: number;
   email?: string;
   name?: string;
@@ -189,7 +189,7 @@
   avatar_url?: string;
 }
 &nbsp;
-interface GitHubTokenResponse {
+interface GithubTokenResponse {
   accessToken?: string;
 }
 &nbsp;
@@ -217,10 +217,10 @@ async function <span class="fstat-no" title="function not covered" >verifyGithub
     }
   );
 &nbsp;
-  const tokenData: GitHubTokenResponse = <span class="cstat-no" title="statement not covered" >await tokenRes.json();</span>
+  const tokenData: GithubTokenResponse = <span class="cstat-no" title="statement not covered" >await tokenRes.json();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  if (!tokenData.accessToken) {</span>
-<span class="cstat-no" title="statement not covered" >    throw new Error("Failed to obtain GitHub access token");</span>
+<span class="cstat-no" title="statement not covered" >    throw new Error("Failed to obtain Github access token");</span>
   }
 &nbsp;
   const userRes = <span class="cstat-no" title="statement not covered" >await fetch("https://api.github.com/user", {</span>
@@ -229,7 +229,7 @@ async function <span class="fstat-no" title="function not covered" >verifyGithub
     },
   });
 &nbsp;
-  const profile: GitHubProfile = <span class="cstat-no" title="statement not covered" >await userRes.json();</span>
+  const profile: GithubProfile = <span class="cstat-no" title="statement not covered" >await userRes.json();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return {</span>
     provider: "GITHUB",

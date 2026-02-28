@@ -1,13 +1,13 @@
 // src/subgraphs/user/services/user.service.ts
 import * as EmailValidator from 'email-validator';
-import UserRepo from "../repos/user.repo";
-import { IUserDB, UserDocument } from "../models/user.model";
-import { Role } from "../../../shared/types/role";
+import UserRepo from "../../../subgraphs/user/repos/user.repo";
+import { IUserDB, UserDocument } from "../../../subgraphs/user/models/user.model";
+import { Role } from "../../../domain/user/types/role";
 import { AuthenticationError, ForbiddenError, UserInputError } from "../../../infrastructure/utils/errors";
 import IPermissionService from "../../../security/permission.service";
-import { IUser } from "../../../shared/types/user";
+import { IUser } from "../../../domain/user/types/user";
 
-import { mapToDomain } from '../models/mapToDomain';
+import { mapToDomain } from '../../../subgraphs/user/models/mapToDomain';
 
 export interface IContext {
   user?: IUserDB;
@@ -54,7 +54,7 @@ export default class UserService {
         throw new AuthenticationError('Authentication required');
       }
 
-      if (context.user.role !== Role.ADMIN && context.user.profile.UserId !== user.profile.UserId) {
+      if (context.user.role !== Role.ADMIN && context.user.profile.userId !== user.profile.userId) {
         throw new ForbiddenError('Access denied: Cannot access other users');
       }
 
@@ -86,7 +86,7 @@ export default class UserService {
         role: Role.CUSTOMER,
         status: "ACTIVE",
         profile: {
-          UserId: profile.id,
+          userId: profile.id,
           email: profile.email,
           name: profile.name,
           avatar: profile.picture,

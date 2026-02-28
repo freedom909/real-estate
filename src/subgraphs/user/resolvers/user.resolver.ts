@@ -1,6 +1,6 @@
 // src/subgraphs/user/resolvers/index.ts
 
-import { Action, Resource } from "../../../shared/types/types";
+import { Action, Resource } from "../../../domain/user/types/types";
 import { TOKENS } from "../../../shared/container/tokens";
 import { IUserDB } from "../models/user.model.js";
 import { ForbiddenError } from "@/infrastructure/utils/errors";
@@ -60,7 +60,7 @@ export default {
   },
 
   Mutation: {
-    createOAuthUser: (_: unknown, { input }: { input: { email: string; profile: any } }, { container }: ResolverContext) => {
+    createOAuthUser: (_: unknown, { input }: { input: { email: string; profile: any} }, { container }: ResolverContext) => {
       console.log("🔥 USER SUBGRAPH RESOLVER HIT");
       console.log("resolver hit");
       const userService = container

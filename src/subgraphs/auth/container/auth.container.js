@@ -25,9 +25,9 @@ import AuthService from "../services/auth.service.js";
 import UserClient from "../adapters/user.client.js";
 import OAuthAdapter from "../adapters/oauth/index.js";
 import GoogleOAuthAdapter from "../adapters/oauth/google.adapter.js";
-import GitHubOAuthAdapter from "../adapters/oauth/github.adapter.js";
+import GithubOAuthAdapter from "../adapters/oauth/github.adapter.js";
 
-export function createAuthContainer({ redis }) {
+function createAuthContainer({ redis }) {
   const container = createContainer();
 
   // ======================================================
@@ -145,7 +145,7 @@ container.register(
     google: new GoogleOAuthAdapter({
         clientId: process.env.GOOGLE_CLIENT_ID,
       }),
-      // github: new GitHubOAuthAdapter({
+      // github: new GithubOAuthAdapter({
       //   githubApi: container.resolve(
       //     TOKENS.infra.githubApi
       //   ),
@@ -208,3 +208,4 @@ container.register(
 
   return container;
 }
+export default createAuthContainer;

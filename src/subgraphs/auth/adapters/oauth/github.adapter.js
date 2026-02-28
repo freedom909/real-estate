@@ -1,7 +1,7 @@
 // adapters/oauth/github.adapter.js
 import { OAuthProvider } from "./oauth.types.js";
 
-export default class GitHubOAuthAdapter {
+export default class GithubOAuthAdapter {
   constructor({ githubApi }) {
     this.githubApi = githubApi;
   }
@@ -10,7 +10,7 @@ export default class GitHubOAuthAdapter {
     const profile = await this.githubApi.getProfile(accessToken);
 
     if (!profile?.id) {
-      throw new Error("Invalid GitHub access token");
+      throw new Error("Invalid Github access token");
     }
 
     return {

@@ -7,7 +7,7 @@ export default class GoogleOAuthAdapter {
     this.client = new OAuth2Client(clientId);
   }
 
-  async parse(idToken) {
+  async parse(idToken) {// it has only 1 parameter
     const ticket = await this.client.verifyIdToken({
       idToken,
       audience: this.client._clientId,

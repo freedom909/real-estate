@@ -1,16 +1,17 @@
-import { IUser } from "@/shared/types/user";
-import { IUserDB, UserDocument } from "./user.model";
-import { Types } from "mongoose";
-type IUserDBObject = IUserDB & { _id: Types.ObjectId };
+import { IUser } from "@/domain/user/types/user";
+import { IUserDBObject } from "../repos/user.repo";
+
 export function mapToDomain(user: IUserDBObject): IUser {
   return {
     id: user._id.toString(),
+
     profile: {
-      UserId: user.profile.UserId,
+      userId: user.profile.userId,   // ✅ correct case
       email: user.profile.email,
       name: user.profile.name,
       avatar: user.profile.avatar,
     },
+
     role: user.role,
     status: user.status,
     tokenVersion: user.tokenVersion,
@@ -18,4 +19,3 @@ export function mapToDomain(user: IUserDBObject): IUser {
     updatedAt: user.updatedAt,
   };
 }
- 

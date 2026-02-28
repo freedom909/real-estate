@@ -1,8 +1,8 @@
 // user.model.ts
 import mongoose, { HydratedDocument, Types } from "mongoose";
 import { v4 as uuidv4 } from "uuid";
-import { Role } from "../../../shared/types/role";
-import { IProfile } from "@/shared/types/user";
+import { Role } from "../../../domain/user/types/role";
+import { IProfile } from "@/domain/user/types/user";
 
 export type UserDocument = HydratedDocument<IUserDB>;
 
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
 }, { timestamps: true });
-// ユーザーIDを生成する前に、profile.UserId が存在するか確認
+// ユーザーIDを生成する前に、profile.userId が存在するか確認
 userSchema.pre("validate", function (next) {
   if (!this.profile.userId) {
     this.profile.userId = uuidv4();

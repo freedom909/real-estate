@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { Types } from 'mongoose';
 
-import UserService, { IContext } from '@subgraphs/user/services/user.service';
+import UserService, { IContext } from '@/application/user/services/user.service';
 import UserRepo from '@subgraphs/user/repos/user.repo';
 import { IUserDB } from '@subgraphs/user/models/user.model';
-import { Role } from '../../../shared/types/role';
+import { Role } from '../../../domain/user/types/role';
 import {
   AuthenticationError,
   ForbiddenError,

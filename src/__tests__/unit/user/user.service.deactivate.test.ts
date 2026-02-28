@@ -1,7 +1,7 @@
 // src/subgraphs/user/services/user.service.test.ts
 
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import UserService from '../../../subgraphs/user/services/user.service';
+import UserService from '../../../application/user/services/user.service';
 import UserRepo from '../../../subgraphs/user/repos/user.repo';
 import IPermissionService from '../../../security/permission.service';
 

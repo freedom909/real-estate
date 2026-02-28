@@ -120,7 +120,7 @@ export default class PermissionService implements IPermissionService {
   canAccessUser(requestUser: IUserDB, targetUserId: string): void {
 &nbsp;
     const isAdmin = requestUser.role === Role.ADMIN;
-    const isSelf = requestUser.profile.UserId === targetUserId;
+    const isSelf = requestUser.profile.userId === targetUserId;
 &nbsp;
     if (!isAdmin &amp;&amp; !isSelf) {
       throw new ForbiddenError(

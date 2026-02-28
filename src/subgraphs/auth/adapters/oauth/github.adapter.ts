@@ -1,7 +1,8 @@
 // adapters/oauth/github.adapter.ts
-import { OAuthProvider } from "./oauth.types.js";
+import { OAuthProvider } from "./oauth.types";
+import { OAuthProviderAdapter } from "./oauthProviderAdapter";
 
-interface GitHubProfile {
+interface GithubProfile {
   id: number;
   login: string;
   name?: string;
@@ -10,12 +11,12 @@ interface GitHubProfile {
   [key: string]: any;
 }
 
-interface GitHubApi {
-  getProfile(accessToken: string): Promise<GitHubProfile>;
+interface GithubApi {
+  getProfile(accessToken: string): Promise<GithubProfile>;
 }
 
-interface GitHubOAuthAdapterConstructorParams {
-  githubApi: GitHubApi;
+interface GithubOAuthAdapterConstructorParams {
+  githubApi: GithubApi;
 }
 
 interface OAuthProfile {
@@ -26,18 +27,18 @@ interface OAuthProfile {
   avatar?: string;
 }
 
-export default class GitHubOAuthAdapter {
-  private githubApi: GitHubApi;
+export default class GithubOAuthAdapter implements OAuthProviderAdapter{
+  private githubApi: GithubApi;
 
-  constructor({ githubApi }: GitHubOAuthAdapterConstructorParams) {
+  constructor({ githubApi }: GithubOAuthAdapterConstructorParams) {
     this.githubApi = githubApi;
   }
 
-  async parse(accessToken: string): Promise<OAuthProfile> {
-    const profile = await this.githubApi.getProfile(accessToken);
+  async parse(idToken: string): Promise<OAuthProfile> {
+    const profile = await this.githubApi.getProfile(idToken);
 
     if (!profile?.id) {
-      throw new Error("Invalid GitHub access token");
+      throw new Error("Invalid Github id token");
     }
 
     return {

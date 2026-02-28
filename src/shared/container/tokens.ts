@@ -13,11 +13,13 @@ export const TOKENS = {
     userApi: Symbol("auth.userApi"),
     userClient: Symbol("auth.userClient"),
     userService: Symbol("auth.userService"),
+    oauthAdapter:Symbol("auth.oauthAdapter"),
+    oauthVerifier:Symbol("auth.oauthVerifier"),
     userGraphQLClient: Symbol("auth.userGraphQLClient"),
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
-    oauthAdapter: Symbol("auth.oauthAdapter"),
-    oauthVerifier: Symbol("auth.oauthVerifier"),
     googleOAuthAdapter: Symbol("auth.googleOAuthAdapter"),
+    githubOAuthAdapter: Symbol("auth.githubOAuthAdapter"),
+
 
     // models
     credentialModel: Symbol("auth.credentialModel"),
@@ -29,12 +31,13 @@ export const TOKENS = {
     credentialRepo: Symbol("auth.credentialRepo"),
     refreshTokenRepo: Symbol("auth.refreshTokenRepo"),
     riskEventRepo: Symbol("auth.riskEventRepo"),
-    
+    keyProvider: Symbol("auth.keyProvider"),
     oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
     userRepo: Symbol("auth.userRepo"),
     sessionRepo: Symbol("auth.sessionRepo"),
 
     // services
+    envKeyProvider: Symbol("auth.envKeyProvider"),
     tokenService: Symbol("auth.tokenService"),
     refreshTokenService: Symbol("auth.refreshTokenService"),
     loginRiskService: Symbol("auth.loginRiskService"),

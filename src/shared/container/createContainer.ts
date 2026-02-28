@@ -1,16 +1,19 @@
-interface Token {
-  toString(): string;
+
+export interface Container {
+  register<T>(token: Token<T>, factory: Factory<T>): void;
+  resolve<T>(token: Token<T>): T;
+
+  _debugTokens?(): symbol[];
 }
 
-interface Factory<T> {
-  (): T;
-}
+type Token<T> = symbol;
+type Factory<T> = (container: Container) => T;
 
-export default function createContainer() {
-  const factories = new Map<Token, Factory<any>>();
+export default function createContainer(): Container {
+  const factories = new Map<symbol, Factory<any>>();
 
-  return {
-    register<T>(token: Token, factory: Factory<T>) {
+  const container: Container = {
+    register<T>(token: symbol, factory: Factory<T>) {
       if (typeof factory !== "function") {
         throw new Error(
           `DI register failed: factory for ${token.toString()} is not a function`
@@ -19,18 +22,22 @@ export default function createContainer() {
       factories.set(token, factory);
     },
 
-    resolve<T>(token: Token): T {
-      if (!factories.has(token)) {
+    resolve<T>(token: symbol): T {
+      const factory = factories.get(token);
+
+      if (!factory) {
         throw new Error(
           `DI resolve failed: ${token.toString()} not registered`
         );
       }
-      return factories.get(token)!();
+
+      return factory(container);
     },
 
-    // 👇 只读调试
-    _debugTokens(): string[] {
-      return Array.from(factories.keys()).map(token => token.toString());
+    _debugTokens() {
+      return Array.from(factories.keys());
     },
   };
+console.log("🆕 Container created");
+  return container;
 }

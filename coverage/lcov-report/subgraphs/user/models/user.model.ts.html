@@ -183,7 +183,7 @@ const userSchema = <span class="cstat-no" title="statement not covered" >new mon
     default: 0,
   },
 }, { timestamps: true });
-// ユーザーIDを生成する前に、profile.UserId が存在するか確認
+// ユーザーIDを生成する前に、profile.userId が存在するか確認
 <span class="cstat-no" title="statement not covered" >userSchema.pre("validate", <span class="fstat-no" title="function not covered" >function (n</span>ext) {</span>
 <span class="cstat-no" title="statement not covered" >  if (!this.profile.userId) {</span>
 <span class="cstat-no" title="statement not covered" >    this.profile.userId = uuidv4();</span>

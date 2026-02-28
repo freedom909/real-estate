@@ -813,7 +813,7 @@ input CheckSchemaAsyncInput {
   """Configuration options for the check execution."""
   config: HistoricQueryParametersInput!
 
-  """The GitHub context to associate with the check."""
+  """The Github context to associate with the check."""
   gitContext: GitContextInput!
   graphRef: ID @deprecated(reason: "This field is not required to be sent anymore")
 
@@ -3671,7 +3671,7 @@ input MultiSubgraphCheckAsyncInput {
   """Configuration options for the check execution."""
   config: HistoricQueryParametersInput!
 
-  """The GitHub context to associate with the check."""
+  """The Github context to associate with the check."""
   gitContext: GitContextInput!
 
   """
@@ -6720,7 +6720,7 @@ input SubgraphCheckAsyncInput {
   """Configuration options for the check execution."""
   config: HistoricQueryParametersInput!
 
-  """The GitHub context to associate with the check."""
+  """The Github context to associate with the check."""
   gitContext: GitContextInput!
 
   """

@@ -11,7 +11,6 @@ interface User {
   id: string;
   email: string;
   role: string;
-  status: string;
   profile?: {
     name: string;
     avatar: string;
@@ -25,6 +24,7 @@ interface OAuthProvider {
 interface CreateOAuthUserInput {
   email: string;
   profile?: any;
+  familyId?: string;
   [key: string]: any;
 }
 

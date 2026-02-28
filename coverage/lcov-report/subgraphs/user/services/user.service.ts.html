@@ -333,7 +333,7 @@ export default class UserService {
 <span class="cstat-no" title="statement not covered" >        throw new AuthenticationError('Authentication required');</span>
       }
 &nbsp;
-      if (context.user.role !== Role.ADMIN &amp;&amp; context.user.profile.UserId !== user.profile.UserId) {
+      if (context.user.role !== Role.ADMIN &amp;&amp; context.user.profile.userId !== user.profile.UserId) {
         throw new ForbiddenError('Access denied: Cannot access other users');
       }
 &nbsp;

@@ -8,7 +8,7 @@ src/
 │  │  │  └─ index.ts
 │  │  │
 │  │  ├─ oauth/
-│  │  │  ├─ oauth.service.ts   # Google / GitHub / Facebook verify
+│  │  │  ├─ oauth.service.ts   # Google / Github / Facebook verify
 │  │  │  └─ providers/
 │  │  │     ├─ google.ts
 │  │  │     ├─ github.ts

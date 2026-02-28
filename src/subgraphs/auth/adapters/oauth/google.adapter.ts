@@ -1,6 +1,7 @@
 // adapters/oauth/google.adapter.ts
 import { OAuth2Client, TokenPayload } from "google-auth-library";
-import { OAuthProvider } from "./oauth.types.js";
+import { OAuthProvider } from "./oauth.types";
+import { OAuthProviderAdapter } from "./oauthProviderAdapter";
 
 interface GoogleOAuthAdapterConstructorParams {
   clientId: string;
@@ -14,7 +15,7 @@ interface OAuthProfile {
   avatar?: string;
 }
 
-export default class GoogleOAuthAdapter {
+export default class GoogleOAuthAdapter implements OAuthProviderAdapter{
   private client: OAuth2Client;
 
   constructor({ clientId }: GoogleOAuthAdapterConstructorParams) {

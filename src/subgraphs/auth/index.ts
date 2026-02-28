@@ -10,7 +10,7 @@ import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@as-integrations/express4'
 import { buildSubgraphSchema } from '@apollo/subgraph'
 import { createRedis } from "../../infrastructure/redis/redis.js";
-import { createAuthContainer } from './container/auth.container.js'
+import  createAuthContainer  from './container/auth.container.js'
 import resolvers from './resolvers/resolver.js'
 import mongoose from 'mongoose'
 import { userApolloClient } from "../../infrastructure/userApolloClient.js";
@@ -28,9 +28,7 @@ console.log(
 );
 
 // ⭐⭐⭐ 核心：创建 DI 容器实例（一次）
-const container = createAuthContainer({
-  redis,
-});
+const container = createAuthContainer();
 
 const typeDefs = gql(readFileSync('./src/subgraphs/auth/schema.graphql', { encoding: 'utf-8' }));
 

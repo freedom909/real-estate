@@ -166,7 +166,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// adapters/oauth/github.adapter.ts
 <span class="cstat-no" title="statement not covered" >import { OAuthProvider } from "./oauth.types.js";</span>
 &nbsp;
-interface GitHubProfile {
+interface GithubProfile {
   id: number;
   login: string;
   name?: string;
@@ -175,12 +175,12 @@ interface GitHubProfile {
   [key: string]: any;
 }
 &nbsp;
-interface GitHubApi {
-  getProfile(accessToken: string): Promise&lt;GitHubProfile&gt;;
+interface GithubApi {
+  getProfile(accessToken: string): Promise&lt;GithubProfile&gt;;
 }
 &nbsp;
-interface GitHubOAuthAdapterConstructorParams {
-  githubApi: GitHubApi;
+interface GithubOAuthAdapterConstructorParams {
+  githubApi: GithubApi;
 }
 &nbsp;
 interface OAuthProfile {
@@ -192,9 +192,9 @@ interface OAuthProfile {
 }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >export default class G</span>itHubOAuthAdapter {
-  private githubApi: GitHubApi;
+  private githubApi: GithubApi;
 &nbsp;
-<span class="fstat-no" title="function not covered" >  constructor({</span> githubApi }: GitHubOAuthAdapterConstructorParams) {
+<span class="fstat-no" title="function not covered" >  constructor({</span> githubApi }: GithubOAuthAdapterConstructorParams) {
 <span class="cstat-no" title="statement not covered" >    this.githubApi = githubApi;</span>
   }
 &nbsp;
@@ -202,7 +202,7 @@ interface OAuthProfile {
     const profile = <span class="cstat-no" title="statement not covered" >await this.githubApi.getProfile(accessToken);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!profile?.id) {</span>
-<span class="cstat-no" title="statement not covered" >      throw new Error("Invalid GitHub access token");</span>
+<span class="cstat-no" title="statement not covered" >      throw new Error("Invalid Github access token");</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return {</span>

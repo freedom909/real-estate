@@ -1,8 +1,8 @@
 // src/security/policy.engine.ts
 
-import { IPolicy, PolicyContext } from "@/shared/types/policyContext";
-import { Action, Resource } from "@/shared/types/types";
-import { Role } from "@/shared/types/role";
+import { IPolicy, PolicyContext } from "@/domain/user/types/policyContext";
+import { Action, Resource } from "@/domain/user/types/types";
+import { Role } from "@/domain/user/types/role";
 
 type PolicyHandler = (context: PolicyContext) => boolean;
 

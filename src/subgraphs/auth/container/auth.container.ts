@@ -4,7 +4,6 @@ import { createUserGraphQLClient } from "../adapters/user.client.factory.js";
 
 // ===== models =====
 import CredentialModel from "../models/credential.model.js";
-import SessionModel from "../models/session.model.js";
 import RefreshTokenModel from "../models/refreshToken.model.js";
 import OAuthAccountModel from "../models/oauthAccounts.model.js";
 import UserModel from "../../user/models/user.model.js";
@@ -14,76 +13,40 @@ import RefreshTokenRepo from "../repos/refresh-token.repo.js";
 import RiskEventRepo from "../repos/riskEvent.repo.js";
 import OAuthAccountRepo from "../repos/oauthAccount.repo.js";
 import UserRepo from "../repos/user.repo.js";
-import SessionRepo from "../repos/session.repo.js";
-
 // ===== services =====
 import LoginRiskService from "../services/risk/loginRisk.service.js";
-import TokenService from "../services/token/token.service.js";
+import TokenService, { KeyProvider } from "../services/token/token.service.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
 import OAuthVerifier from "../services/oauth/oauthVerifier.js";
 
-import { Redis } from "ioredis";
 import AuthService from "../services/auth.service.js";
 
 // ===== adapters =====
 import UserClient from "../adapters/user.client.js";
 import OAuthAdapter from "../adapters/oauth/index.js";
 import GoogleOAuthAdapter from "../adapters/oauth/google.adapter.js";
-import GitHubOAuthAdapter from "../adapters/oauth/github.adapter.js";
-import { RedisAdapter } from "./RedisAdapter.js";
-import MergeAccountService from "../../admin/Services/mergeAccount.service.js";
-import { createRedis } from "@/infrastructure/redis/redis.js";
+import GithubOAuthAdapter from "../adapters/oauth/github.adapter.js";
+import { createClient } from "redis";
+import { EnvKeyProvider } from "../services/token/env-key.provider.js";
+import SessionModel from "../models/session.model.js";
+import SessionRepo from "../repos/session.repo.js";
+import { GithubApi } from "../adapters/oauth/githubApi.js";
 
-interface ContainerParams {
-  redis: Redis;
-  userApi?: any;
-  refreshTokenRepo?: any;
-}
-
-export function createAuthContainer({ redis, userApi, refreshTokenRepo }: ContainerParams) {
-
+ function createAuthContainer() {
   const container = createContainer();
 
-  // ======================================================
-  // INFRA
-  // ======================================================
-  container.register(TOKENS.infra.redis, () => redis);
-  
-  if (userApi) {
-    container.register(TOKENS.auth.userApi, () => userApi);
-  }
-  
-  if (refreshTokenRepo) {
-    container.register(TOKENS.auth.refreshTokenRepo, () => refreshTokenRepo);
-  }
+  // =============================
+  // Infra - Redis
+  // =============================
 
-  container.register(
-  TOKENS.auth.userRepo,
-  () =>
-    new UserRepo({
-      //
-      UserModel: UserModel, // your Mongoose User model
-      redis: container.resolve(TOKENS.infra.redis),
-    })
-);
-  // ======================================================
-  // GRAPHQL CLIENT (User Subgraph)
-  // ======================================================
-  container.register(
-    TOKENS.auth.userGraphQLClient,
-    () => createUserGraphQLClient()
-  );
+  container.register(TOKENS.infra.redis, () => {
+    const client = createClient({
+      url: process.env.REDIS_URL,
+    });
 
-  // ======================================================
-  // ACL — UserClient (Auth → User Subgraph)
-  // ======================================================
-  container.register(
-    TOKENS.auth.userClient,
-    () =>
-      new UserClient(
-        container.resolve(TOKENS.auth.userGraphQLClient)
-      ),
-  );
+    client.connect().catch(console.error);
+    return client;
+  });
 
   // ======================================================
   // MODELS
@@ -110,17 +73,7 @@ export function createAuthContainer({ redis, userApi, refreshTokenRepo }: Contai
         ),
       })
   );
-
-container.register(
-  TOKENS.auth.sessionRepo,
-  () =>
-    new SessionRepo({
-      SessionModel: container.resolve(TOKENS.auth.sessionModel),
-    })
-);
-
-
-  container.register(
+    container.register(
     TOKENS.auth.refreshTokenRepo,
     () =>
       new RefreshTokenRepo({
@@ -131,21 +84,89 @@ container.register(
   );
 
   container.register(
-  TOKENS.auth.sessionModel,
-  () => SessionModel
-);
+    TOKENS.auth.riskEventRepo,
+    () => new RiskEventRepo()
+  );
 
+  container.register(
+    TOKENS.auth.userRepo,
+    () => new UserRepo({ UserModel: UserModel })
+  );
+
+  container.register(
+    TOKENS.auth.sessionRepo,
+    () => new SessionRepo({ SessionModel: SessionModel })
+  );
+
+
+    // ======================================================
+  // GRAPHQL CLIENT (User Subgraph)
+  // ======================================================
+  container.register(
+    TOKENS.auth.userGraphQLClient,
+    () => createUserGraphQLClient()
+  );
+
+    // ======================================================
+  // ACL — UserClient (Auth → User Subgraph)
+  // ======================================================
+  container.register(
+    TOKENS.auth.userClient,
+    () =>
+      new UserClient(
+        container.resolve(TOKENS.auth.userGraphQLClient)
+      ),
+  );
+  
+  // =============================
+  // Infra - JWT Key Provider
+  // =============================
+
+  container.register(TOKENS.auth.keyProvider, () => {
+    return new EnvKeyProvider();
+  });
 
 container.register(
-  TOKENS.infra.cache,
-  () => new RedisAdapter(redis)
+  TOKENS.auth.googleOAuthAdapter,
+  () =>
+    new GoogleOAuthAdapter({
+      clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    }),
 );
 
 container.register(
-  TOKENS.auth.riskEventRepo,
-  () => new RiskEventRepo({ redis: container.resolve(TOKENS.infra.cache) })
+  TOKENS.auth.githubOAuthAdapter,
+  (c) =>
+    new GithubOAuthAdapter({
+      githubApi: c.resolve(TOKENS.infra.githubApi),
+    }),
+);
+container.register(
+  TOKENS.infra.githubApi,
+  () =>
+    new GithubApi({ // 名前 'GithubApi' が見つかりません。should it need to write?
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    }),
 );
 
+container.register(TOKENS.auth.oauthAdapter, (c) => {
+  return new OAuthAdapter({
+    google: c.resolve<GoogleOAuthAdapter>(TOKENS.auth.googleOAuthAdapter),
+    github: c.resolve<GithubOAuthAdapter>(TOKENS.auth.githubOAuthAdapter),
+   // facebook: c.resolve<FacebookOAuthAdapter>(TOKENS.auth.facebookOAuthAdapter),
+  });
+});
+
+  container.register(
+    TOKENS.auth.oauthVerifier,
+    () => new OAuthVerifier()
+  );
+
+container.register(
+  TOKENS.auth.oauthAccountRepo,
+  () => new OAuthAccountRepo({ model: OAuthAccountModel })
+);
 
   // ======================================================
   // DOMAIN SERVICES
@@ -159,97 +180,40 @@ container.register(
         ),
       })
   );
+  // =============================
+  // Infra - Token Service
+  // =============================
+//パラメーター 'c' の型は暗黙的に 'any' になっていますが、使い方からより良い型を推論できます。
 
-  container.register(
-    TOKENS.auth.tokenService,
-    () => new TokenService()
-  );
+  container.register(TOKENS.auth.tokenService, (c) => {
+    const keyProvider = c.resolve<KeyProvider>(TOKENS.auth.keyProvider);
+    console.log("keyProvider:",keyProvider);
 
-  container.register(
-    TOKENS.auth.refreshTokenService,
-    () =>
-      new RefreshTokenService({
-        tokenService: container.resolve(
-          TOKENS.auth.tokenService
-        ),
-        refreshTokenRepo: container.resolve(
-          TOKENS.auth.refreshTokenRepo
-        ),
-        loginRiskService: container.resolve(
-          TOKENS.auth.loginRiskService
-        ),
-        userRepo: container.resolve(
-          TOKENS.auth.userRepo
-        ),
-      })
-  );
+    return new TokenService(keyProvider, {
+      issuer: process.env.JWT_ISSUER,
+      accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN as any,
+      refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN as any,
+    });
+  });
 
-container.register(
-  TOKENS.auth.oauthAdapter,
-  () => new OAuthAdapter({
-    google: new GoogleOAuthAdapter({
-        clientId: process.env.GOOGLE_CLIENT_ID,
-      }),
-  })
-);
+  // =============================
+  // Application - AuthService
+  // =============================
 
-  container.register(
-    TOKENS.auth.oauthVerifier,
-    () => new OAuthVerifier()
-  );
-
-container.register(
-  TOKENS.auth.oauthAccountRepo,
-  () => new OAuthAccountRepo({ model: OAuthAccountModel })
-);
-
-  // ======================================================
-  // APPLICATION SERVICE
-  // ======================================================
-container.register(
-  TOKENS.auth.oauthAccountModel,
-  () => OAuthAccountModel
-);
-container.register(
-  TOKENS.auth.mergeAccountService,
-  () => new MergeAccountService({
-    ...container.resolve(TOKENS.auth.mergeAccountService),
-    userRepo: container.resolve(TOKENS.auth.userRepo),
-  })
-);
-  container.register(
-    TOKENS.auth.authService,
-    () =>
-      new AuthService({
-        oauthService: container.resolve(
-          TOKENS.auth.oauthAdapter
-        ),
-        oauthAccountRepo: container.resolve(
-        TOKENS.auth.oauthAccountRepo
-      ),
-
-        userClient: container.resolve(
-          TOKENS.auth.userClient
-        ),
-        tokenService: container.resolve(
-          TOKENS.auth.tokenService
-        ),
-       
-        refreshTokenRepo: container.resolve(
-          TOKENS.auth.refreshTokenRepo
-        ),
-        loginRiskService: container.resolve(
-          TOKENS.auth.loginRiskService
-        ),
-        credentialRepo: container.resolve(
-          TOKENS.auth.credentialRepo
-        ),
-        sessionRepo: container.resolve(
-          TOKENS.auth.sessionRepo
-        ),
-
-      })
-  );
+container.register(TOKENS.auth.authService, (c) => {
+  return new AuthService({
+    oauthService: c.resolve(TOKENS.auth.oauthAdapter),
+    oauthAccountRepo: c.resolve(TOKENS.auth.oauthAccountRepo),
+    userClient: c.resolve(TOKENS.auth.userClient),
+    tokenService: c.resolve(TOKENS.auth.tokenService),
+    refreshTokenRepo: c.resolve(TOKENS.auth.refreshTokenRepo),
+    loginRiskService: c.resolve(TOKENS.auth.loginRiskService),
+    credentialRepo: c.resolve(TOKENS.auth.credentialRepo),
+    sessionRepo: c.resolve(TOKENS.auth.sessionRepo),
+  });
+});
 
   return container;
 }
+
+export default createAuthContainer;

@@ -44,6 +44,8 @@ export default class RefreshTokenRepo {
    * 💾 保存新 refresh token（只存 hash）
    */
   async save(refreshToken, meta) {
+    console.log("typeof refreshToken:", typeof refreshToken);//no output
+console.log("refreshToken value:", refreshToken);
     const payload = jwt.decode(refreshToken);
 
     if (!payload?.jti) {

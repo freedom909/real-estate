@@ -53,6 +53,20 @@ jest.mock('../../infrastructure/redis/redis.js', () => ({
   },
 }));
 
+// 🔹 mock EnvKeyProvider to prevent singleton tokenService from failing on import
+// This mock ensures that any module importing the singleton `tokenService`
+// gets a working version during test setup, even before env vars are set.
+jest.mock('@/subgraphs/auth/services/token/env-key.provider', () => {
+  return {
+    EnvKeyProvider: jest.fn().mockImplementation(() => ({
+      getKeys: () => ({
+        privateKey: TEST_PRIVATE_KEY,
+        publicKey: TEST_PUBLIC_KEY,
+      }),
+    })),
+  };
+});
+
 jest.mock('../../shared/debug', () => ({
   debugRisk: jest.fn(),
 }));
@@ -72,6 +86,7 @@ import SessionRepo from '@/subgraphs/auth/repos/session.repo';
 import TokenService from '@/subgraphs/auth/services/token/token.service';
 import LoginRiskService from '@/subgraphs/auth/services/risk/loginRisk.service';
 import RiskEventRepo from '@/subgraphs/auth/repos/riskEvent.repo';
+import path from 'path';
 
 describe('AuthService Integration - login', () => {
   let mongo: MongoMemoryServer;
@@ -106,8 +121,8 @@ beforeEach(async () => {
   class TestKeyProvider {
   getKeys() {
     return {
-      privateKey: TEST_PRIVATE_KEY,//名前 'TEST_PRIVATE_KEY' が見つかりません。
-      publicKey: TEST_PUBLIC_KEY, //名前 'TEST_PRIVATE_KEY' が見つかりません。
+      privateKey: TEST_PRIVATE_KEY,
+      publicKey: TEST_PUBLIC_KEY, 
     };
   }
 }

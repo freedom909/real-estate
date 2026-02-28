@@ -1,7 +1,7 @@
 import { Role } from "./role";
 
 export  interface IProfile {
-  UserId: string;
+  userId: string;
   email: string;
   name: string;
   avatar: string;

@@ -7,13 +7,23 @@ export interface RefreshToken {
   tokenId: string;
   userId: mongoose.Types.ObjectId;
   familyId: string;
+
+  tokenHash: string;           // 🔥 必须
+
+  expiresAt: Date;             // 🔥 必须
+
+  replacedBy?: string;        // 🔥 企业级
+
   deviceId?: string;
   ip?: string;
   userAgent?: string;
+
   status: "active" | "used" | "revoked";
+
   issuedAt: Date;
   rotatedAt?: Date;
   revokedAt?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -54,14 +64,31 @@ const refreshTokenSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    tokenHash: {
+      type: String,
+      required: true,
+    },           // 🔥 必须
 
+    expiresAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },             // 🔥 必须
+
+    replacedBy: {
+      type: String,
+      index: true,
+    },
     rotatedAt: Date,
     revokedAt: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
+refreshTokenSchema.index(
+  { familyId: 1, status: 1 }
+);
 export default mongoose.model<RefreshToken>(
   "RefreshToken",
-  refreshTokenSchema
+  refreshTokenSchema,
 );

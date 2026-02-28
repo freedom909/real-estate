@@ -13,7 +13,7 @@ class OAuthService {
 
   /**
    * 🔐 OAuth login via Auth Subgraph (Gateway)
-   * Google / GitHub / Apple → ID Token
+   * Google / Github / Apple → ID Token
    */
   async oauthLogin({ provider, idToken }) {
     const res = await fetch(GATEWAY_URL, {

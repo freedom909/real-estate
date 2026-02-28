@@ -2,16 +2,15 @@
 import { TOKENS } from "../../../shared/container/tokens.js";
 import { setAuthCookies } from "../../../infrastructure/auth/setAuthCookies.js";
 import type { Request, Response } from "express";
-import authService from "../services/auth.service.js";
+import type OAuthAdapter from "../adapters/oauth/index.js";
+import type AuthService from "../services/auth.service.js";
+import { Container } from "@/shared/container/createContainer.js";
 
 interface User {
   userId: string;
   [key: string]: any;
 }
 
-interface Container {
-  resolve(token: symbol): any;
-}
 
 
 interface Context {
@@ -48,7 +47,7 @@ const listOnlineSessions = (redis: any) => {
 };
 
 export default {
-  
+
   Query: {
     me: async (_: unknown, __: unknown, { user }: Context) => {
       if (!user) return null;
@@ -80,11 +79,11 @@ export default {
   },
 
   Mutation: {
-    
-    refreshToken: async (_:unknown, { refreshToken }: { refreshToken: string }, { container }: Context) => {
+
+    refreshToken: async (_: unknown, { refreshToken }: { refreshToken: string }, { container }: Context) => {
       const authService = container.resolve(TOKENS.auth.authService);
-          return authService.refresh(refreshToken);
-     
+      return authService.refresh(refreshToken);
+
     },
 
     revokeToken: async (_, __, { container, user }: Context) => {
@@ -139,23 +138,29 @@ export default {
       { container, req, res }: Context
     ) => {
       console.log("🔥 oauthLogin resolver triggered");
-      console.log("LOGIN resolver triggered");
-      const oauthAdapter = container.resolve(TOKENS.auth.oauthAdapter);
 
+      const oauthAdapter = container.resolve<OAuthAdapter>(TOKENS.auth.oauthAdapter);
       // 1️⃣ 验证第三方 token
       const profile = await oauthAdapter.parse(provider, idToken);
-
-      const authService = container.resolve(TOKENS.auth.authService);
-
+    
+      const authService = container.resolve<AuthService>(TOKENS.auth.authService);
+    
       // 2️⃣ 领域登录
-      const result = await authService.oauthLogin(profile,
-        {
+      let result;
+
+      try {
+        result = await authService.oauthLogin(profile, {
           ip: req.ip,
-          deviceId: req.headers["x-device-id"],
+          deviceId: req.headers["x-device-id"] as string,
           userAgent: req.headers["user-agent"],
         });
+      } catch (err) {
+        console.error("❌ oauthLogin failed:", err);
+        throw err;
+      }
 
-console.log("🔐 oauthLogin result:", result);
+      console.log("typeof",typeof result.refreshToken);
+      console.log("result",result.refreshToken);
       return result;
     },
 

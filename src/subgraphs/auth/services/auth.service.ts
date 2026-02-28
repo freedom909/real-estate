@@ -169,8 +169,7 @@ export default class AuthService {
       } else {
         const created: User = await this.userClient.createOAuthUser({
           email,
-          familyId,
-          profile: { name, avatar },
+          profile: { name, avatar,email },
         });
 
         userId = created.id;
@@ -223,7 +222,7 @@ export default class AuthService {
    })
    const sessionId=session._id.toString()
     // 2️⃣ Issue tokens
-    const tokens: TokensResponse = await this.tokenService.issueTokens({
+    const tokens: TokensResponse = await this.tokenService.issueTokenPair({
       userId,
       familyId,
       ip,
@@ -234,6 +233,7 @@ export default class AuthService {
 
     // 3️⃣ Persist refresh token
     await this.refreshTokenRepo.save(
+      
       tokens.refreshToken,
       {
         userId,
@@ -244,6 +244,9 @@ export default class AuthService {
         issuedAt: new Date(),
         sessionId,
         jti: tokens.refreshJti,
+        expiresAt: new Date(
+          Date.now() + this.tokenService.parseExpires(this.tokenService.config.refreshExpiresIn)
+        ),
       }
     );
 
@@ -392,14 +395,17 @@ export default class AuthService {
       familyId,
       sessionId
     });
+     console.log("tokens.refreshToken+++:",tokens),
     // 5️⃣ Save new refresh token
     await this.refreshTokenRepo.save(tokens.refreshToken, {
+     
       userId,
       familyId,
       sessionId,
       jti: tokens.refreshJti,
       issuedAt: new Date(),
     });
+    console.log("tokens.accessToken:",tokens.accessToken)
     return {
       accessToken: tokens.accessToken,
     };

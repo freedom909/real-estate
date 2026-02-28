@@ -15,7 +15,7 @@ import { readFileSync } from "fs";
 import mongoose from "../../shared/db/mongo.js";
 import { connectMongo } from "../../shared/db/mongo.js";
 import { createUserContainer } from "./container/user.container.js";
-import resolvers from "./resolvers/index.js";
+import resolvers from "./resolvers/user.resolver.js";
 
 // 🔍 启动时验证 env
 console.log(
@@ -37,7 +37,7 @@ const httpServer = http.createServer(app);
 
 const typeDefs = gql(
   readFileSync(
-    "./src/subgraphs/user/schema.graphql",
+    "./src/subgraphs/user/user.schema.graphql",
     "utf-8"
   )
 );

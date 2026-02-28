@@ -1,7 +1,9 @@
 // src/subgraphs/auth/services/refresh/refreshToken.service.js
 import { debugRisk, debugToken } from "../../../../shared/debug.js";
 
-export default class RefreshTokenService {
+
+
+export default class RefreshTokenService  {
   constructor({ tokenService, refreshTokenRepo, loginRiskService, userRepo }) {
     if (!tokenService || !refreshTokenRepo || !loginRiskService || !userRepo) {
       throw new Error("RefreshTokenService dependencies missing");
@@ -12,6 +14,8 @@ export default class RefreshTokenService {
     this.loginRiskService = loginRiskService;
     this.userRepo = userRepo;
   }
+
+
 
   /**
    * 🔁 Refresh access token with rotation (Token Family model)
@@ -77,8 +81,6 @@ export default class RefreshTokenService {
     refreshToken: newRefreshToken,
   };
 }
-
-
   /**
    * ❌ Logout (single device)
    */

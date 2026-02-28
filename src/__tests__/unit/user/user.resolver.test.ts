@@ -1,5 +1,5 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
-import resolvers from '../../../subgraphs/user/resolvers';
+import resolvers from '../../../subgraphs/user/resolvers/user.resolver';
 import { TOKENS } from '../../../shared/container/tokens';
 
 // Mock the TOKENS dependency to ensure we control the token values

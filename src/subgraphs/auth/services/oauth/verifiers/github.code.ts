@@ -1,4 +1,4 @@
-interface GitHubProfile {
+interface GithubProfile {
   id: number;
   email?: string;
   name?: string;
@@ -6,7 +6,7 @@ interface GitHubProfile {
   avatar_url?: string;
 }
 
-interface GitHubTokenResponse {
+interface GithubTokenResponse {
   accessToken?: string;
 }
 
@@ -34,10 +34,10 @@ async function verifyGithubCode(code: string): Promise<OAuthProfile> {
     }
   );
 
-  const tokenData: GitHubTokenResponse = await tokenRes.json();
+  const tokenData: GithubTokenResponse = await tokenRes.json();
 
   if (!tokenData.accessToken) {
-    throw new Error("Failed to obtain GitHub access token");
+    throw new Error("Failed to obtain Github access token");
   }
 
   const userRes = await fetch("https://api.github.com/user", {
@@ -46,7 +46,7 @@ async function verifyGithubCode(code: string): Promise<OAuthProfile> {
     },
   });
 
-  const profile: GitHubProfile = await userRes.json();
+  const profile: GithubProfile = await userRes.json();
 
   return {
     provider: "GITHUB",
