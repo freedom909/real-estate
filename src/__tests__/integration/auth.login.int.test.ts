@@ -59,10 +59,8 @@ jest.mock('../../infrastructure/redis/redis.js', () => ({
 jest.mock('@/subgraphs/auth/services/token/env-key.provider', () => {
   return {
     EnvKeyProvider: jest.fn().mockImplementation(() => ({
-      getKeys: () => ({
-        privateKey: TEST_PRIVATE_KEY,
-        publicKey: TEST_PUBLIC_KEY,
-      }),
+      getPrivateKey: () => TEST_PRIVATE_KEY,
+      getPublicKey: () => TEST_PUBLIC_KEY,
     })),
   };
 });
@@ -119,11 +117,11 @@ beforeEach(async () => {
   });
 
   class TestKeyProvider {
-  getKeys() {
-    return {
-      privateKey: TEST_PRIVATE_KEY,
-      publicKey: TEST_PUBLIC_KEY, 
-    };
+  getPrivateKey() {
+    return TEST_PRIVATE_KEY;
+  }
+  getPublicKey() {
+    return TEST_PUBLIC_KEY;
   }
 }
   const tokenService = new TokenService(new TestKeyProvider());

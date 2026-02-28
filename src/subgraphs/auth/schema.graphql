@@ -51,7 +51,6 @@ type Query {
   user(id: ID!): User @shareable
   mySessions: [Session!]!
   OnlineSessions: [Session!]!
-
 }
 
 type Session {

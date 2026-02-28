@@ -1,9 +1,9 @@
 // src/subgraphs/auth/repos/refreshToken.repo.ts
-import { createRedis } from "../../../infrastructure/redis/redis.js";
+
 import jwt from "jsonwebtoken";
-import { hashToken } from "../../../shared/security/hash.js";
+import { hashToken } from "../../../shared/security/hash";
 import { Document, Model } from 'mongoose';
-import { RefreshToken } from '../models/refreshToken.model.js';
+import { RefreshToken } from '../models/refreshToken.model';
 
 interface RefreshTokenDocument extends RefreshToken, Document {}
 

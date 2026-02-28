@@ -26,7 +26,7 @@ describe('UserService', () => {
     _id: new Types.ObjectId(),
     
     profile: {
-      UserId: 'user123',
+      userId: 'user123',
       email: 'test@example.com',
       name: 'Test User',
       avatar: 'avatar-url',
@@ -147,7 +147,7 @@ describe('UserService', () => {
         ...mockUser,
         profile: {
           ...mockUser.profile,
-          UserId: 'another-user',
+          userId: 'another-user',
         },
         role: Role.USER,
       };
@@ -219,7 +219,7 @@ describe('UserService', () => {
         role: Role.CUSTOMER,
         status: 'ACTIVE',
         profile: {
-          UserId: oauthInput.profile.id,
+          userId: oauthInput.profile.id,
           email: oauthInput.profile.email,
           name: oauthInput.profile.name,
           avatar: oauthInput.profile.picture,
@@ -265,7 +265,7 @@ describe('PermissionService', () => {
   const permissionService = new PermissionService();
 
   const baseUser = {
-    profile: { UserId: 'user123' },
+    profile: { userId: 'user123' },
     role: Role.USER,
   } as any;
 
