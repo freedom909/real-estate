@@ -7,6 +7,7 @@ import AuthService from "../services/auth.service.js";
 import { Container } from "@/shared/container/createContainer.js";
 import RefreshTokenService from "../services/refresh/refreshToken.service.js";
 import { ForbiddenError } from "@/infrastructure/utils/errors.js";
+import OAuthService from "../services/oauth/oauth.service.js";
 
 interface User {
   userId: string;
@@ -146,12 +147,10 @@ export default {
       { container, req, res }: Context
     ) => {
       console.log("🔥 oauthLogin resolver triggered");
-
-      const oauthAdapter = container.resolve<OAuthAdapter>(TOKENS.auth.oauthAdapter);
-      // 1️⃣ 验证第三方 token
-      const profile = await oauthAdapter.parse(provider, idToken);
-
-      const authService = container.resolve<AuthService>(TOKENS.auth.authService);
+     const oauthAdapter = container.resolve<OAuthAdapter>(TOKENS.auth.oauthAdapter);
+     const profile = await oauthAdapter.parse(provider, idToken);
+     console.log("profile:", profile);
+     const authService = container.resolve<AuthService>(TOKENS.auth.authService);
 
       // 2️⃣ 领域登录
       let result;
@@ -172,19 +171,19 @@ export default {
       return result;
     },
 
- revokeSession: async (_, { sessionId }, { user, req, container }) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
+    revokeSession: async (_, { sessionId }, { user, req, container }) => {
+      const token = req.headers.authorization?.replace("Bearer ", "");
 
-  const authService = container.resolve<AuthService>(
-    TOKENS.auth.authService
-  );
+      const authService = container.resolve(
+        TOKENS.auth.authService
+      );
 
-  return authService.revokeSession(
-    user.userId,
-    sessionId,
-    token
-  );
-}
+      return authService.revokeSession(
+        user.userId,
+        sessionId,
+        token
+      );
+    }
   },
 
   // ✅ ✅ ✅ 类型 resolver 在这里

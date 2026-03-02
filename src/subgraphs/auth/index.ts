@@ -1,4 +1,5 @@
 //src/subgraphs/auth/index.ts
+import "reflect-metadata"
 import "dotenv/config";
 import express from 'express'
 import http from 'http'

@@ -6,5 +6,4 @@ export interface SecurityAssessment {
   riskLevel?: "LOW" | "MEDIUM" | "HIGH";
   riskScore?: number;
   details?: string;
-
 }

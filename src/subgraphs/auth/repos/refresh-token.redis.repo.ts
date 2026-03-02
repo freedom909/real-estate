@@ -1,6 +1,6 @@
 import redis from "../../../infrastructure/redis/redis";
 import crypto from "crypto";
-
+import {hash} from "../../../utils/hash"
 interface RefreshTokenData {
   userId: string;
   token: string;
@@ -15,8 +15,7 @@ interface RefreshTokenMeta {
   deviceId: string;
 }
 
-const hash = (t: string): string =>
-  crypto.createHash("sha256").update(t).digest("hex");
+
 
 export default class RedisRefreshTokenRepo {
   async save({ userId, token, sessionId, deviceId, ttl }: RefreshTokenData): Promise<void> {

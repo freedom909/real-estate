@@ -33,10 +33,19 @@ import SessionRepo from "../repos/session.repo.js";
 import { GithubApi } from "../adapters/oauth/githubApi.js";
 
 import redis from "@/infrastructure/redis/redis.js";
+import TokenBindingService from "../middleware/tokenBindingService.js";
+import { AuthGuard } from "../guards/auth.guard.js";
+import OAuthService from "../services/oauth/oauth.service.js";
+
+
 
  function createAuthContainer() {
   const container = createContainer();
-
+  
+  container.register(TOKENS.auth.authGuard, () => AuthGuard);
+  container.register(TOKENS.auth.tokenBindingService, () => TokenBindingService);
+ 
+  // =============================
   // =============================
   // Infra - Redis
   // =============================
@@ -173,6 +182,17 @@ container.register(
   // ======================================================
   // DOMAIN SERVICES
   // ======================================================
+  container.register(
+  TOKENS.auth.oauthService,
+  (c) =>
+    new OAuthService({
+      oauthAdapter: c.resolve(TOKENS.auth.oauthAdapter),
+      oauthVerifier: c.resolve(TOKENS.auth.oauthVerifier),// オブジェクト リテラルは既知のプロパティのみ指定できます。'oauthVerifier' は型 'OAuthServiceDeps' に存在しません。
+      oauthAccountRepo: c.resolve(TOKENS.auth.oauthAccountRepo),
+      userRepo: c.resolve(TOKENS.auth.userRepo),
+    })
+);
+
   container.register(
     TOKENS.auth.loginRiskService,
     () =>

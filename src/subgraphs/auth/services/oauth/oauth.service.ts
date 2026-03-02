@@ -1,77 +1,59 @@
-// src/subgraphs/auth/services/oauth.service.ts
-import { gql } from "graphql-tag";
-import apolloClient from "../../../../shared/apollo/apolloClient.js";
+// src/subgraphs/auth/services/oauth/oauth.service.ts
 
-interface User {
-  id: string;
-  email: string;
-  role: string;
-  status: string;
+
+interface OAuthServiceDeps {
+  oauthAdapter: any;
+  oauthAccountRepo: any;
+  userRepo: any;
+  oauthVerifier: any;
 }
 
-interface Profile {
-  [key: string]: any;
-}
+export default class OAuthService {
+  constructor(private deps: OAuthServiceDeps) {}
 
-interface OAuthInput {
-  email: string;
-  profile: Profile;
-}
+  async login(provider: string, idToken: string) {
+    console.log("App token:", idToken);
+    const { oauthAdapter, oauthAccountRepo, userRepo } = this.deps;
 
-interface CreateUserInput {
-  email: string;
-  profile: Profile;
-}
+    // 1️⃣ 验证第三方 token
+    const profile = await oauthAdapter.verify(provider, idToken);
+        console.log("profile:",profile);
 
-interface QueryResponse {
-  data: {
-    userByEmail: User | null;
-  };
-}
+    if (!profile?.email) {
+      throw new Error("Invalid OAuth profile");
+    }
 
-interface MutationResponse {
-  data: {
-    createOAuthUser: User;
-  };
-}
+    // 2️⃣ 查找 OAuth 账户
+    let oauthAccount = await oauthAccountRepo.findByProviderId(
+      provider,
+      profile.providerId
+    );
 
-export async function oauthLogin(email: string, profile: Profile): Promise<User> {
-  // 1. Query the User subgraph for existing user
-  const { data }: QueryResponse = await apolloClient.query({
-    query: gql`
-      query userByEmail($email: String!) {
-        userByEmail(email: $email) {
-          id
-          email
-          role
-          status
-        }
+    let user;
+
+    if (!oauthAccount) {
+      // 3️⃣ 如果不存在 → 查 email 是否已注册
+      user = await userRepo.findByEmail(profile.email);
+
+      if (!user) {
+        // 4️⃣ 创建用户
+        user = await userRepo.create({
+          email: profile.email,
+          role: "USER",
+          status: "ACTIVE",
+        });
       }
-    `,
-    variables: { email },
-  });
 
-  let user = data.userByEmail;
+      // 5️⃣ 创建 OAuthAccount
+      await oauthAccountRepo.create({
+        provider,
+        providerId: profile.providerId,
+        userId: user.id,
+      });
+    } else {
+      user = await userRepo.findById(oauthAccount.userId);
+    }
 
-  // 2. If user doesn't exist, create one via mutation in User subgraph
-  if (!user) {
-    const { data: newData }: MutationResponse = await apolloClient.mutate({
-      mutation: gql`
-        mutation createOAuthUser($input: CreateOAuthUserInput!) {
-          createOAuthUser(input: $input) {
-            id
-            email
-            role
-          }
-        }
-      `,
-      variables: {
-        input: { email, profile } as CreateUserInput,
-      },
-    });
-    user = newData.createOAuthUser;
+    return user;
   }
-
-  // 3. Return user to the auth flow (issue JWT, etc)
-  return user;
 }

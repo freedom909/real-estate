@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import path from "path";
-import hashToken from "../models/hashToken";
+import{ hash }from "@/utils/hash";
 import { ForbiddenError } from "@/infrastructure/utils/errors";
 import AccessTokenBlacklist from "@/shared/security/blacklist";
 
@@ -133,7 +133,6 @@ export default class AuthService {
    */
   async oauthLogin(profile: OAuthProfile, ctx: LoginContext = {}): Promise<any> {
     const familyId = randomUUID();
-
     const {
       provider,
       providerUserId,
@@ -223,8 +222,8 @@ export default class AuthService {
       userId,
       familyId,
       deviceId,
-      userAgent,
-      ip,
+      userAgentHash: hash(userAgent),
+      ipHash: hash(ip),
       lastSeenAt: new Date(),
     })
     const sessionId = session._id.toString()
@@ -453,7 +452,7 @@ export default class AuthService {
     // 3️⃣ blacklist current access token
 
     if (accessToken) {
-      const decoded = this.tokenService.asyncverifyAccessToken(accessToken);
+      const decoded = await this.tokenService.verifyAccessToken(accessToken);
 
       await this.accessTokenBlacklist.blacklist(decoded.jti, decoded.exp);
     }

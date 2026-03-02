@@ -83,7 +83,7 @@ export default class TokenService {
     );
   }
 
-  asyncverifyAccessToken(token: string): TokenPayload {
+  async verifyAccessToken(token: string): Promise<TokenPayload> {
     const decoded = jwt.verify(token, this.publicKey, {
       algorithms: [this.config.algorithm],
       issuer: this.config.issuer,

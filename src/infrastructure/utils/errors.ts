@@ -30,5 +30,14 @@ class UserInputError extends GraphQLError {
   }
 }
 
+class UnauthorizedError extends GraphQLError {
+  constructor(message: string) {
+    super(message, {
+      extensions: {
+        code: 'UNAUTHORIZED',
+      },
+    });
+  }
+}
 
-export { AuthenticationError, ForbiddenError,UserInputError };
+export { AuthenticationError, ForbiddenError,UserInputError,UnauthorizedError };

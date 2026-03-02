@@ -16,7 +16,7 @@ export const TOKENS = {
     userClient: Symbol("auth.userClient"),
     userService: Symbol("auth.userService"),
     oauthAdapter:Symbol("auth.oauthAdapter"),
-    oauthVerifier:Symbol("auth.oauthVerifier"),
+    
     userGraphQLClient: Symbol("auth.userGraphQLClient"),
     userSubgraphClient: Symbol("auth.userSubgraphClient"),
     googleOAuthAdapter: Symbol("auth.googleOAuthAdapter"),
@@ -46,7 +46,10 @@ export const TOKENS = {
     authService: Symbol("auth.authService"),
     mergeAccountService: Symbol("mergeAccountService"),
     oauthService: Symbol("auth.oauthService"),
-    
+    oauthVerifier: Symbol("auth.oauthVerifier"),
+    // guards
+    authGuard: Symbol("auth.authGuard"),
+    tokenBindingService: Symbol("auth.tokenBindingService"),
   },
 
   user: {
@@ -58,6 +61,7 @@ export const TOKENS = {
   },
   security:{
   policyEngine: Symbol("security.policyEngine"),
+  
 }
 } as const;
 
