@@ -1,9 +1,9 @@
 //src/subgraphs/user/index.ts
 console.log("🔥🔥🔥 USER ENTRY STARTED 🔥🔥🔥");
 
-import "dotenv/config";
-import "reflect-metadata";
 
+import "reflect-metadata";
+import "dotenv/config";
 import express from "express";
 import http from "http";
 import cors from "cors";
@@ -14,8 +14,9 @@ import { gql } from "graphql-tag";
 import { readFileSync } from "fs";
 import mongoose from "../../shared/db/mongo.js";
 import { connectMongo } from "../../shared/db/mongo.js";
-import { createUserContainer } from "./container/user.container.js";
-import resolvers from "./resolvers/user.resolver.js";
+import { registerUserDependencies } from "./container/user.registerContainer.js";
+import {  createUserResolvers } from "./resolvers/user.resolver.js";
+import UserService from "./services/user.service.js";
 
 // 🔍 启动时验证 env
 console.log(
@@ -29,7 +30,7 @@ await connectMongo(
 );
 
 // 🧰 2️⃣ Container
-const userContainer = createUserContainer();
+const userContainer = registerUserDependencies();
 
 // 🚀 3️⃣ App
 const app = express();
@@ -44,7 +45,8 @@ const typeDefs = gql(
 
 const server = new ApolloServer({
   schema: buildSubgraphSchema([
-    { typeDefs, resolvers },
+  
+    { typeDefs, resolvers: createUserResolvers() },//
   ]),
 });
 

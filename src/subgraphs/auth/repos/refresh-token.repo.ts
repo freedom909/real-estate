@@ -62,9 +62,9 @@ async save(
   refreshToken: string,
   meta: RefreshTokenMeta & { jti: string; expiresAt: Date }
 ) {
-  console.log("refreshToken:",refreshToken)// undefined
+  
   const tokenHash = hashToken(refreshToken);
- console.log("tokenHash:",tokenHash)
+ 
   return this.model.create({
     tokenId: meta.jti,
     tokenHash,

@@ -34,8 +34,7 @@ export default class UserService {
   }
 
   async findById(id: string, context?: IContext): Promise<IUserDB | null> {
-    console.log("context:",context)
-    console.log("context?.user:",context?.user)
+
     if (!context?.user) {
       throw new AuthenticationError('Authentication required');
     }

@@ -1,12 +1,16 @@
 // src/subgraphs/user/resolvers/index.ts
 
+import UserService from "@/application/user/services/user.service";
 import { Action, Resource } from "../../../domain/user/types/types";
 import { TOKENS } from "../../../shared/container/tokens";
 import { IUserDB } from "../models/user.model.js";
 import { ForbiddenError } from "@/infrastructure/utils/errors";
-
+import { container } from "tsyringe";
+import PolicyEngine from "@/security/policy.engine";
+import AuthService from "@/subgraphs/auth/services/auth.service";
+import userService from "../services/user.service";
 interface ResolverContext {
-  container: any;
+  container: typeof container;
   services: any;
   user?: any;
 }
@@ -16,73 +20,68 @@ interface UserReference {
   __typename?: string;
 }
 
-export default {
+// user.resolver.ts
 
-  Query: {
-    userById: async (_: unknown, { id }: { id: string }, { container, user }: ResolverContext) => {
-      const policyEngine = container.resolve(TOKENS.security.policyEngine);
-      const userService = container.resolve(TOKENS.user.userService);
+export const createUserResolvers = () => {
+  return {
+    Query: {
+      User: {
+    __resolveReference: async (ref, { userService }) => {
+      return await userService.findById(ref.id);
+    },
+  },
+      userById: async (_: unknown, { id }: { id: string }, { user }: ResolverContext) => {
+        const policyEngine = container.resolve<PolicyEngine>(TOKENS.security.policyEngine);
+        const userService = container.resolve<UserService>(TOKENS.user.userService);
 
-      const targetUser = await userService.findById(id);
+        const targetUser = await userService.findById(id);
 
-      if (targetUser) {
-        return null
-      }
+        if (!targetUser) {
+          return null
+        }
 
-      const policyContext = {
-        user: user ? { id: user.id, role: user.role } : undefined,
-        resourceOwnerId: targetUser.id
-      }
-      const allowed = policyEngine.can(Action.READ,
-        Resource.USER, {
-        user: policyContext.user ?? undefined,
-        resourceOwnerId: targetUser.id
-      })
-      if (!allowed) {
-        throw new ForbiddenError("Access denied");
-      }
-      return targetUser;
+        const policyContext = {
+          user: user ? { id: user.id, role: user.role } : undefined,
+          resourceOwnerId: targetUser.id
+        }
+        const allowed = policyEngine.can(Action.READ,
+          Resource.USER, {
+          user: policyContext.user ?? undefined,
+          resourceOwnerId: targetUser.id.toString(),
+        })
+        if (!allowed) {
+          throw new ForbiddenError("Access denied");
+        }
+        return targetUser;
+      },
+
+      userByEmail: async (_: unknown, { email }: { email: string }) => {
+        const userService = container.resolve<UserService>(TOKENS.user.userService);
+        return userService.findByEmail(email);
+      },
     },
 
-
-    userByEmail: (_: unknown, { email }: { email: string }, { container }: ResolverContext) =>
-      container
-        .resolve(TOKENS.user.userService)
-        .findByEmail(email),
-  },
-
-  User: {
-
-    async __resolveReference(ref: UserReference, { container }: ResolverContext) {
-      const userService = container.resolve(TOKENS.user.userService);
-      return userService.findById(ref.id);
-    }
-  },
-
-  Mutation: {
-    createOAuthUser: (_: unknown, { input }: { input: { email: string; profile: any} }, { container }: ResolverContext) => {
-      console.log("🔥 USER SUBGRAPH RESOLVER HIT");
-      console.log("resolver hit");
-      const userService = container
-        .resolve(TOKENS.user.userService);
-      return userService.createOAuthUser(input);
+    Mutation: {
+      deactivateUser: async (
+        _: unknown,
+        { userId }: { userId: string }
+      ) => {
+        const userService = container.resolve<UserService>(TOKENS.user.userService);
+        return userService.deactivate(userId);
+      },
     },
-    deactivateUser: async (
+    createOAuthUser: async (
       _: unknown,
-      { userId }: { userId: string },
-      context: ResolverContext
+      { input }: { input: { email: string; profile?: any } }
     ) => {
-      const userService = context?.services?.userService;
+      const userService = container.resolve<UserService>(
+        TOKENS.user.userService
+      );
 
-      if (!userService) {
-        throw new TypeError("Services not found in context");
-      }
-
-      if (typeof userService.deactivate !== "function") {
-        throw new TypeError("deactivate is not a function");
-      }
-
-      return userService.deactivate(userId);
+      return await userService.createOAuthUser({
+        email: input.email,
+        profile: input.profile ?? {},
+      });
     },
-  },
+  }
 }

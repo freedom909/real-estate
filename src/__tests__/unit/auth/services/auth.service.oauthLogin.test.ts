@@ -67,7 +67,7 @@ describe('AuthService.oauthLogin', () => {
       refreshTokenRepo: mockRefreshTokenRepo,
       sessionRepo: mockSessionRepo,
       oauthService: mockOauthService,
-      accessTokenBlacklist: {} as any,
+      blacklist: {} as any,
     });
 
     jest

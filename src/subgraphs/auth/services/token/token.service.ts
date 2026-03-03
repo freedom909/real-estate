@@ -4,6 +4,10 @@ import jwt, { Algorithm, SignOptions, JwtPayload } from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import fs from "fs";
 import crypto from "crypto";
+import { container } from "tsyringe";
+import Blacklist from "@/shared/security/blacklist";
+import { TOKENS } from "@/shared/container/tokens";
+
 
 export interface TokenPayload extends JwtPayload {
   sub: string;
@@ -44,57 +48,86 @@ export default class TokenService {
   private privateKey: string;
   private publicKey: string;
   private config: TokenConfig;
+  
 
- constructor(envKeyProvider: KeyProvider, config?: Partial<TokenConfig>) {
-  if (!envKeyProvider) {
-    throw new Error("TokenService: keyProvider is required");
+  constructor(envKeyProvider: KeyProvider, config?: Partial<TokenConfig>) {
+    if (!envKeyProvider) {
+      throw new Error("TokenService: keyProvider is required");
+    }
+    const privateKey = envKeyProvider.getPrivateKey();
+    const publicKey = envKeyProvider.getPublicKey();
+
+
+    this.privateKey = privateKey;
+    this.publicKey = publicKey;
+
+
+    this.config = {
+      issuer: config?.issuer ?? "auth-service",
+      algorithm: config?.algorithm ?? "RS256",
+      accessExpiresIn: config?.accessExpiresIn ?? "15m",
+      refreshExpiresIn: config?.refreshExpiresIn ?? "7d",
+    };
   }
-  const privateKey=envKeyProvider.getPrivateKey();
-  const publicKey=envKeyProvider.getPublicKey();
-
- 
-  this.privateKey = privateKey;
-  this.publicKey = publicKey;
- console.log("privateKey:",privateKey);
- console.log("publicKey:",publicKey);
-
-  this.config = {
-    issuer: config?.issuer ?? "auth-service",
-    algorithm: config?.algorithm ?? "RS256",
-    accessExpiresIn: config?.accessExpiresIn ?? "15m",
-    refreshExpiresIn: config?.refreshExpiresIn ?? "7d",
-  };
-}
 
   /* =========================================================
      ACCESS TOKEN
   ========================================================= */
 
-  signAccessToken(payload: Omit<TokenPayload, "type">): string {
-    
-    return jwt.sign(
-      { ...payload, type: "access" },
-      this.privateKey,
-      {
-        algorithm: this.config.algorithm,
-        issuer: this.config.issuer,
-        expiresIn: this.config.accessExpiresIn,
-      }
-    );
-  }
-
-  async verifyAccessToken(token: string): Promise<TokenPayload> {
-    const decoded = jwt.verify(token, this.publicKey, {
-      algorithms: [this.config.algorithm],
+signAccessToken(payload: Omit<TokenPayload, "type">): string {
+  const jti = randomUUID();
+  return jwt.sign(
+    {
+      ...payload,
+      type: "access",
+      jti,            // ✅ 加入 jti
+    },
+    this.privateKey,
+    {
+      algorithm: this.config.algorithm,
       issuer: this.config.issuer,
-    }) as TokenPayload;
-
-    if (decoded.type !== "access") {
-      throw new Error("Invalid access token type");
+      expiresIn: this.config.accessExpiresIn, // 15m
     }
-  
-    return decoded;
+  );
+}
+
+async verifyAccessToken(token: string): Promise<TokenPayload> {
+  try {
+    const payload = jwt.verify(
+      token,
+      this.publicKey,
+      {
+        algorithms: [this.config.algorithm],
+        issuer: this.config.issuer,
+      }
+    ) as TokenPayload;
+
+    // 1️⃣ type check（防止 refresh 冒充 access）
+    if (payload.type !== "access") {
+      throw new Error("Invalid token type");
+    }
+
+    // 2️⃣ jti 必须存在
+    if (!payload.jti) {
+      throw new Error("Token missing jti");
+    }
+
+    // 3️⃣ blacklist 检查
+    const blacklist = container.resolve<Blacklist>(
+      TOKENS.security.blacklist
+    );
+
+    const isBlacklisted = await blacklist.isBlacklisted(payload.jti);
+
+    if (isBlacklisted) {
+      throw new Error("Token is blacklisted");
+    }
+
+    return payload;
+  } catch (err) {
+    throw new Error("Unauthorized");
   }
+}
 
   /* =========================================================
      REFRESH TOKEN
@@ -144,7 +177,7 @@ export default class TokenService {
   ========================================================= */
 
   issueTokenPair(params: {
-    userId: string;  
+    userId: string;
     role?: string;
     email?: string;
     tokenVersion: number;
@@ -155,7 +188,7 @@ export default class TokenService {
     userAgent?: string;
   }): TokenPair {
     const {
-      userId,     
+      userId,
       role,
       email,
       tokenVersion,
@@ -165,7 +198,7 @@ export default class TokenService {
       ip,
       userAgent,
     } = params;
-   
+
     const basePayload = {
       sub: userId,
       role,

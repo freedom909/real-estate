@@ -11,7 +11,7 @@ import { ApolloServer } from '@apollo/server'
 import { expressMiddleware } from '@as-integrations/express4'
 import { buildSubgraphSchema } from '@apollo/subgraph'
 import { createRedis } from "../../infrastructure/redis/redis.js";
-import  createAuthContainer  from './container/auth.container.js'
+import { registerAuthDependencies } from './container/registerAuthDependencies.js'
 import resolvers from './resolvers/resolver.js'
 import mongoose from 'mongoose'
 import { userApolloClient } from "../../infrastructure/userApolloClient.js";
@@ -29,7 +29,7 @@ console.log(
 );
 
 // ⭐⭐⭐ 核心：创建 DI 容器实例（一次）
-const container = createAuthContainer();
+const container = registerAuthDependencies();
 
 const typeDefs = gql(readFileSync('./src/subgraphs/auth/schema.graphql', { encoding: 'utf-8' }));
 
@@ -76,7 +76,6 @@ app.use((req: CustomRequest, res, next) => {
           })
         );
       }
-
     }
   }
 console.log("Subgraph Authorization:", req.headers.authorization);
@@ -89,17 +88,14 @@ app.use(
   cors({ origin: "http://localhost:3000", credentials: true }),
   express.json(),
   expressMiddleware(server, {
-    context: async ({ req, res }) => ({
-      
+    context: async ({ req, res }) => ({     
       req,
       res,
       container,
       redis,
       user: req.user ?? null,
-    }),
-    
-  })
-  
+    }),   
+  })  
 );
 
 

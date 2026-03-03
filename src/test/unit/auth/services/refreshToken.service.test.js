@@ -2,9 +2,6 @@ import RefreshTokenService from "../../../../subgraphs/auth/services/refresh/ref
 
 import { describe, it, expect, jest, beforeEach } from "@jest/globals";
 
-
-
-
 describe("RefreshTokenService", () => {
   let service;
   let tokenService;

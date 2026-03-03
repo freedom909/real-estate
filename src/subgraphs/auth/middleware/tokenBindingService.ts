@@ -1,8 +1,12 @@
+// src/services/tokenBinding.service.ts
 
 import { hash } from "@/utils/hash";
 import { Session } from "../models/session.model";
 import LoginRiskService from "../services/risk/loginRisk.service";
 
+import { injectable } from "tsyringe";
+
+@injectable()
 export default class TokenBindingService {
   constructor(private loginRiskService: LoginRiskService) {}
 

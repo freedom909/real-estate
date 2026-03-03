@@ -77,8 +77,8 @@ export default class UserClient {
       CREATE_OAUTH_USER,
       { input }
     );
-
-    return res?.createOAuthUser ?? null;
+console.log("createOAuthUser result:", res);
+    return res?.data?.createOAuthUser ?? null;
   }
 
   async linkOAuthProvider({ 

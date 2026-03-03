@@ -5,7 +5,7 @@ import { Redis } from "ioredis";
 import { TOKENS } from "@/shared/container/tokens";
 
 @injectable()
-export default class AccessTokenBlacklist {
+export default class Blacklist {
   constructor(
     @inject(TOKENS.infra.redis)
     private readonly redis: Redis

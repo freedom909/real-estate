@@ -1,6 +1,6 @@
 // src/subgraphs/auth/services/refresh/refreshToken.service.ts
 
-import { hashToken } from "@/utils/hash";
+import { hash } from "@/utils/hash";
 import TokenService from "../token/token.service";
 
 interface RefreshTokenRepo {
@@ -48,7 +48,7 @@ export default class RefreshTokenService {
       throw new Error("Token revoked globally");
     }
 
-    const tokenHash = hashToken(refreshToken);
+    const tokenHash = hash(refreshToken);
 
     // 2️⃣ 原子消费
     const consumed = await this.refreshRepo.consume(tokenHash);
@@ -79,7 +79,7 @@ export default class RefreshTokenService {
     });
 
     await this.refreshRepo.save({
-      tokenHash: hashToken(pair.refreshToken),
+      tokenHash,
       userId,
       familyId,
       sessionId,

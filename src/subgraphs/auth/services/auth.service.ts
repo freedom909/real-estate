@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import{ hash }from "@/utils/hash";
 import { ForbiddenError } from "@/infrastructure/utils/errors";
-import AccessTokenBlacklist from "@/shared/security/blacklist";
+import Blacklist from "@/shared/security/blacklist";
 
 interface OAuthUser {
   sub: string;
@@ -87,10 +87,11 @@ interface AuthServiceDependencies {
   refreshTokenRepo: any;
   oauthAccountRepo: any;
   sessionRepo: any;
-  accessTokenBlacklist: AccessTokenBlacklist;
+  blacklist: Blacklist;
 }
 
 export default class AuthService {
+
   private oauthService: any;
   private userClient: any;
   private credentialRepo: any;
@@ -100,7 +101,7 @@ export default class AuthService {
   private oauthAccountRepo: any;
   private sessionRepo: any;
   private refreshPublicKey: string;
-  private accessTokenBlacklist: AccessTokenBlacklist;
+  private blacklist: Blacklist;
 
 
   constructor(deps: AuthServiceDependencies) {
@@ -113,7 +114,7 @@ export default class AuthService {
       "refreshTokenRepo",
       "oauthAccountRepo",
       "sessionRepo",
-      "accessTokenBlacklist"
+      "blacklist"
     ];
 
     for (const key of required) {
@@ -218,6 +219,7 @@ export default class AuthService {
       familyId,
       severity: "LOW",
     });
+    
     const session = await this.sessionRepo.create({
       userId,
       familyId,
@@ -454,7 +456,7 @@ export default class AuthService {
     if (accessToken) {
       const decoded = await this.tokenService.verifyAccessToken(accessToken);
 
-      await this.accessTokenBlacklist.blacklist(decoded.jti, decoded.exp);
+      await this.blacklist.blacklist(decoded.jti, decoded.exp);
     }
     return true;
   }

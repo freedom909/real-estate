@@ -2,7 +2,7 @@
 import { gql } from "graphql-tag";
 import apolloClient  from "../../../../shared/apollo/apolloClient.js"; 
 
-export async function oauthLogin(email, profile) {
+ async function oauthLogin(email, profile) {
   // 1. Query the User subgraph for existing user
   const { data } = await apolloClient.query({
     query: gql`
@@ -42,3 +42,4 @@ export async function oauthLogin(email, profile) {
   // 3. Return user to the auth flow (issue JWT, etc)
   return user;
 }
+export default oauthLogin;

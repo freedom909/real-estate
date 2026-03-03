@@ -1,4 +1,4 @@
-import {normalizeRole} from "../domain/normalizeRole";
+import {normalizeRole} from "../../../core/user/domain/normalizeRole";
 
 interface User {
   id: string;

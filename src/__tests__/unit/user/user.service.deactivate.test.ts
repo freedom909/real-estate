@@ -1,5 +1,5 @@
 // src/subgraphs/user/services/user.service.test.ts
-
+import "reflect-metadata";
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import UserService from '../../../application/user/services/user.service';
 import UserRepo from '../../../subgraphs/user/repos/user.repo';

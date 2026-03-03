@@ -12,6 +12,8 @@ import { expressMiddleware } from "@as-integrations/express4";
 import { ApolloGateway } from "@apollo/gateway";
 import AuthenticatedDataSource from "@/infrastructure/auth/authenticatedDataSource";
 import { classifyToken } from "@/gateway/helpers/classifyToken";
+import { JwtVerifier } from "../security/service/jwt/JwtVerifier"
+import { createGatewayAuthGuard } from "./middleware/gatewayAuthGuard"
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -84,7 +86,8 @@ async function startGateway() {
   // 3️⃣ Load Public Key (Dev Safe)
   // ==============================
   let PUBLIC_KEY: string | null = null;
-
+     const publicKey = fs.readFileSync("./keys/public.pem", "utf8")
+    const verifier = new JwtVerifier(publicKey)
   try {
 
     const keyPath =
@@ -98,7 +101,7 @@ async function startGateway() {
       "⚠️ Public key not found. JWT verification skipped (DEV MODE)."
     );
   }
-
+  app.use(createGatewayAuthGuard(verifier))
   // ==============================
   // 4️⃣ Express Middlewares
   // ==============================
@@ -110,7 +113,6 @@ async function startGateway() {
     "/graphql",
     expressMiddleware<MyContext>(server, {
       context: async ({ req, res }): Promise<MyContext> => {
-        console.log("🔍 Incoming Authorization:", req.headers.authorization);
         const operationName = req.body?.operationName;
         const authHeader = req.headers.authorization;
         if (operationName === "oauthLogin") {

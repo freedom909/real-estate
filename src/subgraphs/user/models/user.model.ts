@@ -7,7 +7,7 @@ import { IProfile } from "@/domain/user/types/user";
 export type UserDocument = HydratedDocument<IUserDB>;
 
 export interface IUserDB {
-
+  id: Types.ObjectId;
   profile: IProfile;
   role: Role;
   status: "ACTIVE" | "INACTIVE" | "BANNED";

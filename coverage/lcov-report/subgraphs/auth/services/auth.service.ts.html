@@ -960,6 +960,8 @@ interface AuthServiceDependencies {
   refreshTokenRepo: any;
   oauthAccountRepo: any;
   sessionRepo: any;
+  blacklist: Blacklist;
+  refreshPublicKey: string;
 }
 &nbsp;
 export default class AuthService {

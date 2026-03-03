@@ -7,7 +7,7 @@ export const TOKENS = {
     githubApi: Symbol("infra.githubApi"),
     redis: Symbol("infra.redis"),
     cache: Symbol("infra.cache"),
-    accessTokenBlacklist: Symbol("infra.accessTokenBlacklist"),
+    
   },
 
   auth: {
@@ -61,7 +61,7 @@ export const TOKENS = {
   },
   security:{
   policyEngine: Symbol("security.policyEngine"),
-  
+  blacklist: Symbol("security.blacklist"),
 }
 } as const;
 

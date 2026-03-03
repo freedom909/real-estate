@@ -1,5 +1,5 @@
 // src/subgraphs/auth/services/oauth/oauthVerifier.ts
-import verifyGoogleIdToken from "./verifiers/google.id.js";
+import verifyGoogleIdToken from "./verifiers/google.id";
 
 interface OAuthProfile {
   providerUserId: string;

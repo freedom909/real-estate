@@ -6,7 +6,7 @@ import TokenService, { TokenPayload } from "../services/token/token.service";
 import SessionRepo from "../repos/session.repo";
 import TokenBindingService from "../middleware/tokenBindingService";
 import { UnauthorizedError } from "../../../infrastructure/utils/errors";
-
+import Blacklist from "../../../shared/security/blacklist";
 /**
  * AuthGuard handles token verification and session validation.
  */
@@ -16,7 +16,9 @@ export class AuthGuard {
     @inject(TOKENS.auth.tokenService) private tokenService: TokenService,
     @inject(TOKENS.auth.sessionRepo) private sessionRepo: SessionRepo,
     @inject(TOKENS.auth.tokenBindingService)
-    private tokenBindingService: TokenBindingService
+    private tokenBindingService: TokenBindingService,
+    @inject(TOKENS.security.blacklist)
+    private blacklist: Blacklist
   ) {}
 
   /**
@@ -32,7 +34,15 @@ export class AuthGuard {
 
     // 2️⃣ Verify access token
     const payload: TokenPayload = await this.tokenService.verifyAccessToken(token);
-
+    if (payload.type !== "access") {
+      throw new UnauthorizedError("Invalid token type");
+    }
+    if (!payload.sessionId) {
+      throw new UnauthorizedError("Missing session ID");
+    }
+    if(await this.blacklist.isBlacklisted(payload.jti)) {
+      throw new UnauthorizedError("Token blacklisted");
+    }
     // 3️⃣ Fetch session
     const session = await this.sessionRepo.findById(payload.sessionId);
     if (!session || session.revokedAt) {

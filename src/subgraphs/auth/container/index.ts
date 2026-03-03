@@ -1,5 +1,5 @@
 // src/subgraphs/auth/container/index.ts
-import  createAuthContainer  from "./auth.container.js";
+import  {registerAuthDependencies}  from "./registerAuthDependencies.js";
 
 
 interface Request {
@@ -14,7 +14,7 @@ interface Context {
 }
 
 export function buildAuthContext({ req }: { req: Request }): Context {
-  const container = createAuthContainer();
+  const container = registerAuthDependencies();
 
   return {
     container,

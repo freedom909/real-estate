@@ -9,7 +9,7 @@
     "strict": false,
     "esModuleInterop": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
@@ -18,5 +18,5 @@
       "@infrastructure/*": ["src/infrastructure/*"]
     }
   },
-    "include": ["src", "__tests__"]
+  "include": ["src", "__tests__"]
 }
