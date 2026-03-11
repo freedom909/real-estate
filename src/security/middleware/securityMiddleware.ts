@@ -1,6 +1,6 @@
 import { SecurityEventBuilder } from "../builder/securityEvent.builder";
 import{ GeminiSecurityService} from "../service/geminiSecurity.service";
-import { SecurityEventRepository} from "../repo/securityEventRepository";
+import { SecurityEventRepository} from "../repo/";
 import { SecurityAssessment } from "../../utils/types";
 interface Context {
   user?: any;

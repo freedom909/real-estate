@@ -30,7 +30,6 @@ export default function createContainer(): Container {
           `DI resolve failed: ${token.toString()} not registered`
         );
       }
-
       return factory(container);
     },
 

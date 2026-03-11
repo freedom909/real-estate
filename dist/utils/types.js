@@ -1,2 +1,0 @@
-//utils/types.ts
-export {};

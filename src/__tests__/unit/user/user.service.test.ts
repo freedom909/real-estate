@@ -22,15 +22,12 @@ describe('UserService', () => {
   let mockPermissionService: jest.Mocked<IPermissionService>;
   let mockUser: IUserDBObject;
 
-  const createMockUser = (): IUserDBObject=> ({
+  const createMockUser = (): IUserDBObject => ({
     _id: new Types.ObjectId(),
-    
-    profile: {
-      userId: 'user123',
-      email: 'test@example.com',
-      name: 'Test User',
-      avatar: 'avatar-url',
-    },
+    tenantId: new Types.ObjectId(),
+    email: 'test@example.com',
+    name: 'Test User',
+    avatar: 'avatar-url',
     role: Role.CUSTOMER,
     status: 'ACTIVE',
     tokenVersion: 0,
@@ -64,13 +61,13 @@ describe('UserService', () => {
     it('should return mapped user when exists', async () => {
       mockUserRepo.findByEmail.mockResolvedValue(mockUser);
 
-      const result = await userService.findByEmail(mockUser.profile.email);
+      const result = await userService.findByEmail(mockUser.email);
 
       expect(result).not.toBeNull();
       expect(result?.id).toBe(mockUser._id.toString());
-      expect(result?.profile.email).toBe(mockUser.profile.email);
+      expect(result?.profile.email).toBe(mockUser.email);
       expect(mockUserRepo.findByEmail).toHaveBeenCalledWith(
-        mockUser.profile.email
+        mockUser.email
       );
     });
 
@@ -96,7 +93,7 @@ describe('UserService', () => {
       );
 
       await expect(
-        userService.findByEmail(mockUser.profile.email)
+        userService.findByEmail(mockUser.email)
       ).rejects.toThrow(UserInputError);
     });
   });
@@ -145,10 +142,8 @@ describe('UserService', () => {
 
       const otherUser: IUserDBObject = {
         ...mockUser,
-        profile: {
-          ...mockUser.profile,
-          userId: 'another-user',
-        },
+        _id: new Types.ObjectId(),
+        email: 'another@example.com',
         role: Role.USER,
       };
 
@@ -218,12 +213,9 @@ describe('UserService', () => {
       expect(mockUserRepo.create).toHaveBeenCalledWith({
         role: Role.CUSTOMER,
         status: 'ACTIVE',
-        profile: {
-          userId: oauthInput.profile.id,
-          email: oauthInput.profile.email,
-          name: oauthInput.profile.name,
-          avatar: oauthInput.profile.picture,
-        },
+        email: oauthInput.profile.email,
+        name: oauthInput.profile.name,
+        avatar: oauthInput.profile.picture,
       });
     });
 

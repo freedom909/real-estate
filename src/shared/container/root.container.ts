@@ -1,13 +1,23 @@
 // src/shared/container/root.container.ts
-import createContainer from "./createContainer";
-import { TOKENS } from "./tokens";
-import Redis from "ioredis";
 
-export const container = createContainer();
+import { container } from "tsyringe"
 
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+import { registerUserDependencies } from "@/subgraphs/user/container/user.container"
+import  registerAuthDependencies  from "@/subgraphs/auth/container/registerAuthDependencies"
+import registerInfra from "@/infrastructure/infra.container"
+import registerSecurity from "@/security/container/security.container"
 
-container.register(
-  TOKENS.infra.redis,
-  () => redis
-);
+export function bootstrapContainer() {
+
+  // infra
+  registerInfra(container)
+
+  // security
+  registerSecurity(container)
+
+  // modules
+  registerUserDependencies(container)
+
+  registerAuthDependencies(container)
+
+}

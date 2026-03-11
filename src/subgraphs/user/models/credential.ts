@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 
 interface ICredential {
   userId: mongoose.Types.ObjectId;
-  provider: "PASSWORD" | "GOOGLE" | "GITHUB" | "FACEBOOK" | "APPLE" | "LINE";
+  provider:  "GOOGLE" | "GITHUB" | "FACEBOOK" | "APPLE" | "LINE";
   providerUserId: string;
   email?: string;
   emailVerified?: boolean;

@@ -1,27 +1,9 @@
-"use client";
-
-import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
-
-const httpLink = createHttpLink({
-  uri: "http://localhost:4000/graphql", // 改成你的 gateway
-});
-
-const authLink = setContext((_, { headers }) => {
-  if (typeof window === "undefined") return { headers };
-
-  const token = localStorage.getItem("accessToken");
-  console.log("token", token); //no output in the terminal
-
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-});
+import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client/core";
 
 export const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: new HttpLink({
+    uri: "http://localhost:4000/graphql",
+    credentials: "include",
+  }),
   cache: new InMemoryCache(),
 });

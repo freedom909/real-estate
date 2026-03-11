@@ -1,8 +1,6 @@
 // src/subgraphs/auth/services/auth.service._login.test.ts
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
-
-
 interface TokensResponse {
   accessToken: string;
   refreshToken: string;

@@ -1,0 +1,122 @@
+schema
+  @link(
+    url: "https://specs.apollo.dev/federation/v2.11"
+    import: ["@key", "@shareable"]
+  ) {
+  query: Query
+  mutation: Mutation
+}
+
+scalar DateTime
+
+# =====================
+# Role
+# =====================
+enum Role {
+  ADMIN
+  OWNER
+  AGENT
+  CUSTOMER
+}
+
+# =====================
+# User
+# =====================
+type User @key(fields: "id") {
+
+  id: ID!
+
+  tenants: [Tenant!]!
+
+}
+
+# =====================
+# Tenant
+# =====================
+type Tenant @key(fields: "id") {
+
+  id: ID!
+
+  name: String!
+
+  slug: String!
+
+  createdAt: DateTime!
+
+  members: [Membership!]!
+
+}
+
+# =====================
+# Membership
+# =====================
+type Membership {
+
+  id: ID!
+
+  user: User!
+
+  tenant: Tenant!
+
+  role: Role!
+
+  status: MembershipStatus!
+
+  createdAt: DateTime!
+
+}
+
+# =====================
+# Membership Status
+# =====================
+enum MembershipStatus {
+
+  ACTIVE
+
+  INVITED
+
+  SUSPENDED
+
+}
+
+# =====================
+# Query
+# =====================
+type Query {
+
+  tenant(id: ID!): Tenant
+
+  tenants: [Tenant!]!
+
+  myTenants: [Tenant!]!
+
+}
+
+# =====================
+# Mutation
+# =====================
+type Mutation {
+
+  createTenant(
+    name: String!
+    slug: String!
+  ): Tenant!
+
+  inviteUser(
+    tenantId: ID!
+    email: String!
+    role: Role!
+  ): Boolean!
+
+  removeUser(
+    tenantId: ID!
+    userId: ID!
+  ): Boolean!
+
+  changeUserRole(
+    tenantId: ID!
+    userId: ID!
+    role: Role!
+  ): Boolean!
+
+}

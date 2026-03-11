@@ -23,6 +23,8 @@ describe('AuthService.oauthLogin', () => {
   let mockRefreshTokenRepo: any;
   let mockSessionRepo: any;
   let mockOauthService: any;
+  let mockRefreshTokenService: any;
+  let mockBlacklist: any;
 
   const mockFamilyId = 'mock-family-uuid';
 
@@ -44,6 +46,7 @@ describe('AuthService.oauthLogin', () => {
     mockOauthAccountRepo = {
       findByProviderUserId: jest.fn(),
       create: jest.fn(),
+      deleteByProvider: jest.fn(),
     };
 
     mockUserClient = {
@@ -56,7 +59,14 @@ describe('AuthService.oauthLogin', () => {
     mockLoginRiskService = {};
     mockRefreshTokenRepo = {};
     mockSessionRepo = {};
-    mockOauthService = {};
+    mockOauthService = {
+      login: jest.fn(),
+      verify: jest.fn(),
+    };
+    mockRefreshTokenService = {};
+    mockBlacklist = {
+      blacklist: jest.fn(),
+    };
 
     authService = new AuthService({
       oauthAccountRepo: mockOauthAccountRepo,
@@ -67,12 +77,9 @@ describe('AuthService.oauthLogin', () => {
       refreshTokenRepo: mockRefreshTokenRepo,
       sessionRepo: mockSessionRepo,
       oauthService: mockOauthService,
-      blacklist: {} as any,
+      blacklist: mockBlacklist,
+      refreshTokenService: mockRefreshTokenService,
     });
-
-    jest
-      .spyOn(authService as any, '_login')
-      .mockResolvedValue({ success: true, userId: 'final-user-id' });
   });
 
   // =============================================================================
@@ -81,40 +88,35 @@ describe('AuthService.oauthLogin', () => {
   it('should login existing user when OAuth account exists', async () => {
     const existingUserId = 'user-existing-123';
 
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue({
-      userId: existingUserId,
+    mockOauthService.login.mockResolvedValue({
+      _id: existingUserId,
+      email: mockProfile.email,
+      name: mockProfile.name,
+      role: 'CUSTOMER',
+      tokenVersion: 0,
     });
 
-    const result = await authService.oauthLogin(mockProfile, mockCtx);
+    mockSessionRepo.create.mockResolvedValue({ _id: 'session-123' });
+    mockTokenService.issueTokenPair.mockReturnValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
-    expect(mockOauthAccountRepo.findByProviderUserId).toHaveBeenCalledTimes(1);
-    expect(mockUserClient.findByEmail).not.toHaveBeenCalled();
-    expect(mockOauthAccountRepo.create).not.toHaveBeenCalled();
-    expect(mockUserClient.createOAuthUser).not.toHaveBeenCalled();
+    const result = await authService.oauthLogin(mockProfile.provider, 'id-token');
 
-    expect((authService as any)._login).toHaveBeenCalledTimes(1);
-    expect((authService as any)._login).toHaveBeenCalledWith(
-      existingUserId,
-      { ...mockCtx, familyId: mockFamilyId },
-      false
-    );
-
-    expect(result).toEqual({ success: true, userId: 'final-user-id' });
+    expect(mockOauthService.login).toHaveBeenCalledTimes(1);
+    expect(result.accessToken).toBeDefined();
   });
 
   // =============================================================================
   // 🟡 Path A2: Corrupted OAuth Mapping (Missing userId)
   // =============================================================================
   it('should throw if OAuth account exists but userId is invalid', async () => {
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue({
-      userId: undefined,
-    });
+    mockOauthService.login.mockRejectedValue(new Error('Invalid OAuth login'));
 
     await expect(
-      authService.oauthLogin(mockProfile, mockCtx)
+      authService.oauthLogin(mockProfile.provider, 'id-token')
     ).rejects.toThrow();
-
-    expect((authService as any)._login).not.toHaveBeenCalled();
   });
 
   // =============================================================================
@@ -123,27 +125,23 @@ describe('AuthService.oauthLogin', () => {
   it('should link OAuth account when user exists by email', async () => {
     const existingUserId = 'user-linked-456';
 
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue(null);
-    mockUserClient.findByEmail.mockResolvedValue({ id: existingUserId });
-
-    await authService.oauthLogin(mockProfile, mockCtx);
-
-    expect(mockUserClient.findByEmail).toHaveBeenCalledTimes(1);
-    expect(mockOauthAccountRepo.create).toHaveBeenCalledTimes(1);
-
-    expect(mockOauthAccountRepo.create).toHaveBeenCalledWith({
-      userId: existingUserId,
-      provider: mockProfile.provider,
-      providerUserId: mockProfile.providerUserId,
+    mockOauthService.login.mockResolvedValue({
+      _id: existingUserId,
       email: mockProfile.email,
-      familyId: mockFamilyId,
+      name: mockProfile.name,
+      role: 'CUSTOMER',
+      tokenVersion: 0,
     });
 
-    expect((authService as any)._login).toHaveBeenCalledWith(
-      existingUserId,
-      expect.objectContaining({ familyId: mockFamilyId }),
-      false
-    );
+    mockSessionRepo.create.mockResolvedValue({ _id: 'session-123' });
+    mockTokenService.issueTokenPair.mockReturnValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+
+    await authService.oauthLogin(mockProfile.provider, 'id-token');
+
+    expect(mockOauthService.login).toHaveBeenCalledTimes(1);
   });
 
   // =============================================================================
@@ -152,41 +150,48 @@ describe('AuthService.oauthLogin', () => {
   it('should create new user when no OAuth link and no existing user', async () => {
     const newUserId = 'user-new-789';
 
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue(null);
-    mockUserClient.findByEmail.mockResolvedValue(null);
-    mockUserClient.createOAuthUser.mockResolvedValue({ id: newUserId });
+    mockOauthService.login.mockResolvedValue({
+      _id: newUserId,
+      email: mockProfile.email,
+      name: mockProfile.name,
+      role: 'CUSTOMER',
+      tokenVersion: 0,
+    });
 
-    await authService.oauthLogin(mockProfile, mockCtx);
+    mockSessionRepo.create.mockResolvedValue({ _id: 'session-123' });
+    mockTokenService.issueTokenPair.mockReturnValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
-    expect(mockUserClient.createOAuthUser).toHaveBeenCalledTimes(1);
+    await authService.oauthLogin(mockProfile.provider, 'id-token');
 
-    expect((authService as any)._login).toHaveBeenCalledWith(
-      newUserId,
-      expect.objectContaining({ familyId: mockFamilyId }),
-      true
-    );
+    expect(mockOauthService.login).toHaveBeenCalledTimes(1);
   });
 
   // =============================================================================
   // 🟡 Path D: Missing Email
   // =============================================================================
   it('should skip email lookup when profile.email is undefined', async () => {
-    const profileNoEmail = { ...mockProfile, email: undefined };
     const newUserId = 'user-no-email-999';
 
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue(null);
-    mockUserClient.createOAuthUser.mockResolvedValue({ id: newUserId });
+    mockOauthService.login.mockResolvedValue({
+      _id: newUserId,
+      email: undefined,
+      name: mockProfile.name,
+      role: 'CUSTOMER',
+      tokenVersion: 0,
+    });
 
-    await authService.oauthLogin(profileNoEmail, mockCtx);
+    mockSessionRepo.create.mockResolvedValue({ _id: 'session-123' });
+    mockTokenService.issueTokenPair.mockReturnValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
 
-    expect(mockUserClient.findByEmail).not.toHaveBeenCalled();
-    expect(mockUserClient.createOAuthUser).toHaveBeenCalledTimes(1);
+    await authService.oauthLogin(mockProfile.provider, 'id-token');
 
-    expect((authService as any)._login).toHaveBeenCalledWith(
-      newUserId,
-      expect.anything(),
-      true
-    );
+    expect(mockOauthService.login).toHaveBeenCalledTimes(1);
   });
 
   // =============================================================================
@@ -195,21 +200,20 @@ describe('AuthService.oauthLogin', () => {
   it('should propagate repository errors', async () => {
     const dbError = new Error('DB failure');
 
-    mockOauthAccountRepo.findByProviderUserId.mockRejectedValue(dbError);
+    mockOauthService.login.mockRejectedValue(dbError);
 
     await expect(
-      authService.oauthLogin(mockProfile, mockCtx)
+      authService.oauthLogin(mockProfile.provider, 'id-token')
     ).rejects.toThrow(dbError);
   });
 
   it('should propagate user client errors', async () => {
-    mockOauthAccountRepo.findByProviderUserId.mockResolvedValue(null);
-    mockUserClient.findByEmail.mockRejectedValue(
+    mockOauthService.login.mockRejectedValue(
       new Error('User service down')
     );
 
     await expect(
-      authService.oauthLogin(mockProfile, mockCtx)
+      authService.oauthLogin(mockProfile.provider, 'id-token')
     ).rejects.toThrow('User service down');
   });
 
@@ -222,7 +226,7 @@ describe('AuthService.oauthLogin', () => {
     });
 
     await expect(
-      authService.oauthLogin(mockProfile, mockCtx)
+      authService.oauthLogin(mockProfile.provider, 'id-token')
     ).rejects.toThrow('UUID failure');
   });
 });

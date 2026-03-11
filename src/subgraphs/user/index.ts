@@ -14,9 +14,10 @@ import { gql } from "graphql-tag";
 import { readFileSync } from "fs";
 import mongoose from "../../shared/db/mongo.js";
 import { connectMongo } from "../../shared/db/mongo.js";
-import { registerUserDependencies } from "./container/user.registerContainer.js";
-import {  createUserResolvers } from "./resolvers/user.resolver.js";
+import { registerUserDependencies } from "./container/user.container.js";
+import   resolvers  from "./resolvers/user.resolver.js";
 import UserService from "./services/user.service.js";
+import { container } from "tsyringe";
 
 // 🔍 启动时验证 env
 console.log(
@@ -26,11 +27,11 @@ console.log(
 // 🥭 1️⃣ Mongo
 await connectMongo(
   process.env.MONGO_URI ||
-  "mongodb://localhost:27017/real_estate_user"
+  "mongodb://localhost:27017/winter"
 );
 
 // 🧰 2️⃣ Container
-const userContainer = registerUserDependencies();
+const userContainer = registerUserDependencies(container);
 
 // 🚀 3️⃣ App
 const app = express();
@@ -45,8 +46,8 @@ const typeDefs = gql(
 
 const server = new ApolloServer({
   schema: buildSubgraphSchema([
-  
-    { typeDefs, resolvers: createUserResolvers() },//
+    
+    { typeDefs, resolvers},//
   ]),
 });
 

@@ -39,7 +39,7 @@ async function startGateway() {
       return new AuthenticatedDataSource({ url });
     },
   });
-
+ 
   // ==============================
   // 2️⃣ Create Apollo Server
   // ==============================
@@ -78,7 +78,7 @@ async function startGateway() {
       },
     ],
   });
-
+  console.log("✅ Apollo Server built");
   // 🚨 MUST START BEFORE expressMiddleware
   await server.start();
 
@@ -87,6 +87,7 @@ async function startGateway() {
   // ==============================
   let PUBLIC_KEY: string | null = null;
      const publicKey = fs.readFileSync("./keys/public.pem", "utf8")
+     
     const verifier = new JwtVerifier(publicKey)
   try {
 
@@ -94,7 +95,7 @@ async function startGateway() {
       process.env.JWT_PUBLIC_KEY_PATH || "keys/public.pem";
 
     PUBLIC_KEY = fs.readFileSync(path.resolve(keyPath), "utf8");
-
+    
     console.log("✅ Public key loaded");
   } catch {
     console.warn(

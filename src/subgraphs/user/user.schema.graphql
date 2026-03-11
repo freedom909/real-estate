@@ -51,7 +51,7 @@ enum ApprovalStatus {
 
 type Query {
   userByEmail(email: String!): User
-  userById(id: ID!): User
+  user(id: ID!): User
 }
 
 type Mutation {
@@ -67,8 +67,7 @@ input CreateOAuthUserInput {
 input ProfileInput {
   email: String!
   name: String
-  avatar: String
-  
+  avatar: String 
 }
 
 

@@ -1,69 +1,115 @@
+// src/shared/container/tokens.ts
+
 import PolicyEngine from "@/security/policy.engine";
-import AccesstokenBlacklist from "@/shared/security/blacklist";
+import AccesstokenBlacklist from "@/security/blacklist/blacklist";
 
 
 export const TOKENS = {
+
+  // =========================
+  // Infrastructure Layer
+  // =========================
   infra: {
-    githubApi: Symbol("infra.githubApi"),
     redis: Symbol("infra.redis"),
     cache: Symbol("infra.cache"),
-    
+    logger: Symbol("infra.logger"),
+    config: Symbol("infra.config"),
   },
 
-  auth: {
-    // adapters
-    userApi: Symbol("auth.userApi"),
-    userClient: Symbol("auth.userClient"),
-    userService: Symbol("auth.userService"),
-    oauthAdapter:Symbol("auth.oauthAdapter"),
-    
-    userGraphQLClient: Symbol("auth.userGraphQLClient"),
-    userSubgraphClient: Symbol("auth.userSubgraphClient"),
-    googleOAuthAdapter: Symbol("auth.googleOAuthAdapter"),
-    githubOAuthAdapter: Symbol("auth.githubOAuthAdapter"),
+  // =========================
+  // External Clients
+  // =========================
+  clients: {
+    userSubgraphClient: Symbol("clients.userSubgraphClient"),
+    githubApi: Symbol("clients.githubApi"),
+    googleApi: Symbol("clients.googleApi"),
+  },
 
+  // =========================
+  // Security Module
+  // =========================
+  security: {
+    policyEngine: Symbol("security.policyEngine"),
+    blacklist: Symbol("security.blacklist"),
+    tokenBindingService: Symbol("security.tokenBindingService"),
+  },
+
+  // =========================
+  // Auth Domain
+  // =========================
+  auth: {
+
+    // adapters
+    adapters: {
+      oauthAdapter: Symbol("auth.adapters.oauthAdapter"),
+      googleOAuthAdapter: Symbol("auth.adapters.googleOAuthAdapter"),
+      githubOAuthAdapter: Symbol("auth.adapters.githubOAuthAdapter"),
+    },
 
     // models
-    credentialModel: Symbol("auth.credentialModel"),
-    refreshTokenModel: Symbol("auth.refreshTokenModel"),
-    oauthAccountModel: Symbol('oauthAccountModel'),
-    sessionModel: Symbol('sessionModel'),
+    models: {
+      credential: Symbol("auth.models.credential"),
+      refreshToken: Symbol("auth.models.refreshToken"),
+      oauthAccount: Symbol("auth.models.oauthAccount"),
+      session: Symbol("auth.models.session"),
+      riskEvent: Symbol("auth.models.riskEvent"),
+    },
 
-    // repos
-    credentialRepo: Symbol("auth.credentialRepo"),
-    refreshTokenRepo: Symbol("auth.refreshTokenRepo"),
-    riskEventRepo: Symbol("auth.riskEventRepo"),
-    keyProvider: Symbol("auth.keyProvider"),
-    oauthAccountRepo: Symbol("auth.oauthAccountRepo"),
-    userRepo: Symbol("auth.userRepo"),
-    sessionRepo: Symbol("auth.sessionRepo"),
+    // repositories
+    repos: {
+      credentialRepo: Symbol("auth.repos.credentialRepo"),
+      refreshTokenRepo: Symbol("auth.repos.refreshTokenRepo"),
+      oauthAccountRepo: Symbol("auth.repos.oauthAccountRepo"),
+      sessionRepo: Symbol("auth.repos.sessionRepo"),
+      riskEventRepo: Symbol("auth.repos.riskEventRepo"),
+    },
 
     // services
-    envKeyProvider: Symbol("auth.envKeyProvider"),
-    tokenService: Symbol("auth.tokenService"),
-    refreshTokenService: Symbol("auth.refreshTokenService"),
-    loginRiskService: Symbol("auth.loginRiskService"),
-    authService: Symbol("auth.authService"),
-    mergeAccountService: Symbol("mergeAccountService"),
-    oauthService: Symbol("auth.oauthService"),
-    oauthVerifier: Symbol("auth.oauthVerifier"),
+    services: {
+      authService: Symbol("auth.services.authService"),
+      tokenService: Symbol("auth.services.tokenService"),
+      refreshTokenService: Symbol("auth.services.refreshTokenService"),
+      oauthService: Symbol("auth.services.oauthService"),
+      oauthVerifier: Symbol("auth.services.oauthVerifier"),
+      loginRiskService: Symbol("auth.services.loginRiskService"),
+      mergeAccountService: Symbol("auth.services.mergeAccountService"),
+    },
+
+    // providers
+    providers: {
+      keyProvider: Symbol("auth.providers.keyProvider"),
+      envKeyProvider: Symbol("auth.providers.envKeyProvider"),
+    },
+
     // guards
-    authGuard: Symbol("auth.authGuard"),
-    tokenBindingService: Symbol("auth.tokenBindingService"),
+    guards: {
+      authGuard: Symbol("auth.guards.authGuard"),
+    }
   },
 
+  // =========================
+  // User Domain
+  // =========================
   user: {
-    userService: Symbol("user.userService"),
-    userRepo: Symbol("user.userRepo"),
-    profileRepo: Symbol("user.profileRepo"),
-    userModel: Symbol("user.userModel"),
-    profileModel: Symbol("user.profileModel"),
-  },
-  security:{
-  policyEngine: Symbol("security.policyEngine"),
-  blacklist: Symbol("security.blacklist"),
-}
-} as const;
+
+    userClient: Symbol("user.userClient"),
+
+    models: {
+      user: Symbol("user.models.user"),
+      profile: Symbol("user.models.profile"),
+    },
+
+    repos: {
+      userRepo: Symbol("user.repos.userRepo"),
+      profileRepo: Symbol("user.repos.profileRepo"),
+    },
+
+    services: {
+      userService: Symbol("user.services.userService"),
+    }
+  }
+
+} as const
 
 
-export type TOKENS_TYPE = typeof TOKENS;
+export type TOKENS_TYPE = typeof TOKENS

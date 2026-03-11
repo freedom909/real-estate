@@ -26,4 +26,3 @@ export async function closeRedis(): Promise<void> {
     redis = null;
   }
 }
-export default redis;

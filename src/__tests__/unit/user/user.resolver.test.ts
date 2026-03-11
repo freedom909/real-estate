@@ -19,10 +19,7 @@ describe('User Resolvers', () => {
     };
 
     // ✅ create resolvers AFTER mocks exist
-    resolvers = createUserResolvers({
-      userService: mockUserService,
-      policyEngine: mockPolicyEngine,
-    });
+    resolvers = createUserResolvers();
 
     jest.clearAllMocks();
   });

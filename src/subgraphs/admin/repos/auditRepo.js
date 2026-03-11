@@ -1,4 +1,0 @@
-class AdminAuditRepo {
-  insert()
-  query()
-}
