@@ -15,12 +15,25 @@ User subgraph 是 User 的唯一 owner
 type User @key(fields: "id") {
   id: ID!
   profile: Profile!
-  role: Role!
   status: AccountStatus!
   tokenVersion: Int!
   createdAt: DateTime!
+  memberships: [Membership!]!
+}
+type Tenant @key(fields: "id") {
+  id: ID!
+  name: String!
+  createdAt: DateTime!
 }
 
+type Membership @key(fields: "id") {
+  id: ID!
+  user: User!
+  tenant: Tenant!
+  role: Role!
+  approvalStatus: ApprovalStatus!
+  createdAt: DateTime!
+}
 
 type Profile @shareable {
   name: String
@@ -57,6 +70,24 @@ type Query {
 type Mutation {
   createOAuthUser(input: CreateOAuthUserInput!): User!
   deactivateUser(userId: ID!): Boolean!
+    createTenant(name: String!): Tenant!
+
+  addUserToTenant(
+    tenantId: ID!
+    userId: ID!
+    role: Role!
+  ): Membership!
+
+  removeUserFromTenant(
+    tenantId: ID!
+    userId: ID!
+  ): Boolean!
+
+  updateMembershipRole(
+    tenantId: ID!
+    userId: ID!
+    role: Role!
+  ): Membership!
 }
 
 input CreateOAuthUserInput {

@@ -12,7 +12,7 @@ import RefreshTokenService from "./services/refreshToken.service";
 import { ForbiddenError } from "@/infrastructure/utils/errors";
 import {OAuthService} from "./services/oauth.service";
 import { subgraphAuthGuard } from "./guards/subgraphAuthGuard";
-import { IdentityModel } from "./models/identity.model";
+import { IdentityModel } from "../user/models/identity.model.js";
 
 
 interface User {

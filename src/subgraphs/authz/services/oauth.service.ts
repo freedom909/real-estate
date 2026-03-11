@@ -70,9 +70,6 @@ export class OAuthService {
       if (profile.email) {
         console.log("checking user by email:", profile.email)
         user = await this.userClient.findByEmail(profile.email);
-        console.log("user by email:", user)
-            console.log("profile+:", profile); //no output
-            console.log("profile.email+:", profile.email);
       }
       if (!user) {
           try {
@@ -86,7 +83,7 @@ export class OAuthService {
         }),
           console.log("profile++:", profile),
 
-        await this.oauthAccountRepo.create({
+        await this.oauthAccountRepo.create({ // the 'this.oauthAccountRepo' was removed,what it will  replac it
           userId: user.id,
 
           provider: profile.provider,

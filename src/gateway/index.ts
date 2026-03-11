@@ -31,7 +31,7 @@ async function startGateway() {
   // ==============================
   // 1️⃣ Build Gateway
   // ==============================
-  const supergraphSdl = fs.readFileSync("./supergraph.graphql", "utf-8");
+  const supergraphSdl = fs.readFileSync("./supergraph.graphql", "utf-8");//现在我删除了supergraph.graphql，如何再生？
 
   const gateway = new ApolloGateway({
     supergraphSdl,

@@ -1,12 +1,13 @@
 // src/subgraphs/user/container/registerUserDependencies.ts
 
 import { container } from "tsyringe";
-import { TOKENS } from "../../../shared/container/tokens.js";
-
-import PolicyEngine from "../../../security/policy.engine.js";
-import UserModel from "../models/user.model.js";
-import UserRepo from "../repos/user.repo.js";
-import UserService from "../../../application/user/services/user.service.js";
+import { TOKENS } from "../../../shared/container/tokens";
+import CredentialModel from "../models/credential.model"
+import PolicyEngine from "../../../security/policy.engine";
+import UserModel from "../models/user.model";
+import UserRepo from "../repos/user.repo";
+import UserService from "../../../application/user/services/user.service";
+import CredentialRepo from "../repos/credential.repo";
 
 export function registerUserDependencies(container) {
 
@@ -34,5 +35,14 @@ export function registerUserDependencies(container) {
         c.resolve(TOKENS.security.policyEngine)
       )
   });
+  container.register(TOKENS.auth.models.credential, {
+    useValue: CredentialModel
+  })
 
+  container.register(TOKENS.auth.repos.credentialRepo, {
+    useFactory: (c) =>
+      new CredentialRepo({
+        CredentialModel: c.resolve(TOKENS.auth.models.credential)
+      })
+  })
 }

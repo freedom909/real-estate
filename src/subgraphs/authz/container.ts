@@ -7,21 +7,21 @@ import { TOKENS } from "../../shared/container/tokens"
 import { createRedis } from "@/infrastructure/redis/redis"
 
 // models
-import CredentialModel from "./models/credential.model"
+
 import RefreshTokenModel from "./models/refreshToken.model"
 import OAuthAccountModel from "./models/oauthAccount.model"
 import SessionModel from "./models/session.model"
 import RiskEventModel from "./models/riskEvent.model"
 
 // repos
-import CredentialRepo from "./repos/credential.repo"
+import CredentialRepo from "../user/repos/credential.repo"
 import RefreshTokenRepo from "./repos/refresh-token.repo"
 import OAuthAccountRepo from "./repos/oauthAccount.repo"
 import RiskEventRepo from "./repos/riskEvent.repo"
 import SessionRepo from "./repos/session.repo"
 
 // services
-import AuthService from "./services/auth.service"
+
 import {OAuthService} from "./services/oauth.service"
 import LoginRiskService from "./risk/login.engine"
 import RefreshTokenService from "./services/refreshToken.service"
@@ -73,9 +73,7 @@ container.register("Redis", {
     useValue: RefreshTokenModel
   })
 
-  container.register(TOKENS.auth.models.credential, {
-    useValue: CredentialModel
-  })
+
 
   container.register(TOKENS.auth.models.oauthAccount, {
     useValue: OAuthAccountModel
@@ -89,12 +87,7 @@ container.register("Redis", {
     useFactory: () => new RiskEventRepo()
   })
 
-  container.register(TOKENS.auth.repos.credentialRepo, {
-    useFactory: (c) =>
-      new CredentialRepo({
-        CredentialModel: c.resolve(TOKENS.auth.models.credential)
-      })
-  })
+
 
   container.register(TOKENS.auth.repos.refreshTokenRepo, {
     useFactory: (c) =>
@@ -197,6 +190,11 @@ container.registerSingleton(
 })
 
 
+
+
+  // ======================================================
+  // APPLICATION SERVICE
+  // ======================================================
 container.register(TOKENS.auth.services.oauthService, {
   useFactory: (c) => 
     new OAuthService({
@@ -211,23 +209,4 @@ container.register(TOKENS.auth.services.oauthService, {
     })
 })
 
-  // ======================================================
-  // APPLICATION SERVICE
-  // ======================================================
-
-  container.register(TOKENS.auth.services.authService, {
-    useFactory: (c) =>
-      new AuthService({
-        oauthService: c.resolve(TOKENS.auth.services.oauthService),
-        credentialRepo: c.resolve(TOKENS.auth.repos.credentialRepo),
-        tokenService: c.resolve(TOKENS.auth.services.tokenService),
-        refreshTokenService: c.resolve(TOKENS.auth.services.refreshTokenService),
-        refreshTokenRepo: c.resolve(TOKENS.auth.repos.refreshTokenRepo),
-        sessionRepo: c.resolve(TOKENS.auth.repos.sessionRepo),
-        loginRiskService: c.resolve(TOKENS.auth.services.loginRiskService),
-        oauthAccountRepo: c.resolve(TOKENS.auth.repos.oauthAccountRepo),
-        userClient: c.resolve(TOKENS.user.userClient),
-        blacklist: c.resolve(TOKENS.security.blacklist)
-      })
-  })
 }
