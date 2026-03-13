@@ -42,15 +42,18 @@ export const TOKENS = {
     // adapters
     adapters: {
       oauthAdapter: Symbol("auth.adapters.oauthAdapter"),
+      oauthAdapterRegistry: Symbol("auth.adapters.oauthAdapterRegistry"),
       googleOAuthAdapter: Symbol("auth.adapters.googleOAuthAdapter"),
       githubOAuthAdapter: Symbol("auth.adapters.githubOAuthAdapter"),
+      appleOAuthAdapter: Symbol("auth.adapters.appleOAuthAdapter"),
+      facebookOAuthAdapter: Symbol("auth.adapters.facebookOAuthAdapter"),
     },
 
     // models
     models: {
       credential: Symbol("auth.models.credential"),
       refreshToken: Symbol("auth.models.refreshToken"),
-      oauthAccount: Symbol("auth.models.oauthAccount"),
+      
       session: Symbol("auth.models.session"),
       riskEvent: Symbol("auth.models.riskEvent"),
     },
@@ -59,7 +62,7 @@ export const TOKENS = {
     repos: {
       credentialRepo: Symbol("auth.repos.credentialRepo"),
       refreshTokenRepo: Symbol("auth.repos.refreshTokenRepo"),
-      oauthAccountRepo: Symbol("auth.repos.oauthAccountRepo"),
+      
       sessionRepo: Symbol("auth.repos.sessionRepo"),
       riskEventRepo: Symbol("auth.repos.riskEventRepo"),
     },
@@ -73,6 +76,8 @@ export const TOKENS = {
       oauthVerifier: Symbol("auth.services.oauthVerifier"),
       loginRiskService: Symbol("auth.services.loginRiskService"),
       mergeAccountService: Symbol("auth.services.mergeAccountService"),
+      unlinkAccountService: Symbol("auth.services.unlinkAccountService"),
+      oauthloginService: Symbol("auth.services.oauthloginService"),     
     },
 
     // providers

@@ -105,9 +105,14 @@ const resolvers = {
         throw err;
       }
     }
+  },
 
-  }
-
+updateLastLogin: async (_, { userId }) => {
+  await UserModel.updateOne(
+    { _id: userId },
+    { lastLoginAt: new Date() }
+  );
+}
 }
 
 export default resolvers;

@@ -8,6 +8,7 @@ interface User {
 
 interface UserRepository {
   findById(id: string): Promise<User | null>;
+  updateLastLogin(userId: string): Promise<boolean>;
 }
 
 class UserService {
@@ -24,6 +25,13 @@ class UserService {
     user.role = normalizeRole(user.role);
     return user;
   }
+
+  async updateLastLogin(userId: string): Promise<boolean> {
+
+  const res = await this.userRepository.updateLastLogin(userId);
+
+  return !!res;
+}
 }
 
 export default UserService;

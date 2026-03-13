@@ -43,4 +43,12 @@ async create(data: Partial<IUserDB>) {
 async update(id: string, user: Partial<IUserDB>): Promise<IUserDBObject | null> {
   return this.UserModel.findByIdAndUpdate(id, user, { new: true }).lean<IUserDBObject>();
 }
+
+async updateLastLogin(userId: string) {
+
+  return this.UserModel.findByIdAndUpdate(
+    userId,
+    { lastLoginAt: new Date() }
+  );
+}
 }

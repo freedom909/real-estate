@@ -69,7 +69,7 @@ describe('AuthService.oauthLogin', () => {
     };
 
     authService = new AuthService({
-      oauthAccountRepo: mockOauthAccountRepo,
+      credentialRepo: mockOauthAccountRepo,
       userClient: mockUserClient,
       credentialRepo: mockCredentialRepo,
       tokenService: mockTokenService,

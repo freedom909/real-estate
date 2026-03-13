@@ -958,7 +958,7 @@ interface AuthServiceDependencies {
   tokenService: any;
   loginRiskService: any;
   refreshTokenRepo: any;
-  oauthAccountRepo: any;
+  credentialRepo: any;
   sessionRepo: any;
   blacklist: Blacklist;
   refreshPublicKey: string;
@@ -971,7 +971,7 @@ export default class AuthService {
   private tokenService: any;
   private loginRiskService: any;
   private refreshTokenRepo: any;
-  private oauthAccountRepo: any;
+  private credentialRepo: any;
   private sessionRepo: any;
   private refreshPublicKey: string;
 &nbsp;
@@ -984,7 +984,7 @@ export default class AuthService {
       "tokenService",
       "loginRiskService",
       "refreshTokenRepo",
-      "oauthAccountRepo",
+      "credentialRepo",
       "sessionRepo",
     ];
 &nbsp;
@@ -1014,7 +1014,7 @@ export default class AuthService {
       avatar,
     } = profile;
 &nbsp;
-    let oauthAccount: any = await this.oauthAccountRepo.findByProviderUserId(
+    let oauthAccount: any = await this.credentialRepo.findByProviderUserId(
       provider,
       providerUserId
     );
@@ -1038,7 +1038,7 @@ export default class AuthService {
       if (user) {
         userId = user.id;
 &nbsp;
-        await this.oauthAccountRepo.create({
+        await this.credentialRepo.create({
           userId,
           provider,
           providerUserId,

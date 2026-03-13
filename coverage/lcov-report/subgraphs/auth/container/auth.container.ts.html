@@ -585,7 +585,7 @@
 <span class="cstat-no" title="statement not covered" >import CredentialRepo from "../repos/credential.repo.js";</span>
 <span class="cstat-no" title="statement not covered" >import RefreshTokenRepo from "../repos/refresh-token.repo.js";</span>
 <span class="cstat-no" title="statement not covered" >import RiskEventRepo from "../repos/riskEvent.repo.js";</span>
-<span class="cstat-no" title="statement not covered" >import OAuthAccountRepo from "../repos/oauthAccount.repo.js";</span>
+<span class="cstat-no" title="statement not covered" >import credentialRepo from "../repos/oauthAccount.repo.js";</span>
 <span class="cstat-no" title="statement not covered" >import UserRepo from "../repos/user.repo.js";</span>
 <span class="cstat-no" title="statement not covered" >import SessionRepo from "../repos/session.repo.js";</span>
 &nbsp;
@@ -772,8 +772,8 @@ interface ContainerParams {
   );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >container.register(</span>
-  TOKENS.auth.oauthAccountRepo,
-<span class="fstat-no" title="function not covered" >  () =</span>&gt; <span class="cstat-no" title="statement not covered" >new OAuthAccountRepo({ model: OAuthAccountModel })</span>
+  TOKENS.auth.credentialRepo,
+<span class="fstat-no" title="function not covered" >  () =</span>&gt; <span class="cstat-no" title="statement not covered" >new credentialRepo({ model: OAuthAccountModel })</span>
 );
 &nbsp;
   // ======================================================
@@ -797,8 +797,8 @@ interface ContainerParams {
         oauthService: container.resolve(
           TOKENS.auth.oauthAdapter
         ),
-        oauthAccountRepo: container.resolve(
-        TOKENS.auth.oauthAccountRepo
+        credentialRepo: container.resolve(
+        TOKENS.auth.credentialRepo
       ),
 &nbsp;
         userClient: container.resolve(

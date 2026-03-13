@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 interface ICredential {
   userId: mongoose.Types.ObjectId;
   provider:  "GOOGLE" | "GITHUB" | "FACEBOOK" | "APPLE" | "LINE";
-  providerUserId: string;
+  providerAccountId: string;
   email?: string;
   emailVerified?: boolean;
   profile?: {
@@ -40,7 +40,7 @@ const CredentialSchema = new mongoose.Schema(
       index: true,
     },
 
-    providerUserId: {
+    providerAccountId: {
       type: String,
       required: true,
     },
@@ -74,7 +74,7 @@ const CredentialSchema = new mongoose.Schema(
 
 // 🚨 核心唯一索引
 CredentialSchema.index(
-  { provider: 1, providerUserId: 1 },
+  { provider: 1, providerAccountId: 1 },
   { unique: true }
 );
 

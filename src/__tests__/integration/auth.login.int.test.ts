@@ -142,7 +142,7 @@ beforeEach(async () => {
     oauthService: {} as any,
     userClient: {} as any,
     credentialRepo: {} as any,
-    oauthAccountRepo: {} as any,
+    credentialRepo: {} as any,
     blacklist: {} as any,
     refreshTokenService: {} as any,
   });
