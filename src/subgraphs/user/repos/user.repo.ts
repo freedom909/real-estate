@@ -44,10 +44,10 @@ async update(id: string, user: Partial<IUserDB>): Promise<IUserDBObject | null> 
   return this.UserModel.findByIdAndUpdate(id, user, { new: true }).lean<IUserDBObject>();
 }
 
-async updateLastLogin(userId: string) {
+async updateLastLogin(userId: string, lastLoginAt: Date) {
 
-  return this.UserModel.findByIdAndUpdate(
-    userId,
+  return this.UserModel.updateOne(
+    { _id: userId },
     { lastLoginAt: new Date() }
   );
 }

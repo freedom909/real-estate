@@ -157,7 +157,7 @@ console.log(
     });
 
     // 9 update last login
-    // await this.userClient.updateLastLogin(user.id);
+    await this.userClient.updateLastLogin(user.id);
 
     // 10 record login risk event
     await this.loginRiskService.record({

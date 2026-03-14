@@ -8,7 +8,7 @@ interface User {
 
 interface UserRepository {
   findById(id: string): Promise<User | null>;
-  updateLastLogin(userId: string): Promise<boolean>;
+ 
 }
 
 class UserService {
@@ -26,12 +26,12 @@ class UserService {
     return user;
   }
 
-  async updateLastLogin(userId: string): Promise<boolean> {
+  // async updateLastLogin(userId: string, lastLoginAt: Date): Promise<{user: User | null}> {
 
-  const res = await this.userRepository.updateLastLogin(userId);
+  // const res = await this.userRepository.updateLastLogin(userId, lastLoginAt);
 
-  return !!res;
+  // return !!res;
 }
-}
+
 
 export default UserService;

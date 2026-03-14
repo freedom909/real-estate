@@ -138,15 +138,13 @@ export default class UserClient implements IUserClient {
   }
 
   async updateLastLogin(userId: string): Promise<void> {
+    
 const mutation = `
 mutation UpdateLastLogin($userId: ID!) {
-  updateLastLogin(userId: $userId) {
-    id
-  }
+  updateLastLogin(userId: $userId)
 }
 `;
-
-    await this.client.request(mutation, { userId })
+    await this.client.request(mutation, { userId });
   }
 
   /* =========================

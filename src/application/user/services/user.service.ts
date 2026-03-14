@@ -14,6 +14,9 @@ export interface IContext {
 }
 
 export default class UserService {
+  updateLastLogin(arg0: { _id: any; }, arg1: { lastLoginAt: Date; }) {
+    throw new Error("Method not implemented.");
+  }
   constructor(
     private readonly userRepo: UserRepo,
     private readonly permissionService: IPermissionService,

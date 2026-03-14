@@ -71,7 +71,7 @@ type Mutation {
   createOAuthUser(input: CreateOAuthUserInput!): User!
   deactivateUser(userId: ID!): Boolean!
     createTenant(name: String!): Tenant!
- updateLastLogin(userId: ID!): User!
+ updateLastLogin(userId: ID!): Boolean!
 
   addUserToTenant(
     tenantId: ID!
