@@ -131,13 +131,7 @@ console.log("session++", session)
 
       });
 
-      console.log("refreshTokenRepository instance:", this.refreshTokenRepository.save)
-console.log(
-  "methods:",
-  Object.getOwnPropertyNames(
-    Object.getPrototypeOf(this.refreshTokenRepository)
-  )
-)
+
     // 8 store refresh token metadata
     await this.refreshTokenRepository.save(refreshToken, {
 

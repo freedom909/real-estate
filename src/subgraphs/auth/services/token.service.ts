@@ -41,6 +41,11 @@ export interface SignedRefreshToken {
   jti: string
   familyId: string
   expiresAt: Date
+  accessToken: string
+  refreshToken: string
+  refreshJti: string
+  refreshExpiresAt: Date
+
 }
 
 @injectable()
@@ -51,6 +56,8 @@ export class TokenService {
   ) {}
   
   // 注意：如果环境变量未设置，这里会抛出异常。建议在构造函数中处理或确保环境配置正确。
+
+ publicKey = fs.readFileSync(process.env.JWT_PUBLIC_KEY_PATH!, "utf-8");
   privateKey = fs.readFileSync(process.env.JWT_PRIVATE_KEY_PATH!, "utf-8");
 
   async verifyAccessToken(token: string) {
@@ -62,7 +69,10 @@ export class TokenService {
   }
 
   async verifyRefreshToken(token: string) {
-    const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!) as TokenPayload;
+    const payload = jwt.verify(token,  this.publicKey,
+    {
+      algorithms: ["RS256"]
+    }) as TokenPayload;
     return payload;
   }
 
@@ -111,7 +121,6 @@ export class TokenService {
     userId: string;
     role?: string;
     email?: string;
-    tokenVersion: number;
     familyId: string;
     sessionId: string;
     deviceId?: string;
@@ -122,7 +131,6 @@ export class TokenService {
       userId,
       role,
       email,
-      tokenVersion,
       familyId,
       sessionId,
       deviceId,
@@ -136,7 +144,6 @@ export class TokenService {
       userId,
       role,
       email,
-      tokenVersion,
       familyId,
       sessionId,
       deviceId,
@@ -185,11 +192,22 @@ export class TokenService {
       }
     )
 
+    // signRefreshToken は SignedRefreshToken を返す必要があるが、
+    // 実装上は TokenPair を返すように呼び出し側で使われているため、
+    // ここでは一旦 TokenPair 相当を返して呼び出し側の整合を取る
+    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
     return {
       token,
       jti,
       familyId,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      expiresAt: refreshExpiresAt,
+      // 以下は SignedRefreshToken 型に求められるが、
+      // issueTokenPair 内でのみ利用されており、実際には未使用のプロパティ
+      accessToken: "",
+      refreshToken: token,
+      refreshJti: jti,
+      refreshExpiresAt: refreshExpiresAt,
     }
+
   }
 }

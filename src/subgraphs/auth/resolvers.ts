@@ -14,6 +14,7 @@ import { ForbiddenError } from "@/infrastructure/utils/errors";
 import { subgraphAuthGuard } from "./guards/subgraphAuthGuard";
 import { IdentityModel } from "../user/models/identity.model.js";
 import { OAuthLoginService } from "./services/oauth.login.service.js";
+import { TokenService } from "./services/token.service.js";
 
 
 interface User {
@@ -27,6 +28,9 @@ interface Context {
   req: Request;
   res: Response;
   redis?: any;
+  userClient: any;
+  tokenService: TokenService;
+  blacklist: TokenService;
 }
 
 interface AuthPayload {
@@ -99,23 +103,11 @@ export default {
 
   Mutation: {
 
-    refreshToken: async (_, { refreshToken }, ctx) => {
-      const decoded = await ctx.tokenService.verifyRefresh(refreshToken);
+refreshToken: async (_, { refreshToken }, ctx: Context) => {
 
-      await ctx.blacklist.check(decoded.jti);
-
-      const user = await ctx.userClient.userById(decoded.sub);
-
-      const tokens = await ctx.tokenService.rotate(decoded, user);
-
-      return {
-        ...tokens,
-        user: {
-          __typename: "User",
-          id: user.id,
-        },
-      };
-    },
+  const refreshTokenService = container.resolve<RefreshTokenService>(TOKENS.auth.services.refreshTokenService)
+    return refreshTokenService.refresh(refreshToken,ctx.userClient) 
+},
 
     revokeToken: async (_, __, { user }: Context) => {
       if (!user) throw new Error("Unauthorized");
@@ -171,15 +163,9 @@ export default {
       { provider, idToken }: { provider: string; idToken: string },
       { req }: Context
     ) => {
-      // const oauthService = container.resolve<OAuthService>(TOKENS.auth.services.oauthService);
-      // //console.log("oauthService", oauthService)
-      // return oauthService.oauthLogin(provider, idToken, req);
       const loginService = container.resolve<OAuthLoginService>(TOKENS.auth.services.oauthloginService);
       console.log("loginService", loginService)
       return loginService.oauthLogin(provider, idToken, req);
-
-
-
     },
 
     // revokeSession: async (_, { sessionId }, { user, req }) => {

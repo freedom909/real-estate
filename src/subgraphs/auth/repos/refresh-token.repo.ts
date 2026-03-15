@@ -58,13 +58,10 @@ async save(
   meta: RefreshTokenMeta & { jti: string; expiresAt: Date }
 ) {
 
- 
-
   return this.model.create({
     tokenId: meta.jti,
     token: hash(refreshToken),
     status: "active",
-
     meta: {
       userId: meta.userId,
       familyId: meta.familyId,
@@ -73,7 +70,6 @@ async save(
       expiresAt: meta.expiresAt
     }
   });
-
 }
 
   async findByJti(jti: string): Promise<RefreshTokenDocument | null> {
@@ -84,9 +80,9 @@ async deleteByJti(jti: string): Promise<void> {
   await this.model.deleteOne({ tokenId: jti });
 }
 
-async markAsUsed(jti: string): Promise<void> {
+async markAsUsed(jti: string, usedAt: Date): Promise<void> {
   await this.model.updateOne(
-    { tokenId: jti },
+    { tokenId: jti,usedAt: Date.now()},
     { $set: { status: "used", rotatedAt: new Date() } }
   );
 }

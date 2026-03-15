@@ -75,6 +75,21 @@ export default class UserClient implements IUserClient {
   /* =========================
      Queries
   ========================= */
+  async getTokenVersion(userId) {
+    const query = gql`
+      query User($userId: ID!) {
+        user(id: $userId) {
+          tokenVersion
+        }
+      }
+    `;
+  
+    const variables = {
+      userId,
+    };
+
+}
+
 
   async findById(id: string): Promise<User | null> {
 
@@ -82,7 +97,10 @@ export default class UserClient implements IUserClient {
 
     const res: any = await this.client.request(
       FIND_BY_ID,
-      { id }
+      { id },
+      {
+        Authorization: `Bearer ${process.env.INTERNAL_SERVICE_TOKEN}`
+      }
     )
 
     return res?.user ?? null
@@ -107,6 +125,7 @@ export default class UserClient implements IUserClient {
 
       return null
     }
+
   }
 
   /* =========================

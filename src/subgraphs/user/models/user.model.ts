@@ -13,7 +13,7 @@ export interface IUserDB {
   avatar: string;
   role: Role;
   status: "ACTIVE" | "INACTIVE" | "BANNED";
-  tokenVersion: number;
+  tokenVersion: {type:number; default:0}
   createdAt: Date;
   updatedAt: Date;
   profile?: IProfile;

@@ -32,9 +32,6 @@ import OAuthVerifier from "./services/oauthVerifiers"
 // adapters
 import UserClient from "./adapters/user.client"
 import { GoogleOAuthAdapter } from "./adapters/3rdLogin/google.adapter";
-
-
-
 import GithubOAuthAdapter from "./adapters/3rdLogin/github.adapter"
 import GithubApi  from "./adapters/3rdLogin/github.adapter"
 import { OAuthAdapter} from "./adapters/oauth/oauth.adapter"
@@ -229,14 +226,16 @@ container.registerSingleton(
         c.resolve(TOKENS.security.blacklist)
       )
   })
-
+                     
   container.register(TOKENS.auth.services.refreshTokenService, {
     useFactory: (c) =>
       new RefreshTokenService(
-        c.resolve(TOKENS.auth.models.refreshToken),
-        c.resolve(TOKENS.auth.repos.refreshTokenRepo),
-        c.resolve(TOKENS.auth.services.tokenService),
-        c.resolve(TOKENS.auth.services.loginRiskService)
+         c.resolve(TOKENS.auth.services.tokenService),
+          c.resolve(TOKENS.auth.repos.refreshTokenRepo),
+        
+        c.resolve(TOKENS.auth.services.loginRiskService),
+        c.resolve(TOKENS.auth.repos.sessionRepo),
+        c.resolve(TOKENS.user.userClient)
       )
   })
 
@@ -269,7 +268,6 @@ new OAuthVerifier()
 //       refreshTokenRepo: c.resolve(TOKENS.auth.repos.refreshTokenRepo)
 //    })
 // })
-
 
 
 container.register(TOKENS.auth.services.oauthloginService, {

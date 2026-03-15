@@ -61,7 +61,7 @@ export const TOKENS = {
     // repositories
     repos: {
       credentialRepo: Symbol("auth.repos.credentialRepo"),
-      refreshTokenRepo: Symbol("auth.repos.refreshTokenRepo"),
+      refreshTokenRepo: Symbol("auth.repos.refreshTokenRepository"),
       
       sessionRepo: Symbol("auth.repos.sessionRepo"),
       riskEventRepo: Symbol("auth.repos.riskEventRepo"),
@@ -111,7 +111,10 @@ export const TOKENS = {
 
     services: {
       userService: Symbol("user.services.userService"),
-    }
+    },
+
+ 
+    mergeAccountService: Symbol("user.services.mergeAccountService"),
   }
 
 } as const

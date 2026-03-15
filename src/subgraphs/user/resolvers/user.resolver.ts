@@ -109,7 +109,10 @@ const resolvers = {
 
       const user = await UserModel.findByIdAndUpdate(
         userId,
-        { lastLoginAt: new Date() }
+        { lastLoginAt: new Date() },
+      { new: true 
+        
+      }
       )
 
       return !!user
